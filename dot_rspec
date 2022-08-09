@@ -1,0 +1,5 @@
+--colour
+--format <%= ENV['FORMAT'] || :progress %>
+<% if ENV['TAG'] %>
+--tag <%= ENV['TAG'] %>
+<% end %>

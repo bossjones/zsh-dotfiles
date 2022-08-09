@@ -1,0 +1,22 @@
+*~
+._*
+.DS_Store
+.idea
+.vscode/tags
+node_modules
+bower_components
+npm-debug.log
+.vagrant
+**/.*.swp
+# **/.ropeproject
+**/.cache
+*.pyc
+.cache
+.molecule
+__pycache__
+*.retry
+.cache/
+.molecule/
+.tox/
+tests/.cache/
+tests/__pycache__/

@@ -1,0 +1,9 @@
+---
+# SOURCE: https://github.com/skwp/dotfiles/blob/master/ruby/gemrc
+:update_sources: true
+:sources:
+- http://rubygems.org
+:benchmark: false
+:backtrace: false
+:verbose: true
+gem: --no-document

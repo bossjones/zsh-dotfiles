@@ -1,0 +1,4 @@
+--ignore-dir=.idea
+--ignore-dir=.git
+--ignore-dir=.svn
+--ignore-dir=node_modules

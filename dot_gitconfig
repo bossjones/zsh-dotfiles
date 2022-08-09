@@ -1,0 +1,118 @@
+[user]
+  name = Malcolm Jones
+  email = bossjones@theblacktonystark.com
+
+[hub]
+	host = git.corp.adobe.com
+
+[github]
+  user = bossjones
+
+[include]
+  path = .gitconfig.token
+  path = .gitconfig.hub
+
+[core]
+  excludesfile = ~/.gitignore_global
+  editor = nano
+  filemode = false
+  trustctime = false
+  autocrlf = input
+  pager = diff-so-fancy | less --tabs=4 -RFX
+
+[alias]
+  amend = commit --amend --reuse-message=HEAD
+  br = branch --sort=-committerdate --format='%(if)%(HEAD)%(then)* %(color:red bold)%(refname:short)%(color:reset)%(else)  %(refname:short)%(end) - %(color:yellow)%(objectname:short)%(color:reset) %(color:green)(%(committerdate:relative))%(color:reset) %(contents:subject) %(color:blue)'
+  ci = commit
+  co = checkout
+  contrib = shortlog --summary --numbered
+  cr = clone --recursive
+  df = diff --word-diff
+  g = grep --break --heading --line-number
+  l = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  ld = "!sh -c \"git log --since '${1:-1} days ago' --oneline --author $(git config user.email)\" -"
+  lg = log -p
+  ll = log --pretty=oneline --graph --abbrev-commit
+  lm = log --pretty=format:'* %s (%h)'
+  patch = !git --no-pager diff --no-color
+  p = push
+  pf = push --force
+  show-ignored = "! git clean -ndX | perl -pe 's/Would remove/Ignored:/'"
+  st = status
+  stl = ls-files -m -o --exclude-standard
+  sts = status -sb
+  unstage = reset --hard HEAD
+  pr = "!git push origin HEAD && hub pull-request -b"
+  ; pr = "!f() { \
+  ;       BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD); \
+  ;       git push -u origin $BRANCH_NAME; \
+  ;       hub pull-request; \
+  ;   };f "
+  new = "!sh -c 'git pull --rebase  && git checkout -b feature-$1 origin/master' -"
+  hotfix = "!sh -c 'git pull --rebase  && git checkout -b hotfix-$1 origin/production' -"
+  pu = push -u
+  set-upstream = !git branch --set-upstream-to=origin/`git symbolic-ref --short HEAD`
+	add-commit = !git add -A && git commit
+
+[color]
+  ui = auto
+[color "branch"]
+  current = yellow reverse
+  local = yellow
+  remote = green
+[color "diff"]
+  meta = yellow bold
+  frag = magenta bold
+  old = red bold
+  new = green bold
+[color "status"]
+  added = yellow
+  changed = green
+  untracked = cyan
+[color "diff-highlight"]
+  oldNormal = red bold
+  oldHighlight = red bold 52
+  newNormal = green bold
+  newHighlight = green bold 22
+
+[credential]
+  helper = osxkeychain
+
+[grep]
+  lineNumber = true
+
+[help]
+  autocorrect = 1
+
+[difftool]
+  prompt = false
+
+[mergetool]
+  prompt = false
+
+[push]
+  default = current
+
+[fetch]
+  prune = true
+
+[diff]
+  renames = copies
+  indentHeuristic = true
+  tool = Kaleidoscope
+[difftool "Kaleidoscope"]
+  cmd = /usr/local/bin/ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
+[difftool "sourcetree"]
+	cmd = /usr/local/bin/ksdiff -w \"$LOCAL\" \"$REMOTE\"
+	path =
+
+[merge]
+  tool = Kaleidoscope
+  conflictstyle = diff3
+  defaultToUpstream = true
+[mergetool "Kaleidoscope"]
+  cmd = /usr/local/bin/ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+  trustExitCode = true
+[mergetool "sourcetree"]
+	cmd = /usr/local/bin/ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+	trustExitCode = true
