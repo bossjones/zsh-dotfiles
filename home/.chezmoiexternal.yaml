@@ -1,0 +1,32 @@
+# .tmux/plugins/tpm:
+#   type: archive
+#   url: https://github.com/tmux-plugins/tpm/archive/master.tar.gz
+#   exact: true
+#   stripComponents: 1
+#   refreshPeriod: 168h
+
+# .config/nvim:
+#   type: archive
+#   url: https://github.com/kabinspace/AstroVim/archive/main.tar.gz
+#   # Related issues https://github.com/twpayne/chezmoi/issues/1614#issuecomment-966524408
+#   # exact: true
+#   stripComponents: 1
+#   refreshPeriod: 168h
+
+dev/bossjones/oh-my-tmux:
+  type: archive
+  url: https://github.com/bossjones/.tmux/archive/master.tar.gz
+  # Related issues https://github.com/twpayne/chezmoi/issues/1614#issuecomment-966524408
+  exact: true
+  stripComponents: 1
+  refreshPeriod: 168h
+  
+dev/bossjones/boss-cheatsheets:
+  type: archive
+  url: https://github.com/boss-cheatsheets/archive/main.tar.gz
+  # Related issues https://github.com/twpayne/chezmoi/issues/1614#issuecomment-966524408
+  exact: true
+  stripComponents: 1
+  refreshPeriod: 168h
+
+

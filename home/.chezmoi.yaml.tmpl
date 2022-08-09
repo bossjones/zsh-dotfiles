@@ -1,0 +1,94 @@
+{{- /* Checks if running interactively, which is not the case for GitHub Codespaces */ -}}
+{{- $interactive := stdinIsATTY -}}
+
+{{/* Boolean feature tags */}}
+{{/* If this machine should have ruby packages */}}
+{{- $ruby := false -}}
+{{/* If this machine should have pyenv packages */}}
+{{- $pyenv := false -}}
+{{/* If this machine should have nodejs packages */}}
+{{- $nodejs := false -}}
+{{/* If this machine should have k8s packages */}}
+{{- $k8s := false -}}
+{{- "" -}}
+
+{{/* Configs */}}
+{{- $name := "Malcolm Jones" -}}
+{{- $email := "bossjones@theblacktonystark.com" -}}
+{{- $computer_name := default "boss workstation" (env "CM_computer_name") -}}
+{{- $hostname := default "bossworkstation" (env "CM_hostname") -}}
+{{- "" -}}
+
+{{- /* If running interactively */ -}}
+{{- /*   - if config was previously set, reuse it */ -}}
+{{- /*   - if config was not previously set, prompt */ -}}
+{{- if $interactive -}}
+{{-   if hasKey . "name" -}}
+{{-     $name = .name -}}
+{{-   else -}}
+{{-     $name = promptString "Name" $name -}}
+{{-   end -}}
+
+{{-   if hasKey . "email" -}}
+{{-     $email = .email -}}
+{{-   else if $interactive -}}
+{{-     $email = promptString "Email" $email -}}
+{{-   end -}}
+
+{{-   if hasKey . "computer_name" -}}
+{{-     $computer_name = .computer_name -}}
+{{-   else if $interactive -}}
+{{-     $computer_name = promptString "Computer name" $computer_name -}}
+{{-   end -}}
+
+{{-   if hasKey . "hostname" -}}
+{{-     $hostname = .hostname -}}
+{{-   else if $interactive -}}
+{{-     $hostname = promptString "Host name" $hostname -}}
+{{-   end -}}
+
+{{-   if hasKey . "ruby" -}}
+{{-     $ruby = .ruby -}}
+{{-   else -}}
+{{-     $ruby = promptBool "ruby" -}}
+{{-   end -}}
+
+{{-   if hasKey . "pyenv" -}}
+{{-     $pyenv = .pyenv -}}
+{{-   else -}}
+{{-     $pyenv = promptBool "pyenv" -}}
+{{-   end -}}
+
+{{-   if hasKey . "nodejs" -}}
+{{-     $nodejs = .nodejs -}}
+{{-   else -}}
+{{-     $nodejs = promptBool "nodejs" -}}
+{{-   end -}}
+
+{{-   if hasKey . "k8s" -}}
+{{-     $k8s = .k8s -}}
+{{-   else -}}
+{{-     $k8s = promptBool "k8s" -}}
+{{-   end -}}
+
+{{-   if hasKey . "multi_user" -}}
+{{-     $multi_user = .multi_user -}}
+{{-   else -}}
+{{-     $ruby = promptBool "Multi-user support" -}}
+{{-   end -}}
+{{- end -}}
+
+{{- if $interactive -}}
+{{-   writeToStdout "💡 Tip: you can re-enter your name and email with `chezmoi init --data=false`.\n" -}}
+{{- end -}}
+
+
+data:
+  name: {{ $name | quote }}
+  email: {{ $email | quote }}
+  computer_name: {{ $computer_name | quote }}
+  hostname: {{ $hostname | quote }}
+  ruby: {{ $ruby }}
+  pyenv: {{ $pyenv }}
+  nodejs: {{ $nodejs }}
+  k8s: {{ $k8s }}
