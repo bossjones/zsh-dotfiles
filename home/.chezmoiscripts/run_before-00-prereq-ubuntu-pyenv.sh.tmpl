@@ -7,21 +7,27 @@ sudo apt-get update
 sudo apt-get install -y locales ca-certificates && \
 sudo localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 
-export PYENV_ROOT="~/.pyenv"
+export PYENV_ROOT="$HOME/.pyenv"
 export PATH="~/.pyenv/bin:~/.pyenv/shims:$PATH"
 
 if [[ ! -s "$HOME/.pyenv/bin/pyenv" ]]
 then
-    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash && \
+    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+    
+    export PYENV_ROOT="$HOME/.pyenv"
+    command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+    
     git clone https://github.com/yyuu/pyenv-pip-rehash.git $(pyenv root)/plugins/pyenv-pip-rehash || true
     
     # install pyenv dependencies
     sudo apt-get update 
     sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
     
-    eval "$(pyenv init --path)"
-    eval "$(pyenv init -)"
-    pyenv virtualenvwrapper_lazy
+    # eval "$(pyenv init --path)"
+    # eval "$(pyenv init -)"
+    # pyenv virtualenvwrapper_lazy
     
     echo "3.9.9" > ~/python-versions.txt
     echo "3.9.10" >> ~/python-versions.txt
@@ -34,6 +40,8 @@ then
             find $PYENV_ROOT/versions -type f '(' -name '*.py[co]' -o -name '*.exe' ')' -exec rm -fv '{}' + && \
             mv -v -- ~/python-versions.txt $PYENV_ROOT/version
     set +x
+    
+    python3 -c "import sys;print(sys.executable)"
     
     pip install -U pip setuptools virtualenvwrapper wheel --no-cache-dir
 
