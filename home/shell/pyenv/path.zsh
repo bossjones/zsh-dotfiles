@@ -20,9 +20,9 @@ then
     fi
 
 else
-    # export PYENV_ROOT="${HOME}/.pyenv"
+    export PYENV_ROOT="${HOME}/.pyenv"
     export PATH="$PYENV_ROOT/bin:$PATH"
     eval "$($HOME/.pyenv/bin/pyenv init --path)"
     eval "$($HOME/.pyenv/bin/pyenv init -)"
-    $HOME/.pyenv/bin/pyenv virtualenvwrapper_lazy
+    # $HOME/.pyenv/bin/pyenv virtualenvwrapper_lazy
 fi

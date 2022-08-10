@@ -3,15 +3,16 @@
 #!/bin/bash
 export DEBIAN_FRONTEND=noninteractive
 
-sudo apt-get update
-sudo apt-get install -y locales ca-certificates && \
-sudo localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
-
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$HOME/.pyenv/bin:$HOME/.pyenv/shims:$PATH"
 
 if [[ ! -s "$HOME/.pyenv/bin/pyenv" ]]
 then
+
+    sudo apt-get update
+    sudo apt-get install -y locales ca-certificates && \
+    sudo localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+    
     curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
     
     export PYENV_ROOT="$HOME/.pyenv"
@@ -20,6 +21,7 @@ then
     eval "$(pyenv virtualenv-init -)"
     
     git clone https://github.com/yyuu/pyenv-pip-rehash.git $(pyenv root)/plugins/pyenv-pip-rehash || true
+    git clone https://github.com/pyenv/pyenv-virtualenvwrapper.git $(pyenv root)/plugins/pyenv-virtualenvwrapper || true
     
     # install pyenv dependencies
     sudo apt-get update 
