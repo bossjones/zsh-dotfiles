@@ -5,6 +5,8 @@
 
 export ASDF_DIR="${HOME}/.asdf"
 export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+. $HOME/.asdf/asdf.sh
+export PATH="$HOME/.asdf/shims:$HOME/.asdf/bin:$PATH"
 
 printf "${green}[50 - ubuntu] ${reset}"
 {{- if or (lt 31 (atoi (env "SCRIPTS_START_AT"))) (env "SKIP_ASDF_PLUGINS") }}
