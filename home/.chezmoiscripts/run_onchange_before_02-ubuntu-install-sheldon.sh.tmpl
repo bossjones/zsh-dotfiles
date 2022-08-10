@@ -1,0 +1,12 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if (eq .chezmoi.osReleas.name "Ubuntu") -}}
+#!/bin/sh
+
+# Install sheldon
+
+printf "${green}[10 - ubuntu] ${reset}"
+curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
+
+{{ end -}}
+
+{{ end -}}
