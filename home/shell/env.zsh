@@ -19,3 +19,22 @@ export VEDITOR=code
 # https://github.com/x-motemen/ghq#environment-variables
 export GHQ_ROOT=$CODE_WORKSPACE
 
+
+export GOPATH="$HOME/go"
+export TERM="xterm-256color"
+export EDITOR="vim"
+
+if [[ "$OSTYPE" == darwin* ]]
+then
+    _ARCH=$(uname -m)
+    if [[ "${_ARCH}" = "arm64" ]]
+    then
+        SHELL="/opt/homebrew/bin/zsh"
+    else
+        SHELL="/usr/local/bin/zsh"
+    fi
+    
+    SHELL="/usr/bin/zsh"
+fi
+
+export SHELL
