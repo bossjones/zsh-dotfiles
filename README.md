@@ -4,7 +4,7 @@
 
 * One-line binary install
     ```sh
-    sh -c "$(curl -fsLS chezmoi.io/get)" -- init --apply https://github.com/bossjones/zsh-dotfiles.git
+    sh -c "$(curl -fsLS chezmoi.io/get)" -- init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git
     ```
 
 
