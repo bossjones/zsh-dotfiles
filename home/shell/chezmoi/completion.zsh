@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 
-mkdir -p  ~/.zsh/completion || true
-chezmoi completion zsh --output=~/.zsh/completion/_chezmoi
-fpath+=("$HOME/.zsh/completions")
+if [[ "$OSTYPE" == linux* ]]
+then
+    fpath+="$HOME/.zsh/completions"
+fi
