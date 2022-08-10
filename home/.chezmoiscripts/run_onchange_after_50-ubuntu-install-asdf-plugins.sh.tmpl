@@ -1,0 +1,54 @@
+{{- if (eq .chezmoi.os "linux") -}}
+#!/bin/sh
+
+# Install asdf plugins
+
+printf "${green}[50 - ubuntu] ${reset}"
+{{- if or (lt 31 (atoi (env "SCRIPTS_START_AT"))) (env "SKIP_ASDF_PLUGINS") }}
+echo "Skip installing asdf plugins"
+exit 0
+{{ else }}
+echo "Install asdf plugins"
+{{- end }}
+
+{{ $plugins := dict
+  "ruby"    "latest"
+  "golang"    " 1.16.15"
+  "fd" "8.2.1"
+  "tmux" "2.9a"
+  "neovim" "0.7.2"
+  "ag" "2.2.0"
+  "github-cli" "2.0.0"
+  "mkcert" "1.4.3"
+  "shellcheck" "0.8.0"
+  "shfmt" "3.3.1"
+  "yq" "4.27.2"
+}}
+
+# Add plugins & install versions
+{{ range (keys $plugins) -}}
+  {{- $key := . }}
+  {{- $val := get $plugins $key }}
+
+  asdf plugin-add {{ $key }} || true
+
+  {{- if not (eq $val "None") }}
+    asdf install {{ $key }} {{ $val }} || true
+    asdf global {{ $key }} {{ $val }} || true
+  {{- end -}}
+{{ end }}
+
+# -- Packages -- #
+
+{{ $rubyPackages := list
+  "foreman"
+  "tmuxinator"
+}}
+
+{{ range sortAlpha $rubyPackages }}
+  gem install {{ . }} --no-doc
+{{ end -}}
+
+asdf reshim
+
+{{ end -}}
