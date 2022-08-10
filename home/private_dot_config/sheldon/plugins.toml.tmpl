@@ -81,11 +81,11 @@ apply = ["defer"]
 
 [plugins.zsh-autosuggestions]
 github = "zsh-users/zsh-autosuggestions"
-use = ["{{ name }}.zsh"]
+use = ["{{- "{{ name }}.zsh" -}}"]
 
 [plugins.zsh-hooks]
 github = "zsh-hooks/zsh-hooks"
-use = ["{{ name }}.plugin.zsh"]
+use = ["{{- "{{ name }}.plugin.zsh" -}}"]
 
 {{- if (eq .chezmoi.os "linux") -}}
 [plugins.asdf]
