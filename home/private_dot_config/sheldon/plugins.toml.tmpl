@@ -87,14 +87,14 @@ use = ["{{- "{{ name }}.zsh" }}"]
 github = "zsh-hooks/zsh-hooks"
 use = ["{{- "{{ name }}.plugin.zsh" }}"]
 
-{{if (eq .chezmoi.os "linux") -}}
+{{if (eq .chezmoi.os "linux") }}
 [plugins.asdf]
 local = "~/.asdf"
 use = ["asdf.sh"]
 apply = ["defer"]
 {{ end -}}
 
-{{if (eq .chezmoi.os "darwin") -}}
+{{if (eq .chezmoi.os "darwin") }}
 [plugins.asdf]
 local = "{{ output "zsh" "-c" "echo $(brew --prefix asdf)/libexec" | trim }}"
 use = ["{{- "{{ name }}.sh" -}}"]
