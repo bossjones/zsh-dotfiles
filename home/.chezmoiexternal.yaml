@@ -23,7 +23,7 @@ dev/bossjones/oh-my-tmux:
   
 dev/bossjones/boss-cheatsheets:
   type: archive
-  url: https://github.com/boss-cheatsheets/archive/main.tar.gz
+  url: https://github.com/boss-cheatsheets/archive/master.tar.gz
   # Related issues https://github.com/twpayne/chezmoi/issues/1614#issuecomment-966524408
   exact: true
   stripComponents: 1
