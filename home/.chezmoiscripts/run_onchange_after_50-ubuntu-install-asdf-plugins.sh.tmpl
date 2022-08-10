@@ -1,5 +1,7 @@
 {{- if (eq .chezmoi.os "linux") -}}
-#!/bin/sh
+#!/bin/bash
+
+sudo apt-get install autotools-dev automake -y
 
 # Install asdf plugins
 
