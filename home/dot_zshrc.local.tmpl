@@ -1,0 +1,115 @@
+{{ if eq .chezmoi.os "darwin" -}}
+{{ if eq .chezmoi.arch "arm64" -}}
+export SHELL="/opt/homebrew/bin/zsh"
+# export RBENV_ROOT=~/.rbenv
+export RBENV_VERSION=2.7.2
+export VIRTUAL_ENV_DISABLE_PROMPT=1
+export ZSH_PYENV_LAZY_VIRTUALENV=1
+
+# set some history options
+setopt append_history
+setopt extended_history
+setopt hist_expire_dups_first
+setopt hist_ignore_all_dups
+setopt hist_ignore_dups
+setopt hist_ignore_space
+setopt hist_reduce_blanks
+setopt hist_save_no_dups
+setopt hist_verify
+setopt INC_APPEND_HISTORY
+unsetopt HIST_BEEP
+
+# Share your history across all your terminal windows
+setopt share_history
+#setopt noclobber
+
+# Larger bash history (allow 32³ entries; default is 500)
+
+HISTSIZE=100000
+SAVEHIST=100000
+HISTFILE="$HOME/.zsh_history"
+# export HISTCONTROL=ignoredups
+
+# # Prefer US English and use UTF-8
+# export LANG=en_US.UTF-8
+# export LC_ALL=en_US.UTF-8
+
+# # SOURCE: https://github.com/luismayta/dotfiles/blob/597ddc09e1bfccc43076ca21cb679299b83912e4/conf/shell/zshrc
+# # don't put duplicate lines in the history. See bash(1) for more options
+# # ... or force ignoredups and ignorespace
+# HISTCONTROL=ignoredups:ignorespace
+
+# # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+# HISTSIZE=100000
+# HISTFILESIZE=2000
+
+alias reload!='exec "$SHELL" -l'
+
+fixprompt() {
+  antigen reset; reload!
+}
+
+# setopt HIST_FIND_NO_DUPS
+
+# Add some completions settings
+setopt ALWAYS_TO_END     # Move cursor to the end of a completed word.
+setopt AUTO_LIST         # Automatically list choices on ambiguous completion.
+setopt AUTO_MENU         # Show completion menu on a successive tab press.
+setopt AUTO_PARAM_SLASH  # If completed parameter is a directory, add a trailing slash.
+setopt COMPLETE_IN_WORD  # Complete from both ends of a word.
+unsetopt MENU_COMPLETE   # Do not autoselect the first completion entry.
+
+# Long running processes should return time after they complete. Specified
+# in seconds.
+REPORTTIME=2
+TIMEFMT="%U user %S system %P cpu %*Es total"
+
+# # Speed up autocomplete, force prefix mapping
+# zstyle ':completion:*' accept-exact '*(N)'
+# zstyle ':completion:*' use-cache on
+# zstyle ':completion:*' cache-path ~/.zsh/cache
+# zstyle -e ':completion:*:default' list-colors 'reply=("${PREFIX:+=(#bi)($PREFIX:t)*==34=34}:${(s.:.)LS_COLORS}")';
+
+
+if [[ -n "$(command which direnv)" ]]; then
+    eval "$(direnv hook zsh)"
+fi
+
+# [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+test -f "$HOME/.fzf.zsh" && . "$HOME/.fzf.zsh"
+
+
+# remove dupes from $PATH using a zsh builtin
+# https://til.hashrocket.com/posts/7evpdebn7g-remove-duplicates-in-zsh-path
+# typeset -aU path;
+
+# SOURCE: https://github.com/mcornella/dotfiles/blob/main/zshenv
+# remove duplicate entries from PATH
+[ -n "$ZSH_VERSION" ] && {
+  typeset -U path
+  fpath+=("$HOME/.zsh/completions")
+}
+
+# export PATH for other sessions
+export PATH
+# SOURCE: https://github.com/mcornella/dotfiles/blob/main/zshenv - end
+
+# # Load iTerm shell integrations if found.
+# test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+# Expand aliases inline - see http://blog.patshead.com/2012/11/automatically-expaning-zsh-global-aliases---simplified.html
+globalias() {
+  if [[ $LBUFFER =~ ' [A-Z0-9]+$' ]]; then
+    zle _expand_alias
+    zle expand-word
+  fi
+  zle self-insert
+}
+
+zle -N globalias
+
+bindkey " " globalias
+bindkey "^ " magic-space           # control-space to bypass completion
+bindkey -M isearch " " magic-space # normal space during searches
+{{  end -}}
+{{  end -}}
