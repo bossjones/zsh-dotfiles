@@ -71,13 +71,6 @@
 {{-     $k8s = promptBool "k8s" -}}
 {{-   end -}}
 
-{{-   if hasKey . "multi_user" -}}
-{{-     $multi_user = .multi_user -}}
-{{-   else -}}
-{{-     $ruby = promptBool "Multi-user support" -}}
-{{-   end -}}
-{{- end -}}
-
 {{- if $interactive -}}
 {{-   writeToStdout "💡 Tip: you can re-enter your name and email with `chezmoi init --data=false`.\n" -}}
 {{- end -}}
