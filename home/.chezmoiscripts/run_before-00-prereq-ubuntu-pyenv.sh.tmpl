@@ -1,0 +1,42 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+export DEBIAN_FRONTEND=noninteractive
+
+sudo apt-get update
+sudo apt-get install -y locales ca-certificates && \
+sudo localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+
+export PYENV_ROOT="~/.pyenv"
+export PATH="~/.pyenv/bin:~/.pyenv/shims:$PATH"
+
+if [[ ! -s "$HOME/.pyenv/bin/pyenv" ]]
+then
+    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash && \
+    git clone https://github.com/yyuu/pyenv-pip-rehash.git $(pyenv root)/plugins/pyenv-pip-rehash || true
+    
+    # install pyenv dependencies
+    sudo apt-get update 
+    sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+    
+    eval "$(pyenv init --path)"
+    eval "$(pyenv init -)"
+    pyenv virtualenvwrapper_lazy
+    
+    echo "3.9.9" > ~/python-versions.txt
+    echo "3.9.10" >> ~/python-versions.txt
+    
+    set -x 
+    pyenv update && \
+            xargs -P 4 -n 1 pyenv install < ~/python-versions.txt && \
+            pyenv global $(pyenv versions --bare) && \
+            find $PYENV_ROOT/versions -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rfv '{}' + && \
+            find $PYENV_ROOT/versions -type f '(' -name '*.py[co]' -o -name '*.exe' ')' -exec rm -fv '{}' + && \
+            mv -v -- ~/python-versions.txt $PYENV_ROOT/version
+    set +x
+    
+    pip install -U pip setuptools virtualenvwrapper wheel --no-cache-dir
+
+fi
+
+{{ end -}}
+{{ end -}}
