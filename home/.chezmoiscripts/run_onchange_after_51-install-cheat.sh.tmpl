@@ -37,6 +37,9 @@ if [ "${SYSTEM}" = "Linux" ]; then
   elif [ "${HARDWARE}" = "armv5tejl" ]; then
     SYSTEM="linux"
     HARDWARE="arm5"
+  elif [ "${HARDWARE}" = "aarch64" ]; then
+    SYSTEM="linux"
+    HARDWARE="arm64"
   elif [ "${HARDWARE}" = "x86_64" ]; then
     SYSTEM="linux"
     HARDWARE="amd64"
@@ -47,6 +50,9 @@ if [ "${SYSTEM}" = "Linux" ]; then
 elif [ "${SYSTEM}" = "Darwin" ]; then
   if [ "${HARDWARE}" = "x86_64" ]; then
     SYSTEM="darwin"
+    HARDWARE="amd64"
+  elif  [ "${HARDWARE}" = "arm64" ]; then
+    SYSTEM="linux"
     HARDWARE="amd64"
   else
     echo "This platform does'nt suppot yet!!"
