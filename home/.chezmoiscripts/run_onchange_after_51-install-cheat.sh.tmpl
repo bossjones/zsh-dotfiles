@@ -132,11 +132,11 @@ cheatpaths:
   # you downloaded the community cheatsheets.
 
   - name: community
-    path: {{- .chezmoi.homeDir }}/{{- .chezmoi.username }}/.config/cheat/cheatsheets/community
+    path: {{ .chezmoi.homeDir }}/.config/cheat/cheatsheets/community
     tags: [ community ]
     readonly: true
   - name: personal
-    path: {{- .chezmoi.homeDir }}/{{- .chezmoi.username }}/.config/cheat/cheatsheets/personal
+    path: {{ .chezmoi.homeDir }}/.config/cheat/cheatsheets/personal
     tags: [ personal ]
     readonly: true
 
