@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+# set -euox pipefail
+set -e
+
+# https://gist.github.com/jonsuh/3c89c004888dfc7352be
+# ----------------------------------
+# Colors
+# ----------------------------------
+export NOCOLOR='\033[0m'
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export ORANGE='\033[0;33m'
+export BLUE='\033[0;34m'
+export PURPLE='\033[0;35m'
+export CYAN='\033[0;36m'
+export LIGHTGRAY='\033[0;37m'
+export DARKGRAY='\033[1;30m'
+export LIGHTRED='\033[1;31m'
+export LIGHTGREEN='\033[1;32m'
+export YELLOW='\033[1;33m'
+export LIGHTBLUE='\033[1;34m'
+export LIGHTPURPLE='\033[1;35m'
+export LIGHTCYAN='\033[1;36m'
+export WHITE='\033[1;37m'
+
+
+while getopts ":hf:" opt; do
+  case ${opt} in
+    h ) # process option h
+      ;;
+    f ) # process option f
+      filename_val=$OPTARG
+      ;;
+    \? )
+      echo "Invalid option: $OPTARG" 1>&2
+      ;;
+    : )
+      echo "Invalid option: $OPTARG requires an argument" 1>&2
+      ;;
+  esac
+done
+
+export input_file="${filename_val}"
+export full_path_input_file="$(pwd)/${filename_val}"
+
+video_duration=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=s=x:p=0 "${full_path_input_file}")
+
+echo $video_duration | cut -d"." -f1

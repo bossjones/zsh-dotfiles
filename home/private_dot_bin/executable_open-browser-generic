@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+# set -euox pipefail
+set -e
+
+# NOTE: Scaling up an image to have padded space between top and bottom is call letterboxing.
+# NOTE: Scaling up an image to have padded space between left and right is call pillarboxing.
+
+# https://gist.github.com/jonsuh/3c89c004888dfc7352be
+# ----------------------------------
+# Colors
+# ----------------------------------
+export NOCOLOR='\033[0m'
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export ORANGE='\033[0;33m'
+export BLUE='\033[0;34m'
+export PURPLE='\033[0;35m'
+export CYAN='\033[0;36m'
+export LIGHTGRAY='\033[0;37m'
+export DARKGRAY='\033[1;30m'
+export LIGHTRED='\033[1;31m'
+export LIGHTGREEN='\033[1;32m'
+export YELLOW='\033[1;33m'
+export LIGHTBLUE='\033[1;34m'
+export LIGHTPURPLE='\033[1;35m'
+export LIGHTCYAN='\033[1;36m'
+export WHITE='\033[1;37m'
+
+_url=$1
+echo -e " ${BLUE}[open-browser-generic]${NOCOLOR} cmd=/usr/local/bin/open-browser.py \"${_url}\""
+/usr/local/bin/open-browser.py "${_url}"

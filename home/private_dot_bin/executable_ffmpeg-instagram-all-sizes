@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+# set -euox pipefail
+set -e
+
+# NOTE: Scaling up an image to have padded space between top and bottom is call letterboxing.
+# NOTE: Scaling up an image to have padded space between left and right is call pillarboxing.
+
+# https://gist.github.com/jonsuh/3c89c004888dfc7352be
+# ----------------------------------
+# Colors
+# ----------------------------------
+export NOCOLOR='\033[0m'
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export ORANGE='\033[0;33m'
+export BLUE='\033[0;34m'
+export MAD_BLUE='\e[34m'
+export PURPLE='\033[0;35m'
+export CYAN='\033[0;36m'
+export LIGHTGRAY='\033[0;37m'
+export DARKGRAY='\033[1;30m'
+export LIGHTRED='\033[1;31m'
+export LIGHTGREEN='\033[1;32m'
+export YELLOW='\033[1;33m'
+export LIGHTBLUE='\033[1;34m'
+export LIGHTPURPLE='\033[1;35m'
+export LIGHTCYAN='\033[1;36m'
+export WHITE='\033[1;37m'
+
+while getopts ":hf:c:" opt; do
+  case ${opt} in
+    h ) # process option h
+      ;;
+    f ) # process option f
+      filename_val=$OPTARG
+      ;;
+    c ) # common_name
+      common_name=$OPTARG
+      ;;
+    \? )
+      echo "Invalid option: $OPTARG" 1>&2
+      ;;
+    : )
+      echo "Invalid option: $OPTARG requires an argument" 1>&2
+      ;;
+  esac
+done
+
+# export input_file="${filename_val}"
+# export full_path_input_file="$(pwd)/${filename_val}"
+# export get_extension=$(basename -- $input_file | cut -d"." -f2)
+# export fname_common="$(uuidgen).${get_extension}"
+
+# export input_file="${filename_val}"
+# export full_path_input_file="$(pwd)/${filename_val}"
+# export get_extension=$(basename -- $input_file | cut -d"." -f2)
+# export full_path_output_file="$(uuidgen).${get_extension}"
+# # generate a common name when one isn't passed in from outside the script
+# if [[ x"$common_name" = x"" ]]; then
+#     export fname_common="$(uuidgen).${get_extension}"
+#     # export full_path_input_file="${fname_common}"
+#     # export full_path_input_file="$(pwd)/${fname_common}"
+#     export full_path_output_file="${fname_common}.${get_extension}"
+# fi
+
+# generate a common name when one isn't passed in from outside the script
+if [[ x"$common_name" = x"" ]]; then
+    echo -e " ${BLUE}[ffmpeg-instagram-all-sizes]${NOCOLOR} common_name='is empty'"
+    export input_file="${filename_val}"
+    export full_path_input_file="$(pwd)/${input_file}"
+    export get_extension=$(basename -- $input_file | cut -d"." -f2)
+    export fname_common="$(uuidgen).${get_extension}"
+    export full_path_input_file="${fname_common}"
+    export full_path_output_file="${fname_common}"
+    # export full_path_input_file="$(pwd)/${fname_common}"
+else
+    echo -e " ${BLUE}[ffmpeg-instagram-all-sizes]${NOCOLOR} common_name='set', overriding variable names"
+    export input_file="${filename_val}"
+    export full_path_input_file="$(pwd)/${input_file}"
+    export get_extension=$(basename -- $input_file | cut -d"." -f2)
+    export fname_common="${common_name}"
+    export full_path_output_file="${fname_common}"
+fi
+export font_location='/Volumes/Macintosh HD/System/Library/Fonts/Helvetica.ttc'
+
+tmpfile=$(mktemp /tmp/abc-script.XXXXXX)
+echo -e " ${BLUE}[ffmpeg-instagram-all-sizes]${NOCOLOR} tmpfile=${tmpfile}"
+echo -e " ${BLUE}[ffmpeg-instagram-all-sizes]${NOCOLOR} will set the width of the output image to 1920 pixels and will calculate the height of the output image according to the aspect ratio of the input video."
+
+# https://superuser.com/questions/547296/resizing-videos-with-ffmpeg-avconv-to-fit-into-static-sized-player
+# https://superuser.com/questions/690021/video-padding-using-ffmpeg/690211
+# https://github.com/jackliston1998/project-jimin/blob/217c593f873331c01c81daa7fc232433ea9efd13/editor.py
+# https://stackoverflow.com/questions/54526345/ffmpeg-how-to-move-the-video-without-stretching-it
+# https://later.com/blog/instagram-image-size/
+cat << EOF > "${tmpfile}"
+
+echo -e " ${GREEN}[ffmpeg-instagram-all-sizes]${NOCOLOR} ${CYAN}landscape${NOCOLOR} photos ${YELLOW}1.91:1 (1080 x 608px)${NOCOLOR} ${LIGHTPURPLE}filename:ig-landscape-608-${full_path_output_file}${NOCOLOR}"
+ffmpeg -hide_banner -loglevel warning -i ${full_path_input_file} -vf "scale=950:500:force_original_aspect_ratio=decrease,pad=1080:608:-1:-1:color=white,setdar=1.91:1" ig-landscape-608-${full_path_output_file}
+
+echo -e " ${GREEN}[ffmpeg-instagram-all-sizes]${NOCOLOR} ${CYAN}square${NOCOLOR} photos ${YELLOW}1:1 (1080 x 1080px)${NOCOLOR} ${LIGHTPURPLE}filename:ig-square-1080x1080-${full_path_output_file}${NOCOLOR}"
+ffmpeg -hide_banner -loglevel warning -i ${full_path_input_file} -vf "scale=1080:1080:force_original_aspect_ratio=decrease,pad=1080:1080:-1:-1:color=white,setdar=1:1" ig-square-1080x1080-${full_path_output_file}
+
+echo -e " ${GREEN}[ffmpeg-instagram-all-sizes]${NOCOLOR} ${CYAN}portrait${NOCOLOR} photos ${YELLOW}4:5 (1080 x 1350px)${NOCOLOR} ${LIGHTPURPLE}filename:ig-portrait-1080x1350-${full_path_output_file}${NOCOLOR}"
+ffmpeg -hide_banner -loglevel warning -i ${full_path_input_file} -vf "scale=1080:1350:force_original_aspect_ratio=decrease,pad=1080:1350:-1:-1:color=white,setdar=1:1" ig-portrait-1080x1350-${full_path_output_file}
+EOF
+
+# echo -e " ${GREEN}[ffmpeg-instagram-all-sizes]${NOCOLOR} ${CYAN}stories@9:16${NOCOLOR} ${YELLOW}9:16 (1080 x 1920px)${NOCOLOR}"
+# ffmpeg -hide_banner -loglevel warning -i ${full_path_input_file} -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1:color=white,setdar=1:1" ig-stories-1080x1920-${fname_common}
+
+echo -e " ${BLUE}[ffmpeg-instagram-all-sizes]${NOCOLOR} cat ${tmpfile}"
+
+bash "${tmpfile}"
+
+rm "$tmpfile"
+
+
+# 720x576

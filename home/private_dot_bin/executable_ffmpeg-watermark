@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+# set -euox pipefail
+set -e
+
+# https://gist.github.com/jonsuh/3c89c004888dfc7352be
+# ----------------------------------
+# Colors
+# ----------------------------------
+export NOCOLOR='\033[0m'
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export ORANGE='\033[0;33m'
+export BLUE='\033[0;34m'
+export PURPLE='\033[0;35m'
+export CYAN='\033[0;36m'
+export LIGHTGRAY='\033[0;37m'
+export DARKGRAY='\033[1;30m'
+export LIGHTRED='\033[1;31m'
+export LIGHTGREEN='\033[1;32m'
+export YELLOW='\033[1;33m'
+export LIGHTBLUE='\033[1;34m'
+export LIGHTPURPLE='\033[1;35m'
+export LIGHTCYAN='\033[1;36m'
+export WHITE='\033[1;37m'
+
+export awk_bin="$(which gawk)"
+export sed_bin="$(which gsed)"
+
+export delete_orig=false
+
+while getopts ":hf:t:c:d" opt; do
+  case ${opt} in
+    h ) # process option h
+      ;;
+    f ) # process option f
+      filename_val=$OPTARG
+      ;;
+    t ) # process option t
+      text_val=$OPTARG
+      ;;
+    d ) # process option t
+      delete_orig=true
+      ;;
+    c ) # common_name
+      common_name=$OPTARG
+      ;;
+    \? )
+      echo "Invalid option: $OPTARG" 1>&2
+      ;;
+    : )
+      echo "Invalid option: $OPTARG requires an argument" 1>&2
+      ;;
+  esac
+done
+
+
+
+# export input_file="${filename_val}"
+# export full_path_input_file="$(pwd)/${filename_val}"
+# export get_extension=$(basename -- $input_file | cut -d"." -f2)
+# export base_name=$(echo ${input_file} | cut -d"." -f1)
+
+# export full_path_output_file="watermark-$(uuidgen).${get_extension}"
+# # generate a common name when one isn't passed in from outside the script
+
+# if [[ x"$common_name" != x"" ]]; then
+#     export fname_common="${common_name}.${get_extension}"
+#     # export full_path_input_file="${fname_common}"
+#     export full_path_output_file="watermark-${base_name}.${get_extension}"
+# fi
+
+
+# generate a common name when one isn't passed in from outside the script
+if [[ x"$common_name" = x"" ]]; then
+    echo -e " ${BLUE}[ffmpeg-watermark]${NOCOLOR} common_name='is empty'"
+    export input_file="${filename_val}"
+    export full_path_input_file="$(pwd)/${input_file}"
+    export get_extension=$(basename -- $input_file | cut -d"." -f2)
+    export fname_common="$(uuidgen).${get_extension}"
+    export full_path_input_file="${fname_common}"
+    export full_path_output_file="watermark-$RANDOM-${fname_common}"
+    # export full_path_input_file="$(pwd)/${fname_common}"
+else
+    echo -e " ${BLUE}[ffmpeg-watermark]${NOCOLOR} common_name='set', overriding variable names"
+    export input_file="${filename_val}"
+    export full_path_input_file="$(pwd)/${input_file}"
+    export get_extension=$(basename -- $input_file | cut -d"." -f2)
+    export fname_common="${common_name}"
+    basename "$input_file"
+    input_file_without_extension="$(basename -- $input_file | cut -d"." -f1)"
+    echo -e " ${BLUE}[ffmpeg-watermark]${NOCOLOR} ${YELLOW}input_file_without_extension=$input_file_without_extension${NOCOLOR}"
+    export full_path_output_file="watermark-$input_file_without_extension-${fname_common}"
+fi
+export font_location='/Volumes/Macintosh HD/System/Library/Fonts/Helvetica.ttc'
+
+
+# export input_file="${filename_val}"
+# export full_path_input_file="$(pwd)/${filename_val}"
+# export full_path_output_file="watermark-$(uuidgen).mp4"
+export watermark_text=${text_val}
+export font_location='/Volumes/Macintosh HD/System/Library/Fonts/Helvetica.ttc'
+
+tmpfile=$(mktemp /tmp/abc-script.XXXXXX)
+echo -e " ${BLUE}[ffmpeg-watermark]${NOCOLOR} tmpfile=${tmpfile}"
+
+
+# https://superuser.com/questions/809820/scale-watermark-overlay-by-video-size-with-ffmpeg
+# https://openwritings.net/pg/ffmpeg/ffmpeg-add-logo-video
+# https://github.com/koalaman/shellcheck/wiki/SC2155
+cat << EOF > "${tmpfile}"
+dimensions=\$(echo "\$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 ${full_path_input_file})" | $awk_bin 'BEGIN {FS="x"} {print int(\$1/4)"x"int(\$2/4)}' | tee /tmp/dimensions.txt)
+
+echo -e " ${BLUE}[ffmpeg-watermark]${NOCOLOR} dimensions=\$(\head -1 /tmp/dimensions.txt)"
+
+echo -e " ${BLUE}[ffmpeg-watermark]${NOCOLOR} dimensions=\$(\head -1 /tmp/dimensions.txt | cut -d"x" -f1):-1"
+
+echo -e " ${GREEN}[ffmpeg-watermark]${NOCOLOR} ${CYAN}watermark${NOCOLOR} video/img ${YELLOW}full_path_input_file:${full_path_input_file}${NOCOLOR} writing out ${YELLOW}file:${full_path_output_file}${NOCOLOR}"
+
+ffmpeg -hide_banner -loglevel warning -i ${full_path_input_file} -vf drawtext="fontfile=$font_location: \
+text='${watermark_text}': fontcolor=white: fontsize=14: box=1: boxcolor=black@0.5: \
+boxborderw=5: x=(w-text_w)-10: y=(h-text_h)-10" -c:a aac -q:a 128k ${full_path_output_file} 2>&1 > /dev/null
+
+rm /tmp/dimensions.txt
+EOF
+
+echo -e " ${BLUE}[ffmpeg-watermark]${NOCOLOR} cat ${tmpfile}"
+cat "${tmpfile}"
+
+bash  "${tmpfile}"
+
+rm "$tmpfile"

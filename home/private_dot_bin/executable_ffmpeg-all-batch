@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+# set -euox pipefail
+set -e
+
+# https://gist.github.com/jonsuh/3c89c004888dfc7352be
+# ----------------------------------
+# Colors
+# ----------------------------------
+export NOCOLOR='\033[0m'
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export ORANGE='\033[0;33m'
+export BLUE='\033[0;34m'
+export MAD_BLUE='\e[34m'
+export PURPLE='\033[0;35m'
+export CYAN='\033[0;36m'
+export LIGHTGRAY='\033[0;37m'
+export DARKGRAY='\033[1;30m'
+export LIGHTRED='\033[1;31m'
+export LIGHTGREEN='\033[1;32m'
+export YELLOW='\033[1;33m'
+export LIGHTBLUE='\033[1;34m'
+export LIGHTPURPLE='\033[1;35m'
+export LIGHTCYAN='\033[1;36m'
+export WHITE='\033[1;37m'
+
+export delete_orig=false
+while getopts ":hdt:v" opt; do
+  case ${opt} in
+    h ) # process option h
+      echo " Usage: "
+      echo " Example: ffmpeg-all-batch -t \"@iamprofessorEX\""
+      ;;
+    t ) # process option t
+      text_val=$OPTARG
+      ;;
+    d ) # process option f
+      delete_orig=true
+      ;;
+    v ) # process option f
+      verbose=true
+      PS4='(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]} - [${SHLVL},${BASH_SUBSHELL}, $?]'
+      ;;
+    \? )
+      echo "Invalid option: $OPTARG" 1>&2
+      ;;
+    : )
+      echo "Invalid option: $OPTARG requires an argument" 1>&2
+      ;;
+  esac
+done
+
+export watermark_text=${text_val}
+
+echo -e " ${GREEN}[ffmpeg-all-batch]${NOCOLOR} ${CYAN}running${NOCOLOR} ffmpeg-all-batch\n"
+rm -fv all.txt
+touch all.txt
+echo -e " ${GREEN}[ffmpeg-all-batch]${NOCOLOR} ${CYAN}rename all invalid file names${NOCOLOR}\n"
+# find . -depth 1 -name "*\(*" -exec sh -c 'f="{}"; mv -- "$f" "$(uuidgen).$(basename -- $f | cut -d"." -f2)"' \;
+find . -depth 1 -name "*\(*" -exec sh -c 'f="{}"; mv -fv -- "$f" "$(uuidgen).$(basename -- "${f}" | cut -d"." -f2)"' \;
+
+[ "$(ls *.mp4 | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*mp4*; do echo ffmpeg-batch-process -f "$filename" -t $watermark_text; done >> all.txt
+[ "$(ls *.jpg | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*jpg*; do echo ffmpeg-batch-process -f "$filename" -t $watermark_text; done >> all.txt
+[ "$(ls *.jpeg | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*jpeg*; do echo ffmpeg-batch-process -f "$filename" -t $watermark_text; done >> all.txt
+[ "$(ls *.png | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*png*; do echo ffmpeg-batch-process -f "$filename" -t $watermark_text; done >> all.txt
+[ "$(ls *.MOV | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*MOV*; do echo ffmpeg-batch-process -f "$filename" -t $watermark_text; done >> all.txt
+cat all.txt
+echo -e " ${GREEN}[ffmpeg-all-batch]${NOCOLOR} ${CYAN}running${NOCOLOR} batch commands\n"
+bash all.txt
+rm all.txt
