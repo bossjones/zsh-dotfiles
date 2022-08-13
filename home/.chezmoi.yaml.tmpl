@@ -10,6 +10,8 @@
 {{- $nodejs := false -}}
 {{/* If this machine should have k8s packages */}}
 {{- $k8s := false -}}
+{{/* If this machine should have opencv packages */}}
+{{- $opencv := false -}}
 {{- "" -}}
 
 {{/* Configs */}}
@@ -70,6 +72,12 @@
 {{-   else -}}
 {{-     $k8s = promptBool "k8s" -}}
 {{-   end -}}
+
+{{-   if hasKey . "opencv" -}}
+{{-     $opencv = .opencv -}}
+{{-   else -}}
+{{-     $opencv = promptBool "opencv" -}}
+{{-   end -}}
 {{- end -}}
 
 {{- if $interactive -}}
@@ -86,3 +94,4 @@ data:
   pyenv: {{ $pyenv }}
   nodejs: {{ $nodejs }}
   k8s: {{ $k8s }}
+  opencv: {{ $opencv }}

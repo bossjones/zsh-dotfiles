@@ -5,13 +5,13 @@
 # Install common ubuntu packages for 20.04
 
 printf "${green}[10 - ubuntu] ${reset}"
-sudo apt update 
+sudo apt update
 sudo apt install -y curl git gnupg zsh tar software-properties-common vim direnv
 sudo apt-get install fd-find -y
 sudo apt-get install silversearcher-ag -y
 sudo apt-get install ripgrep -y
 sudo apt-get install jq tree parallel file -y
-sudo apt install -yq fzf perl gettext direnv vim awscli
+sudo apt install -yq fzf perl gettext direnv vim awscli ccze
 sudo apt-get -y install \
         build-essential \
         bzr \
@@ -46,7 +46,7 @@ sudo apt-get -y install \
         postgresql-client \
         subversion \
         zlib1g-dev
-        
+
 # asdf Python extra requirements
 # https://github.com/pyenv/pyenv/wiki#suggested-build-environment
 sudo apt-get install -y \
