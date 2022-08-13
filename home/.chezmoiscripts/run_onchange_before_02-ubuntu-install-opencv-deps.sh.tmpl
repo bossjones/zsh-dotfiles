@@ -1,7 +1,7 @@
 {{- if (eq .chezmoi.os "linux") -}}
 {{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
-{{ if .opencv }}
-#!/bin/bash
+{{ if .opencv -}}
+#!/bin/sh
 
 # Install common ubuntu packages for 20.04
 
