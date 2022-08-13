@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+_input=$(basename -- "${1}" | cut -d"." -f1)
+get_extension=$(basename -- $1 | cut -d"." -f2)
+_input_fname="${_input}.${get_extension}"
+_out_fname="${_input}_out.${get_extension}"
+_background="white.jpg"
+_overlay=${_input_fname}
+
+echo "_input = $_input"
+echo "get_extension = $get_extension"
+echo "_input_fname = $_input_fname"
+echo "_out_fname = $_out_fname"
+
+# https://legacy.imagemagick.org/Usage/compose/
+# https://legacy.imagemagick.org/Usage/compose/#over
+# Note that the order of the images is very important as you get very different results if the images, or the operator are swapped. This is especially the case with the "convert" command, which has the destination image before the source image.
+# The following commands are the two direct image 'composite' methods available in ImageMagick...
+
+# composite {overlay} {background} [{mask}] [-compose {method}]   {result}
+# convert  {background} {overlay} [{mask}] [-compose {method}] -composite   {result}
+
+# The "composite" command is the conventional method of compositing in IM. Having a dedicated command demonstrates just how important Image Composition is.
+
+# The "convert" operator "-composite" can also do Image Composition as part of a larger image processing task. Note the reversed order of the images when using "convert". The order is practical as you are generally working with a primary canvas over which you prepare and merge images forming a new image. The order of the images is important.
+
+# Practical examples of both techniques (and more) can be reviewed in Layers of Multiple Images, and is recomended reading before continuing.
+
+# convert -verbose "${_background}" "${_overlay}" -set colorspace RGB -resize 1080x1080 -gravity center -compose Copy_Black -interlace JPEG -composite "${_out_fname}"
+# convert -verbose "${_background}" "${_overlay}" -set colorspace RGB -resize 1080x1080 -gravity center -compose blend -define compose:args=100,100 -interlace JPEG -composite "${_out_fname}"
+# convert -verbose "${_background}" "${_overlay}" -set colorspace RGB -resize 1080x1080 -gravity center -compose Src -alpha set -interlace JPEG -composite "${_out_fname}"
+
+# convert -verbose "${_background}" "${_overlay}" -set colorspace RGB -resize 1080x1080 -gravity center -interlace JPEG -composite "${_out_fname}"
+
+
+# magick 151325673_1017500572117138_6338645722784183762_n.jpg -resize 1080x1080 -background white -compose Copy \
+# -gravity center -extent 1080x1080 -quality 92 output.jpg
+
+# -compose blend \
+# -define compose:args={src_percent},{dst_percent}
+
+magick "${_overlay}" -resize 1080x1080 -background white -compose Copy -gravity center -extent 1080x1080 -quality 92 "${_out_fname}"
