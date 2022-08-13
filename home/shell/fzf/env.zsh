@@ -1,0 +1,1 @@
+export FZF_TMUX_OPTS="-d 15"
