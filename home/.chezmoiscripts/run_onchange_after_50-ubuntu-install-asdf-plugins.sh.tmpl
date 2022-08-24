@@ -1,4 +1,5 @@
 {{- if (eq .chezmoi.os "linux") -}}
+{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 #!/bin/bash
 
 sudo apt-get install autotools-dev automake unzip zip -y
@@ -56,4 +57,5 @@ echo "Install asdf plugins"
 
 asdf reshim
 
+{{ end -}}
 {{ end -}}

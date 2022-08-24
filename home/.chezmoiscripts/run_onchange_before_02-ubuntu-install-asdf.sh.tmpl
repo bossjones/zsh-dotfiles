@@ -1,12 +1,9 @@
 {{- if (eq .chezmoi.os "linux") -}}
-{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 #!/bin/sh
 
 # Install asdf
 
-printf "${green}[10 - ubuntu] ${reset}"
+printf "${green}[10 - linux] ${reset}"
 git clone https://github.com/asdf-vm/asdf.git ~/.asdf --depth 1 --branch v0.10.2 || true
-
-{{ end -}}
 
 {{ end -}}

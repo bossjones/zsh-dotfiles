@@ -1,7 +1,9 @@
 {{- if (eq .chezmoi.os "linux") -}}
 #!/bin/bash
 
+{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 sudo apt-get install gzip jq -y
+{{ end -}}
 
 #-----------------------------------------------------------------------
 # Linux (Linux/x86_64, Darwin/x86_64, Linux/armv7l)
@@ -162,3 +164,4 @@ $HOME/.local/bin/cheat cp
 set +x
 
 {{ end -}}
+
