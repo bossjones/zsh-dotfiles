@@ -1,7 +1,7 @@
 {{- if (eq .chezmoi.os "linux") -}}
 #!/bin/bash
 
-{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+{{- if (eq .chezmoi.osRelease.name "Ubuntu") }}
 sudo apt-get install gzip jq -y
 {{ end -}}
 
