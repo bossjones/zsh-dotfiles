@@ -5,6 +5,10 @@
 # Install sheldon
 
 printf "${green}[10 - linux] ${reset}"
-curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
+if [ ! -f ~/.local/bin/sheldon ]
+then
+    printf "${yellow}[11 - sheldon does not exist, downloading] ${reset}"
+    curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
+fi
 
 {{ end -}}
