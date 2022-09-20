@@ -70,6 +70,20 @@ github = "ohmyzsh/ohmyzsh"
 use = ["**/salt/_salt"]
 apply = ["defer"]
 
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if (eq .chezmoi.osRelease.name "CentOS Linux") -}}
+[plugins.docker]
+github = "docker/cli"
+use = ["**/contrib/completion/zsh/_docker"]
+apply = ["defer"]
+
+[plugins.docker-compose]
+github = "ohmyzsh/ohmyzsh"
+use = ["**/docker-compose/_docker-compose"]
+apply = ["defer"]
+{{ end -}}
+{{ end -}}
+
 [plugins.boss-git-zsh-plugin]
 github = "bossjones/boss-git-zsh-plugin"
 use = ["boss-git.plugin.zsh"]
