@@ -81,6 +81,11 @@ apply = ["defer"]
 github = "ohmyzsh/ohmyzsh"
 use = ["**/docker-compose/_docker-compose"]
 apply = ["defer"]
+
+[plugins.rust]
+github = "ohmyzsh/ohmyzsh"
+use = ["**/rust/*.plugin.zsh"]
+apply = ["defer"]
 {{ end -}}
 {{ end -}}
 
