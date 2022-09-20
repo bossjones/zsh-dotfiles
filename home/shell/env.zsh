@@ -20,18 +20,6 @@ export VEDITOR=code
 export GHQ_ROOT=$CODE_WORKSPACE
 
 
-## On centos we need to custom compile A LOT of stuff, so tell the shell to use it all
-{{if (eq .chezmoi.os "linux") -}}
-{{- if (eq .chezmoi.osRelease.name "CentOS Linux") -}}
-export CC=$HOME/.gcc/10.2.0/bin/gcc
-export CXX=$HOME/.gcc/10.2.0/bin/g++
-export FC=$HOME/.gcc/10.2.0/bin/gfortran
-export LD_LIBRARY_PATH=$HOME/.gcc/10.2.0/lib64
-. "$HOME/.cargo/env"
-{{ end -}}
-{{ end -}}
-
-
 export GOPATH="$HOME/go"
 export TERM="xterm-256color"
 export EDITOR="vim"
