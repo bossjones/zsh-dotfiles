@@ -86,8 +86,8 @@ apply = ["defer"]
 github = "ohmyzsh/ohmyzsh"
 use = ["**/rust/*.plugin.zsh"]
 apply = ["defer"]
-{{ end -}}
-{{ end -}}
+{{ end }}
+{{ end }}
 
 [plugins.boss-git-zsh-plugin]
 github = "bossjones/boss-git-zsh-plugin"
@@ -121,14 +121,14 @@ use = ["{{- "{{ name }}.plugin.zsh" }}"]
 local = "~/.asdf"
 use = ["asdf.sh"]
 apply = ["defer"]
-{{ end -}}
+{{ end }}
 
 {{if (eq .chezmoi.os "darwin") -}}
 [plugins.asdf]
 local = "{{ output "zsh" "-c" "echo $(brew --prefix asdf)/libexec" | trim }}"
 use = ["{{- "{{ name }}.sh" -}}"]
 apply = ["defer"]
-{{ end -}}
+{{ end }}
 
 
 [plugins.fzf-marks]
