@@ -1,0 +1,28 @@
+{
+  "[go]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+  "[go.mod]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+  "gopls": {
+    "formatting.gofumpt": true,
+    "ui.diagnostic.analyses": {
+      "unusedparams": true,
+      "copylocks": true
+    },
+    "ui.semanticTokens": true,
+    "templateExtensions": [
+      "gotmpl",
+      "tmpl"
+    ],
+    "ui.diagnostic.staticcheck": true
+  },
+  "files.exclude": {}
+}
