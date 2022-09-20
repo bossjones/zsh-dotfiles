@@ -18,6 +18,13 @@
 #     $path
 # )
 
+{{if (eq .chezmoi.os "linux") -}}
+{{- if (eq .chezmoi.osRelease.name "CentOS Linux") -}}
+path+=($HOME/.gcc/10.2.0/bin)
+{{ end -}}
+{{ end -}}
+
+
 path+=($HOME/bin)
 path+=($HOME/.bin)
 path+=($HOME/.local/bin)
