@@ -70,6 +70,11 @@ github = "ohmyzsh/ohmyzsh"
 use = ["**/salt/_salt"]
 apply = ["defer"]
 
+[plugins.saltstack]
+github = "saltstack/salt"
+use = ["**/pkg/zsh_completion.zsh"]
+apply = ["defer"]
+
 {{ if (eq .chezmoi.os "linux") -}}
 {{ if (eq .chezmoi.osRelease.name "CentOS Linux") -}}
 [plugins.docker]
