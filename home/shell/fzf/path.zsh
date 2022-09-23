@@ -9,7 +9,8 @@ then
     else
         _MY_PATH_TO_FZF=/usr/local/opt/fzf/bin
     fi
-    
+elif [[ "$OSTYPE" == linux* ]]
+then
     _MY_PATH_TO_FZF=$HOME/.fzf/bin
 fi
 

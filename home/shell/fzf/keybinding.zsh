@@ -9,7 +9,8 @@ then
     else
         _MY_PATH_TO_FZF_KEYBINDINGS=/usr/local/opt/fzf/shell/key-bindings.zsh
     fi
-    
+elif [[ "$OSTYPE" == linux* ]]
+then
     _MY_PATH_TO_FZF_KEYBINDINGS=$HOME/.fzf/shell/key-bindings.zsh
 fi
 

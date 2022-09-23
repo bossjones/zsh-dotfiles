@@ -9,7 +9,8 @@ then
     else
         _MY_PATH_TO_FZF_COMPLETION=/usr/local/opt/fzf/shell/completion.zsh
     fi
-    
+elif [[ "$OSTYPE" == linux* ]]
+then
     _MY_PATH_TO_FZF_COMPLETION=$HOME/.fzf/shell/completion.zsh
 fi
 
