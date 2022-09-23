@@ -72,7 +72,7 @@ apply = ["defer"]
 
 [plugins.saltstack]
 github = "saltstack/salt"
-use = ["pkg/zsh_completion.zsh"]
+use = ["pkg/salt.zsh"]
 apply = ["defer"]
 
 {{ if (eq .chezmoi.os "linux") -}}
