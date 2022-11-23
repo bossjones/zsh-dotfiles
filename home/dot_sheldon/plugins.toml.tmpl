@@ -94,6 +94,13 @@ apply = ["defer"]
 {{ end }}
 {{ end }}
 
+{{ if (eq .chezmoi.os "linux") -}}
+[plugins.cheat]
+github = "cheat/cheat"
+use = ["**/scripts/cheat.zsh"]
+apply = ["defer"]
+{{ end }}
+
 [plugins.boss-git-zsh-plugin]
 github = "bossjones/boss-git-zsh-plugin"
 use = ["boss-git.plugin.zsh"]

@@ -7,3 +7,5 @@ cheat_update_personal() {
     popd
     cheat -l
 }
+
+export CHEAT_USE_FZF=true
