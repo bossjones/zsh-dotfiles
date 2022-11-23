@@ -10,6 +10,9 @@
 # Re run
 `chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git`
 
+# Pull the latest changes from your repo
+`chezmoi git pull -- --autostash --rebase`
+
 <details>
     <summary>Notes</summary>
 
