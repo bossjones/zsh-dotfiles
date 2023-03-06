@@ -1,6 +1,6 @@
 {{- if (eq .chezmoi.os "linux") -}}
 {{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
-#!/bin/bash
+#!/usr/bin/env zsh
 
 mkdir -p  $HOME/.zsh/completion || true
 ~/.bin/chezmoi completion zsh > ~/.zsh/completion/_chezmoi

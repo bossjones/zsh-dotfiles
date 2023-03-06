@@ -1,17 +1,9 @@
 {{- if (eq .chezmoi.os "linux") -}}
 {{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 
-#!/bin/sh
+#!/bin/bin/env zsh
 
-# Install fd
-
-# if fd completion doesn't exist, initialize it
-if [ ! -f ~/.zsh/completion/_fd ]
-then
-    mkdir -p  $HOME/.zsh/completion || true
-    curl -L 'https://raw.githubusercontent.com/sharkdp/fd/master/contrib/completion/_fd' > ~/.zsh/completion/_fd
-    fpath+=("$HOME/.zsh/completion")
-fi
+# noop
 
 {{ end -}}
 {{ end -}}

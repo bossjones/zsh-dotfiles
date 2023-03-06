@@ -12,12 +12,4 @@ then
 
 fi
 
-# if sheldon completion doesn't exist, initialize it
-if [ ! -f ~/.zsh/completion/_sheldon ]
-then
-    mkdir -p  $HOME/.zsh/completion || true
-    ~/.local/bin/sheldon completions --shell zsh > ~/.zsh/completion/_sheldon
-    fpath+=("$HOME/.zsh/completion")
-fi
-
 {{ end -}}
