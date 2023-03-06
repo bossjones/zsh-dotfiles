@@ -1,0 +1,204 @@
+# Sheldon configuration file
+#
+# See https://rossmacarthur.github.io/sheldon/
+
+[templates]
+defer = { value = 'zsh-defer source "{{ "{{ file }}" }}"', each = true }
+defer-more = { value = 'zsh-defer -t 0.5 source "{{ "{{ file }}" }}"', each = true }
+ffpath = { value = 'fpath+="{{ "{{ dir }}/functions" }}" && autoload -U "{{ "{{ dir }}" }}"/functions/*(.:t)', each = true }
+
+[plugins]
+
+###################
+# Completions
+###################
+
+[plugins.zsh-completions]
+github = "zsh-users/zsh-completions"
+
+###################
+# Sourced
+###################
+
+# Alternatives to check
+# starship/starship
+# denysdovhan/spaceship-prompt
+[plugins.pure]
+github = "sindresorhus/pure"
+use = ["{async,pure}.zsh"]
+
+[plugins.env]
+local = "~/.local/share/chezmoi/home/shell"
+use = ["**/env.zsh"]
+
+[plugins.path]
+local = "~/.local/share/chezmoi/home/shell"
+use = ["**/path.zsh"]
+
+[plugins.zsh-defer]
+github = "romkatv/zsh-defer"
+
+###################
+# Deferred
+###################
+
+[plugins.config]
+local = "~/.local/share/chezmoi/home/shell"
+use = ["config.zsh"]
+apply = ["defer", "source"]
+
+[plugins.local]
+local = "~/.local/share/chezmoi/home/shell"
+use = ["**/{keybinding,completion}.zsh"]
+apply = ["defer"]
+
+# Alternative djui/alias-tips
+[plugins.zsh-you-should-use]
+github = "MichaelAquilina/zsh-you-should-use"
+apply = ["defer"]
+
+[plugins.oh-my-zsh]
+github = "ohmyzsh/ohmyzsh"
+
+[plugins.fancy-ctrl-z]
+github = "ohmyzsh/ohmyzsh"
+use = ["**/fancy-ctrl-z/*.plugin.zsh"]
+apply = ["defer"]
+
+{{ if (eq .chezmoi.os "linux") -}}
+{{ if (eq .chezmoi.osRelease.name "CentOS Linux") -}}
+[plugins.salt]
+github = "ohmyzsh/ohmyzsh"
+use = ["**/salt/_salt"]
+apply = ["defer"]
+
+[plugins.saltstack]
+github = "saltstack/salt"
+use = ["pkg/salt.zsh"]
+apply = ["defer"]
+
+[plugins.docker]
+github = "docker/cli"
+use = ["**/contrib/completion/zsh/_docker"]
+apply = ["defer"]
+
+[plugins.docker-compose]
+github = "ohmyzsh/ohmyzsh"
+use = ["**/docker-compose/_docker-compose"]
+apply = ["defer"]
+
+[plugins.rust]
+github = "ohmyzsh/ohmyzsh"
+use = ["**/rust/*.plugin.zsh"]
+apply = ["defer"]
+{{ end }}
+{{ end }}
+
+{{ if (eq .chezmoi.os "linux") -}}
+[plugins.cheat]
+github = "cheat/cheat"
+use = ["**/scripts/cheat.zsh"]
+apply = ["defer"]
+{{ end }}
+
+[plugins.boss-git-zsh-plugin]
+github = "bossjones/boss-git-zsh-plugin"
+use = ["boss-git.plugin.zsh"]
+apply = ["defer"]
+
+# [plugins.golang]
+# github = "ohmyzsh/ohmyzsh"
+# use = ["**/golang/*.plugin.zsh"]
+# apply = ["defer"]
+
+# [plugins.python]
+# github = "ohmyzsh/ohmyzsh"
+# use = ["**/python/*.plugin.zsh"]
+# apply = ["defer"]
+#######################################################
+[plugins.zsh-syntax-highlighting]
+github = "zsh-users/zsh-syntax-highlighting"
+apply = ["defer"]
+
+[plugins.zsh-autosuggestions]
+github = "zsh-users/zsh-autosuggestions"
+use = ["{{- "{{ name }}.zsh" }}"]
+
+[plugins.zsh-hooks]
+github = "zsh-hooks/zsh-hooks"
+use = ["{{- "{{ name }}.plugin.zsh" }}"]
+
+{{if (eq .chezmoi.os "linux") -}}
+[plugins.asdf]
+local = "~/.asdf"
+use = ["asdf.sh"]
+apply = ["defer"]
+{{ end }}
+
+{{if (eq .chezmoi.os "darwin") -}}
+[plugins.asdf]
+local = "{{ output "zsh" "-c" "echo $(brew --prefix asdf)/libexec" | trim }}"
+use = ["{{- "{{ name }}.sh" -}}"]
+apply = ["defer"]
+{{ end }}
+
+
+[plugins.fzf-marks]
+github = "urbainvaes/fzf-marks"
+use = ["fzf-marks.plugin.zsh"]
+apply = ["defer-more"]
+
+[plugins.fast-syntax-highlighting]
+github = "zdharma-continuum/fast-syntax-highlighting"
+use = ["fast-syntax-highlighting.plugin.zsh"]
+# tag = "master"
+apply = ["defer-more"]
+
+[plugins.zsh-dircolors-solarized]
+github = "joel-porquet/zsh-dircolors-solarized"
+use = ["zsh-dircolors-solarized.zsh"]
+apply = ["defer-more"]
+#######################################################
+
+[plugins.compinit]
+local = "~/.local/share/chezmoi/home/shell"
+apply = ["defer"]
+
+# [plugins.fzf-tab]
+# github = "Aloxaf/fzf-tab"
+# apply = ["defer"]
+
+###################
+# Deferred more
+###################
+# Keep this after zsh-syntax-highlighting
+# TODO setup keyboard shortcuts
+# https://github.com/zsh-users/zsh-history-substring-search#usage
+# [plugins.zsh-history-substring-search]
+# github = 'zsh-users/zsh-history-substring-search'
+# use = ["{{- "{{ name }}.zsh" -}}"]
+# apply = ["defer-more"]
+
+{{if (eq .chezmoi.os "linux") -}}
+{{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+[plugins.cuda]
+local = "~/.local/share/chezmoi/home/shell/cuda"
+use = ["custom.zsh"]
+{{ end }}
+{{ end }}
+
+
+{{if (eq .chezmoi.os "linux") -}}
+{{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+[plugins.boss_aliases]
+local = "~/.local/share/chezmoi/home/shell/customs"
+use = ["aliases.zsh"]
+{{ end }}
+{{ end }}
+
+{{if (eq .chezmoi.os "linux") -}}
+{{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+[plugins.boss_fzf]
+inline='[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh'
+{{ end }}
+{{ end }}
