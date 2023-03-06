@@ -177,7 +177,8 @@ split_scenes(){
 }
 
 tmux-copy-screen () {
-        _zsh_tmux_plugin_run capture-pane -pS -1000000 > file.out
+        # _zsh_tmux_plugin_run capture-pane -pS -1000000 > file.out
+        tmux capture-pane -pS -1000000 > file.out
 }
 
 ffmpeg_info() {
