@@ -179,7 +179,7 @@ apply = ["defer"]
 # use = ["{{- "{{ name }}.zsh" -}}"]
 # apply = ["defer-more"]
 
-{{if (eq .cuda "true") -}}
+{{if (eq .cuda true) -}}
 {{if (eq .chezmoi.os "linux") -}}
 {{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 [plugins.cuda]
