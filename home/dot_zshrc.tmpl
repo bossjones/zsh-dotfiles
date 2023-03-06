@@ -336,7 +336,7 @@ prompt pure
 
 {{  if lookPath "sheldon" -}}
 # Source sheldon plugins
-{{    output "sheldon" "source" | trim }}
+{{    output "sheldon" "--config-dir=$HOME/.sheldon" "source" | trim }}
 {{  end -}}
 
 {{ end -}}
