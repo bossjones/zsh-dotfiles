@@ -92,6 +92,8 @@
 {{-   writeToStdout "💡 Tip: you can re-enter your name and email with `chezmoi init --data=false`.\n" -}}
 {{- end -}}
 
+scriptEnv:
+  SHELDON_CONFIG_DIR: "$HOME/.sheldon"
 
 data:
   name: {{ $name | quote }}
@@ -104,5 +106,3 @@ data:
   k8s: {{ $k8s }}
   cuda: {{ $cuda }}
   opencv: {{ $opencv }}
-  homebrew:
-    prefix = "{{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}"
