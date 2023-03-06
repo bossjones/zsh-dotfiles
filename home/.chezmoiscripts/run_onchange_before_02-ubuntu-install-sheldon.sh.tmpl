@@ -15,7 +15,7 @@ fi
 # if sheldon completion doesn't exist, initialize it
 if [ ! -f ~/.zsh/completion/_sheldon ]
     mkdir -p  $HOME/.zsh/completion || true
-    sheldon completions --shell zsh > ~/.zsh/completion/_sheldon
+    ~/.local/bin/sheldon completions --shell zsh > ~/.zsh/completion/_sheldon
     fpath+=("$HOME/.zsh/completion")
 then
 

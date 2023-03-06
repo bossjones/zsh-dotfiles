@@ -3,8 +3,8 @@
 #!/bin/bash
 
 mkdir -p  $HOME/.zsh/completion || true
-chezmoi completion zsh > ~/.zsh/completion/_chezmoi
-fpath+=("$HOME/.zsh/completions")
+~/.bin/chezmoi completion zsh > ~/.zsh/completion/_chezmoi
+fpath+=("$HOME/.zsh/completion")
 
 {{ end -}}
 {{ end -}}
