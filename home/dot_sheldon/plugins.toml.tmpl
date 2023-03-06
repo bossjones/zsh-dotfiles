@@ -197,3 +197,10 @@ local = "~/.local/share/chezmoi/home/shell/customs"
 use = ["aliases.zsh"]
 {{ end }}
 {{ end }}
+
+{{if (eq .chezmoi.os "linux") -}}
+{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+[plugins.boss_fzf]
+inline='[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh'
+{{ end }}
+{{ end }}
