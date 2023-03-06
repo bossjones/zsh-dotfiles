@@ -1,12 +1,17 @@
 # ---------------------------------------------------------
 # chezmoi managed - ~/.profile
 # ---------------------------------------------------------
-export PATH="/home/pi/bin:/home/pi/.bin:/home/pi/.local/bin:$PATH"
+export PATH="${HOME}/bin:${HOME}/.bin:${HOME}/.local/bin:$PATH"
 export PATH=/usr/local/cuda/bin:${PATH}
-export PATH=/usr/local/cuda-12.1/bin${PATH:+:${PATH}}
-export LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+export PATH=/usr/local/cuda-11.8/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
+[ -f ~/.fzf.bash ] && . ~/.fzf.bash
+
 . "$HOME/.cargo/env"
+
 export PYENV_ROOT="${HOME}/.pyenv"
+export PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:$PATH"
 
 if [ -d "${HOME}/.pyenv" ]
 then
@@ -21,8 +26,13 @@ if [[ "$OSTYPE" == linux* ]]
 then
     export ASDF_DIR="${HOME}/.asdf"
 fi
-source "/home/pi/.asdf/asdf.sh"
-source "/home/pi/.asdf/lib/asdf.sh"
+. "$HOME/.asdf/asdf.sh"
+. "$HOME/.asdf/lib/asdf.sh"
+. "$HOME/.asdf/completions/asdf.bash"
+
+# fnm
+export PATH="$HOME/.local/share/fnm:$PATH"
+eval "`fnm env`"
 
 # ---------------------------------------------------------
 # chezmoi managed - end
