@@ -12,6 +12,8 @@
 {{- $k8s := false -}}
 {{/* If this machine should have opencv packages */}}
 {{- $opencv := false -}}
+{{/* If this machine should use cuda */}}
+{{- $cuda := false -}}
 {{- "" -}}
 
 {{/* Configs */}}
@@ -73,6 +75,12 @@
 {{-     $k8s = promptBool "k8s" -}}
 {{-   end -}}
 
+{{-   if hasKey . "cuda" -}}
+{{-     $cuda = .cuda -}}
+{{-   else -}}
+{{-     $cuda = promptBool "cuda" -}}
+{{-   end -}}
+
 {{-   if hasKey . "opencv" -}}
 {{-     $opencv = .opencv -}}
 {{-   else -}}
@@ -94,4 +102,7 @@ data:
   pyenv: {{ $pyenv }}
   nodejs: {{ $nodejs }}
   k8s: {{ $k8s }}
+  cuda: {{ $cuda }}
   opencv: {{ $opencv }}
+  homebrew:
+    prefix = "{{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}"

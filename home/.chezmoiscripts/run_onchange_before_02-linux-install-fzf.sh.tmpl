@@ -6,8 +6,8 @@
 printf "${green}[10 - fzf] ${reset}"
 
 set -x
-[ ! -d "${HOME}/.fzf" ] && git clone --depth 1 --branch 0.32.1 https://github.com/junegunn/fzf.git ~/.fzf
-cd ~/.fzf && git checkout 0.32.1 || true
+[ ! -d "${HOME}/.fzf" ] && git clone --depth 1 --branch 0.38.0 https://github.com/junegunn/fzf.git ~/.fzf
+cd ~/.fzf && git checkout 0.38.0 || true
 
 cd ~/.fzf && git pull && ./install --all || true
 set +x

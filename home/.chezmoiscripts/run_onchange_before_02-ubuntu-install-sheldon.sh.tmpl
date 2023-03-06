@@ -9,6 +9,16 @@ if [ ! -f ~/.local/bin/sheldon ]
 then
     printf "${yellow}[11 - sheldon does not exist, downloading] ${reset}"
     curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin --tag 0.6.6
+
+fi
+
+# if sheldon completion doesn't exist, initialize it
+if [ ! -f ~/.zsh/completion/_sheldon ]
+    mkdir -p  $HOME/.zsh/completion || true
+    sheldon completions --shell zsh > ~/.zsh/completion/_sheldon
+    fpath+=("$HOME/.zsh/completion")
+then
+
 fi
 
 {{ end -}}

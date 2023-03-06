@@ -1,0 +1,1 @@
+export INVOKEAI_ROOT="${HOME}/invokeai"
