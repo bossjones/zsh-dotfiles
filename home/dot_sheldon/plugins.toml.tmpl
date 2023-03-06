@@ -179,9 +179,9 @@ apply = ["defer"]
 # use = ["{{- "{{ name }}.zsh" -}}"]
 # apply = ["defer-more"]
 
-{{if .cuda -}}
+{{if (IsTrue .cuda) -}}
 {{if (eq .chezmoi.os "linux") -}}
-{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+{{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 [plugins.cuda]
 local = "~/.local/share/chezmoi/home/shell/cuda"
 use = ["custom.zsh"]
@@ -191,7 +191,7 @@ use = ["custom.zsh"]
 
 
 {{if (eq .chezmoi.os "linux") -}}
-{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+{{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 [plugins.boss_aliases]
 local = "~/.local/share/chezmoi/home/shell/customs"
 use = ["aliases.zsh"]
@@ -199,7 +199,7 @@ use = ["aliases.zsh"]
 {{ end }}
 
 {{if (eq .chezmoi.os "linux") -}}
-{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+{{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 [plugins.boss_fzf]
 inline='[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh'
 {{ end }}
