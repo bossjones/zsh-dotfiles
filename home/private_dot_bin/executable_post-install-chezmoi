@@ -10,12 +10,12 @@ fi
 mkdir ~/.local/src || true
 # SOURCE: https://www.reddit.com/r/neovim/comments/12x9bxs/nvim_install_script/
 cd ~/.local/src
-git clone https://github.com/ksk0/nvim-install
+git clone https://github.com/ksk0/nvim-install || true
 cd nvim-install
-git checkout 29370c9b89963539bbe36ca1aa4cd1dbd1bcfb53
+git checkout 29370c9b89963539bbe36ca1aa4cd1dbd1bcfb53 || true
 
 # need nodejs
 curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s lts
 npm install -g n
 
-LV_BRANCH='release-1.3/neovim-0.9' curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.3/neovim-0.9/utils/installer/install.sh | bash -s -- --install-dependencies -y
+LV_BRANCH='release-1.3/neovim-0.9' curl -s "https://raw.githubusercontent.com/LunarVim/LunarVim/${LV_BRANCH}/utils/installer/install.sh" | bash -s -- --install-dependencies -y
