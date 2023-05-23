@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+if [ ! -f ~/.cargo/env ]; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	source $HOME/.cargo/env
+	cargo install ripgrep fd-find
+	fd /root
+fi
+
+mkdir ~/.local/src || true
+# SOURCE: https://www.reddit.com/r/neovim/comments/12x9bxs/nvim_install_script/
+cd ~/.local/src
+git clone https://github.com/ksk0/nvim-install
+cd nvim-install
+git checkout 29370c9b89963539bbe36ca1aa4cd1dbd1bcfb53
