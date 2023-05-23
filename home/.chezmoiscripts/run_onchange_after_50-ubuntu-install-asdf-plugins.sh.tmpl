@@ -3,6 +3,7 @@
 
 {{ if (eq .chezmoi.osRelease.name "Ubuntu") }}
 sudo apt-get install autotools-dev automake unzip zip -y
+sudo apt-get install libyaml-dev -y
 {{ end }}
 
 # Install asdf plugins

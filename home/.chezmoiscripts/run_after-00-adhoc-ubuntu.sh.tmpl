@@ -3,7 +3,11 @@
 #!/usr/bin/env zsh
 
 mkdir -p  $HOME/.zsh/completion || true
-~/.bin/chezmoi completion zsh > ~/.zsh/completion/_chezmoi
+if [ -f ~/.bin/chezmoi ]; then
+    ~/.bin/chezmoi completion zsh > ~/.zsh/completion/_chezmoi
+elif [ -f ~/bin/chezmoi ]; then
+    ~/bin/chezmoi completion zsh > ~/.zsh/completion/_chezmoi
+fi
 fpath+=("$HOME/.zsh/completion")
 
 {{ end -}}
