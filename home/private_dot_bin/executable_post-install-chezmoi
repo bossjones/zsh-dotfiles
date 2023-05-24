@@ -18,6 +18,14 @@ git checkout 29370c9b89963539bbe36ca1aa4cd1dbd1bcfb53 || true
 curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s lts
 npm install -g n
 
+mkdir ~/.local/src || true
+git clone -b v0.9.0 https://github.com/neovim/neovim  ~/.local/src/neovim
+cd ~/.local/src/neovim
+make CMAKE_BUILD_TYPE=RelWithDebInfo
+make install
+nvim --version
+
+
 # FIXME: Note, neovim for asdf doesn't work on arm machines yet.
 # FIXME: You need to compile from SOURCE.
 # root@015c8ffdc874 ~/.local/src/neovim tags/v0.9.0
