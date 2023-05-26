@@ -22,7 +22,7 @@ echo "Install asdf plugins"
 {{- end }}
 
 {{ $plugins := dict
-  "ruby"    .myRubyVersion
+  "ruby"    (get $data "myRubyVersion")
   "golang"    " 1.16.15"
   "tmux" "2.9a"
   "neovim" "latest"
