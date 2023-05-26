@@ -22,15 +22,15 @@ echo "Install asdf plugins"
 {{- end }}
 
 {{ $plugins := dict
-  "ruby"    (.myRubyVersion)
-  "golang"    " 1.16.15"
-  "tmux" "2.9a"
-  "neovim" "latest"
-  "github-cli" "2.23.0"
-  "mkcert" "1.4.4"
-  "shellcheck" "0.9.0"
-  "shfmt" "3.6.0"
-  "yq" "4.31.2"
+  "ruby"    (.myAsdfRubyVersion)
+  "golang"    (.myAsdfGolangVersion)
+  "tmux" (.myAsdfTmuxVersion)
+  "neovim" (.myAsdfNeovimVersion)
+  "github-cli" (.myAsdfGithubCliVersion)
+  "mkcert" (.myAsdfMkcertVersion)
+  "shellcheck" (.myAsdfShellcheckVersion)
+  "shfmt" (.myAsdfShfmtVersion)
+  "yq" (.myAsdfYqVersion)
 }}
 
 # Add plugins & install versions
