@@ -57,7 +57,7 @@ fi
 #    13  nvim --version
 #    14  nvim --version | grep 9
 
-display_tarball_platform_dash() {
+function display_tarball_platform_dash() {
   # https://en.wikipedia.org/wiki/Uname
 
   local os="unexpected_os"
@@ -89,7 +89,7 @@ display_tarball_platform_dash() {
   echo "${os}-${arch}"
 }
 
-display_tarball_platform_underscore() {
+function display_tarball_platform_underscore() {
   # https://en.wikipedia.org/wiki/Uname
 
   local os="unexpected_os"
