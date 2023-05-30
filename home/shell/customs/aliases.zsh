@@ -216,6 +216,8 @@ alias reload!='exec "$SHELL" -l'
 fixprompt() {
     reload!
 }
+
+alias trw="tmux rename-window"
 # pi@boss-station ~/.zsh.d/after
 # ❯ cat custom_plugins.zsh
 # plugins+=(git-extra-commands zsh-256color zsh-peco-history pyenv rbenv fd fzf zsh-syntax-highlighting tmux conda-zsh-completion)
