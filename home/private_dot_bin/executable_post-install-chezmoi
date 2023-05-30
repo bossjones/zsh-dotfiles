@@ -9,21 +9,33 @@ fi
 
 mkdir ~/.local/src || true
 # SOURCE: https://www.reddit.com/r/neovim/comments/12x9bxs/nvim_install_script/
-cd ~/.local/src
-git clone https://github.com/ksk0/nvim-install || true
-cd nvim-install
-git checkout 29370c9b89963539bbe36ca1aa4cd1dbd1bcfb53 || true
+# cd ~/.local/src
+# git clone https://github.com/ksk0/nvim-install || true
+# cd nvim-install
+# git checkout 29370c9b89963539bbe36ca1aa4cd1dbd1bcfb53 || true
 
-# need nodejs
-curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s lts
-npm install -g n
+if [ ! -d /usr/local/n ]; then
+	# need nodejs
+	curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s lts
+	npm install -g n
+else
+	echo "n already installed. skipping"
+fi
+
 
 mkdir ~/.local/src || true
-git clone -b v0.9.0 https://github.com/neovim/neovim  ~/.local/src/neovim
-cd ~/.local/src/neovim
-make CMAKE_BUILD_TYPE=RelWithDebInfo
-make install
-nvim --version
+
+_IS_CENTOS=$(\cat /etc/redhat-release | grep -i centos | wc -l)
+
+if [ "${_IS_CENTOS}" = "1" ]; then
+	git clone -b v0.9.0 https://github.com/neovim/neovim  ~/.local/src/neovim
+	cd ~/.local/src/neovim
+	make CMAKE_BUILD_TYPE=RelWithDebInfo
+	make install
+	nvim --version
+else
+	echo "not centos. skipping"
+fi
 
 
 # FIXME: Note, neovim for asdf doesn't work on arm machines yet.
@@ -45,10 +57,102 @@ nvim --version
 #    13  nvim --version
 #    14  nvim --version | grep 9
 
+display_tarball_platform_dash() {
+  # https://en.wikipedia.org/wiki/Uname
 
-export LUNARVIM_LOG_LEVEL="debug"
-export LV_BRANCH='release-1.3/neovim-0.9'
-curl -s "https://raw.githubusercontent.com/LunarVim/LunarVim/${LV_BRANCH}/utils/installer/install.sh" | bash -s -- --install-dependencies -y
+  local os="unexpected_os"
+  local uname_a="$(uname -a)"
+  case "${uname_a}" in
+    Linux*) os="linux" ;;
+    Darwin*) os="darwin" ;;
+    SunOS*) os="sunos" ;;
+    AIX*) os="aix" ;;
+    CYGWIN*) >&2 echo_red "Cygwin is not supported by n" ;;
+    MINGW*) >&2 echo_red "Git BASH (MSYS) is not supported by n" ;;
+  esac
+
+  local arch="unexpected_arch"
+  local uname_m="$(uname -m)"
+  case "${uname_m}" in
+    x86_64) arch=x64 ;;
+    i386 | i686) arch="x86" ;;
+    aarch64) arch=arm64 ;;
+    armv8l) arch=arm64 ;; # armv8l probably supports arm64, and there is no specific armv8l build so give it a go
+    *)
+      # e.g. armv6l, armv7l, arm64
+      arch="${uname_m}"
+      ;;
+  esac
+    # Override from command line, or version specific adjustment.
+  [ -n "$ARCH" ] && arch="$ARCH"
+
+  echo "${os}-${arch}"
+}
+
+display_tarball_platform_underscore() {
+  # https://en.wikipedia.org/wiki/Uname
+
+  local os="unexpected_os"
+  local uname_a="$(uname -a)"
+  case "${uname_a}" in
+    Linux*) os="linux" ;;
+    Darwin*) os="darwin" ;;
+    SunOS*) os="sunos" ;;
+    AIX*) os="aix" ;;
+    CYGWIN*) >&2 echo_red "Cygwin is not supported by n" ;;
+    MINGW*) >&2 echo_red "Git BASH (MSYS) is not supported by n" ;;
+  esac
+
+  local arch="unexpected_arch"
+  local uname_m="$(uname -m)"
+  case "${uname_m}" in
+    x86_64) arch=x64 ;;
+    i386 | i686) arch="x86" ;;
+    aarch64) arch=arm64 ;;
+    armv8l) arch=arm64 ;; # armv8l probably supports arm64, and there is no specific armv8l build so give it a go
+    *)
+      # e.g. armv6l, armv7l, arm64
+      arch="${uname_m}"
+      ;;
+  esac
+    # Override from command line, or version specific adjustment.
+  [ -n "$ARCH" ] && arch="$ARCH"
+
+  echo "${os}-${arch}"
+}
+
+# Get the name of the operating system
+os_name=$(cat /etc/os-release | grep -oP '^NAME="\K[^"]+')
+
+# Check if the operating system is Ubuntu
+if [ "${os_name}" = "Ubuntu" ]; then
+    echo "The operating system is Ubuntu."
+    sudo apt install luarocks -y
+	sudo luarocks install luacheck
+	curl -L "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-${display_tarball_platform_dash}" > ~/.local/bin/hadolint && \
+	chmod +x ~/.local/bin/hadolint && \
+	pip install vim-vint && \
+	npm install -g @fsouza/prettierd && \
+	pip install yapf flake8 black && \
+	cd ~/.local/src && \
+	wget "https://github.com/errata-ai/vale/releases/download/v2.26.0/vale_2.26.0_${display_tarball_platform_underscore}.tar.gz" -O vale.tar.gz && \
+	tar -xvzf vale.tar.gz -C ~/.local/bin && \
+	rm vale.tar.gz && \
+	npm install -g markdownlint-cli
+else
+    echo "The operating system is not Ubuntu."
+fi
+
+echo "run the following when confirmed installed"
+
+
+echo 'export LUNARVIM_LOG_LEVEL="debug"'
+echo 'export LV_BRANCH="release-1.3/neovim-0.9"'
+echo 'curl -s "https://raw.githubusercontent.com/LunarVim/LunarVim/${LV_BRANCH}/utils/installer/install.sh" | bash -s -- --install-dependencies -y'
+
+# export LUNARVIM_LOG_LEVEL="debug"
+# export LV_BRANCH='release-1.3/neovim-0.9'
+# curl -s "https://raw.githubusercontent.com/LunarVim/LunarVim/${LV_BRANCH}/utils/installer/install.sh" | bash -s -- --install-dependencies -y
 
 # UNCOMMENT THIS
 # if we want to install via asdf
