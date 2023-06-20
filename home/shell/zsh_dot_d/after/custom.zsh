@@ -118,40 +118,40 @@ cd_to_cloud () {
 alias cd_cloud=cd_to_cloud
 
 cd_to_to_schedule_on_meme_account() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd ~/Downloads/to_schedule_on_meme_account
 }
 
 cd_to_albums() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd ~/Downloads/to_schedule_on_meme_account/albums
 }
 
 cd_to_waiting_on_audio() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd ~/Downloads/to_schedule_on_meme_account/waiting_on_audio
 
 }
 
 cd_to_meme_show_staging_area() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd '/Volumes/Macintosh HD/Users/malcolm/Movies/Media/meme_show_staging_area'
 
 }
 
 cd_to_meme_show_archive() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd '/Volumes/Macintosh HD/Users/malcolm/Movies/Media/meme show archive'
 
 }
 
 story_to_square_post() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     ffmpeg-tools -c batch-crop-story,batch-eq-mp4,batch-loop -f "$(PWD)" -r
 }
 
 cd_to_to_schedule_on_meme_account_staging() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd ~/Downloads/to_schedule_on_meme_account/staging
 }
 
@@ -166,13 +166,13 @@ mkdir_date(){
 ####################################
 
 cd_to_to_schedule_on_meme_account_today() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd ~/Downloads/to_schedule_on_meme_account/$(date +%Y%m%d)
     pwd
 }
 
 cd_to_albums_today() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd ~/Downloads/to_schedule_on_meme_account/albums/$(date +%Y%m%d)
     cd $(date +%Y%m%d) || mkdir_date
 }
@@ -180,25 +180,25 @@ cd_to_albums_today() {
 
 
 cd_to_meme_show_staging_area_today() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd '/Volumes/Macintosh HD/Users/malcolm/Movies/Media/meme_show_staging_area'
     cd $(date +%Y%m%d) || mkdir_date
 }
 
 cd_to_meme_show_archive_today() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd '/Volumes/Macintosh HD/Users/malcolm/Movies/Media/meme show archive'
     cd $(date +%Y%m%d) || mkdir_date
 
 }
 
 story_to_square_post_today() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     ffmpeg-tools -c prepare-from-story -f "$(PWD)" -r
 }
 
 cd_to_to_schedule_on_meme_account_staging_today() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     cd ~/Downloads/to_schedule_on_meme_account/staging
     cd $(date +%Y%m%d) || mkdir_date
 }
@@ -213,27 +213,27 @@ alias killf="kill \$(ps aux | fzf -m | awk '{print \$2}')"
 alias mkdir_cd="mcd"
 
 prepare_story() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     ffmpeg-tools -c prepare-from-story -f "$(PWD)" -r
 }
 
 prepare_square() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     ffmpeg-tools -c prepare-from-square -f "$(PWD)" -r
 }
 
 dl_download() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     ffmpeg-tools -c gallery-dl -f "$(PWD)/download.txt" -r --metadata
 }
 
 dl_story() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     ffmpeg-tools -c dl-story --user "${1}"
 }
 
 dl_all() {
-    pyenv activate ffmpeg-tools3 || true
+    pyenv activate ffmpeg-tools399 || true
     ffmpeg-tools -c gallery-dl -f "$(PWD)/download.txt" -r --range '0-100' --metadata
     sleep $((1 + $RANDOM % 10))
     ffmpeg-tools -c gallery-dl -f "$(PWD)/download.txt" -r --range '101-200' --metadata

@@ -109,7 +109,7 @@ dl-split () {
 }
 
 dl-safe () {
-  pyenv activate ffmpeg-tools3 || true
+  pyenv activate ffmpeg-tools399 || true
   local url=${1}
 
   dl-thumb ${url}
@@ -132,7 +132,7 @@ dl-safe () {
 }
 
 prepare_from_square() {
-  pyenv activate ffmpeg-tools3 || true
+  pyenv activate ffmpeg-tools399 || true
   ffmpeg-tools -c prepare-from-square -f "$(PWD)" -r
   find . -name "white.jpg" -exec rm -rfv {} \;
 }

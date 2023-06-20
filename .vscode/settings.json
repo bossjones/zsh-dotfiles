@@ -23,6 +23,5 @@
       "tmpl"
     ],
     "ui.diagnostic.staticcheck": true
-  },
-  "files.exclude": {}
+  }
 }
