@@ -19,7 +19,7 @@ case $OS in
   *) ;;
 esac
 
-if [ "$OSTYPE" = 'Mac' ]
+if [ "$OS" = 'Mac' ]
 then
     _ARCH=$(uname -m)
     if [ "${_ARCH}" = "arm64" ]
