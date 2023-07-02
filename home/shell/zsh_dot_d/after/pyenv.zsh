@@ -7,15 +7,16 @@ fi
 if [[ -s "$HOMEBREW_PREFIX"/opt/pyenv/libexec/pyenv ]]; then
   eval "$(${HOMEBREW_PREFIX}/opt/pyenv/libexec/pyenv init --path)"
   eval "$(${HOMEBREW_PREFIX}/opt/pyenv/libexec/pyenv init -)"
+  eval "$(${HOMEBREW_PREFIX}/opt/pyenv/libexec/pyenv virtualenv-init -)"
   fpath=(${HOMEBREW_PREFIX}/opt/pyenv/completions $fpath)
-  pyenv virtualenvwrapper_lazy
+  # pyenv virtualenvwrapper_lazy
 
 elif [[ -s "$HOME/.pyenv/bin/pyenv" ]]; then
   export PYENV_ROOT=~/.pyenv
   export PATH="$PYENV_ROOT/bin:$PATH"
   eval "$(pyenv init --path)"
   eval "$(pyenv init -)"
-  pyenv virtualenvwrapper_lazy
+  # pyenv virtualenvwrapper_lazy
 fi
 
 enable_openblas_flags() {
@@ -91,7 +92,7 @@ enable_compile_flags() {
         test_traceback \
         test_unicode \
   '
-  
+
   if [[ -s "$(brew --prefix libsndfile)" ]]; then
     export CFLAGS="${CFLAGS} -I$(brew --prefix libsndfile)/include"
     export LDFLAGS="${LDFLAGS} -L${LOCAL_HOMEBREW_PREFIX}/opt/libsndfile/lib"
