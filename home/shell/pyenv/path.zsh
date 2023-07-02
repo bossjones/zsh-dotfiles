@@ -1,8 +1,28 @@
 
-if [[ "$OSTYPE" == darwin* ]]
+OS="`uname`"
+case $OS in
+  'Linux')
+    OS='Linux'
+    ;;
+  'FreeBSD')
+    OS='FreeBSD'
+    ;;
+  'WindowsNT')
+    OS='Windows'
+    ;;
+  'Darwin')
+    OS='Mac'
+    ;;
+  'SunOS')
+    OS='Solaris'
+    ;;
+  *) ;;
+esac
+
+if [ "$OSTYPE" = 'Mac' ]
 then
     _ARCH=$(uname -m)
-    if [[ "${_ARCH}" = "arm64" ]]
+    if [ "${_ARCH}" = "arm64" ]
     then
         _MY_OPT_HOMEBREW=/opt/homebrew
         export OPT_HOMEBREW="${_MY_OPT_HOMEBREW}"
