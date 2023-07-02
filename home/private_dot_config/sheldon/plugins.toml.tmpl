@@ -202,3 +202,8 @@ use = ["aliases.zsh"]
 inline='[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh'
 {{ end }}
 {{ end }}
+
+{{if (eq .chezmoi.os "darwin") -}}
+[plugins.boss_fzf]
+inline='[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh'
+{{ end }}

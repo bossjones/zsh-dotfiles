@@ -1,0 +1,12 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/usr/bin/env zsh
+
+mkdir -p  $HOME/.zsh/completion || true
+if [ -f ~/.bin/chezmoi ]; then
+    ~/.bin/chezmoi completion zsh > ~/.zsh/completion/_chezmoi
+elif [ -f ~/bin/chezmoi ]; then
+    ~/bin/chezmoi completion zsh > ~/.zsh/completion/_chezmoi
+fi
+fpath+=("$HOME/.zsh/completion")
+
+{{ end -}}
