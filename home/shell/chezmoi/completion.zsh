@@ -28,4 +28,5 @@ esac
 if [ "$OS" = 'Mac' ]
 then
     fpath+="$HOME/.zsh/completions"
+    fpath+="$HOME/.zsh/completion"
 fi

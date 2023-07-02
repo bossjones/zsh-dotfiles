@@ -1,5 +1,31 @@
 #!/usr/bin/env zsh
 
+# ----------------------------------------------------------------------
+# SOURCE: https://github.com/z0rc/dotfiles/blob/7940585d409cfe705af817ee7af8bcd4ea3b25da/zsh/rc.d/14_completion.zsh#L17
+# ----------------------------------------------------------------------
+# # Init completions, but regenerate compdump only once a day.
+# # The globbing is a little complicated here:
+# # - '#q' is an explicit glob qualifier that makes globbing work within zsh's [[ ]] construct.
+# # - 'N' makes the glob pattern evaluate to nothing when it doesn't match (rather than throw a globbing error)
+# # - '.' matches "regular files"
+# # - 'mh+20' matches files (or directories or whatever) that are older than 20 hours.
+# autoload -Uz compinit
+# if [[ -n "${XDG_CACHE_HOME}/zsh/compdump"(#qN.mh+20) ]]; then
+#     compinit -i -u -d "${XDG_CACHE_HOME}/zsh/compdump"
+#     # zrecompile fresh compdump in background
+#     {
+#         autoload -Uz zrecompile
+#         zrecompile -pq "${XDG_CACHE_HOME}/zsh/compdump"
+#     } &!
+# else
+#     compinit -i -u -C -d "${XDG_CACHE_HOME}/zsh/compdump"
+# fi
+
+# # Enable bash completions too
+# autoload -Uz bashcompinit
+# bashcompinit
+# ----------------------------------------------------------------------
+
 # Load all stock functions (from $fpath files) called below.
 autoload -U compaudit compinit
 

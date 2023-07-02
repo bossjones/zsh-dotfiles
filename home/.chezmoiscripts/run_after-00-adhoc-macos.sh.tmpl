@@ -7,6 +7,6 @@ if [ -f ~/.bin/chezmoi ]; then
 elif [ -f ~/bin/chezmoi ]; then
     ~/bin/chezmoi completion zsh > ~/.zsh/completion/_chezmoi
 fi
-fpath+=("$HOME/.zsh/completion")
+fpath+="$HOME/.zsh/completion"
 
 {{ end -}}
