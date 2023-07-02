@@ -12,6 +12,8 @@
 {{- $k8s := false -}}
 {{/* If this machine should have opencv packages */}}
 {{- $opencv := false -}}
+{{/* If this machine should have fnm packages */}}
+{{- $fnm := false -}}
 {{/* If this machine should use cuda */}}
 {{- $cuda := false -}}
 {{- "" -}}
@@ -81,6 +83,12 @@
 {{-     $cuda = promptBool "cuda" -}}
 {{-   end -}}
 
+{{-   if hasKey . "fnm" -}}
+{{-     $fnm = .fnm -}}
+{{-   else -}}
+{{-     $fnm = promptBool "fnm" -}}
+{{-   end -}}
+
 {{-   if hasKey . "opencv" -}}
 {{-     $opencv = .opencv -}}
 {{-   else -}}
@@ -106,15 +114,16 @@ data:
   k8s: {{ $k8s }}
   cuda: {{ $cuda }}
   opencv: {{ $opencv }}
-  myFzfVersion: "0.38.0"
+  fnm: {{ $fnm }}
+  myFzfVersion: "0.42.0"
   mySheldonVersion: "0.6.6"
   myAsdfVersion: "v0.11.2"
   myAsdfRubyVersion: "3.2.1"
   myAsdfGolangVersion: "1.16.15"
   myAsdfTmuxVersion: "2.9a"
   myAsdfNeovimVersion: "latest"
-  myAsdfGithubCliVersion: "2.23.0"
+  myAsdfGithubCliVersion: "2.31.0"
   myAsdfMkcertVersion: "1.4.4"
   myAsdfShellcheckVersion: "0.9.0"
-  myAsdfShfmtVersion: "3.6.0"
-  myAsdfYqVersion: "4.31.2"
+  myAsdfShfmtVersion: "3.7.0"
+  myAsdfYqVersion: "4.34.1"
