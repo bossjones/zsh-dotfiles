@@ -1,6 +1,14 @@
 {{- if (eq .chezmoi.os "darwin") -}}
 #!/bin/bash
 
+# NOTE: https://github.com/asdf-vm/asdf-ruby/issues/345 (compile ruby on arm64)
+UNAME_MACHINE="$(/usr/bin/uname -m)"
+if [ "$UNAME_MACHINE" = "arm64" ]
+then
+  export RUBY_CONFIGURE_OPTS="--disable-install-doc --disable-shared --with-openssl-dir=$(brew --prefix openssl@3)"
+  export ASDF_RUBY_BUILD_VERSION=master
+fi
+
 # Install asdf plugins
 
 export ASDF_DIR="${HOME}/.asdf"
