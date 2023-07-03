@@ -1,0 +1,57 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+#!/bin/bash
+
+# Install asdf plugins
+
+export ASDF_DIR="${HOME}/.asdf"
+export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+. $HOME/.asdf/asdf.sh
+export PATH="$HOME/.asdf/shims:$HOME/.asdf/bin:$PATH"
+
+printf "${green}[50 - macos] ${reset}"
+{{- if or (lt 31 (atoi (env "SCRIPTS_START_AT"))) (env "SKIP_ASDF_PLUGINS") }}
+echo "Skip installing asdf plugins"
+exit 0
+{{ else }}
+echo "Install asdf plugins"
+{{- end }}
+
+{{ $plugins := dict
+  "ruby"    (.myAsdfRubyVersion)
+  "golang"    (.myAsdfGolangVersion)
+  "tmux" (.myAsdfTmuxVersion)
+  "neovim" (.myAsdfNeovimVersion)
+  "github-cli" (.myAsdfGithubCliVersion)
+  "mkcert" (.myAsdfMkcertVersion)
+  "shellcheck" (.myAsdfShellcheckVersion)
+  "shfmt" (.myAsdfShfmtVersion)
+  "yq" (.myAsdfYqVersion)
+}}
+
+# Add plugins & install versions
+{{ range (keys $plugins) -}}
+  {{- $key := . }}
+  {{- $val := get $plugins $key }}
+
+  asdf plugin-add {{ $key }} || true
+
+  {{- if not (eq $val "None") }}
+    asdf install {{ $key }} {{ $val }} || true
+    asdf global {{ $key }} {{ $val }} || true
+  {{- end -}}
+{{ end }}
+
+# -- Packages -- #
+
+{{ $rubyPackages := list
+  "foreman"
+  "tmuxinator"
+}}
+
+{{ range sortAlpha $rubyPackages }}
+  gem install {{ . }} --no-doc
+{{ end -}}
+
+asdf reshim
+
+{{ end -}}

@@ -1,5 +1,4 @@
-{{- if (eq .chezmoi.os "linux") -}}
-{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+{{ if eq .chezmoi.os "darwin" -}}
 #!/usr/bin/env zsh
 
 mkdir -p  $HOME/.zsh/completion || true
@@ -11,5 +10,3 @@ fi
 fpath+="$HOME/.zsh/completion"
 
 {{ end -}}
-{{ end -}}
-

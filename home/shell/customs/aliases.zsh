@@ -187,6 +187,13 @@ ffmpeg_info() {
 
 alias imgdupes="docker run --rm -it -v $PWD:/app knjcode/imgdupes"
 
+enable_asdf() {
+    . "$HOME"/.asdf/asdf.sh
+}
+
+alias imgdupes="docker run -it -v $PWD:/app knjcode/imgdupes"
+
+
 git-fork-sync() {
     git fetch upstream master && git rebase upstream/master
 }
@@ -218,9 +225,363 @@ fixprompt() {
 }
 
 alias trw="tmux rename-window"
+
+alias dotfiles_provision='chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git'
 # pi@boss-station ~/.zsh.d/after
 # ❯ cat custom_plugins.zsh
 # plugins+=(git-extra-commands zsh-256color zsh-peco-history pyenv rbenv fd fzf zsh-syntax-highlighting tmux conda-zsh-completion)
+
+dl(){
+    echo "running dl \"${1}\" ..."
+    /usr/local/bin/youtube-dl -o "$(uuidgen).%(ext)s" "${1}"
+    echo ""
+}
+
+dl-best(){
+    echo "running dl-best \"${1}\" ..."
+    /usr/local/bin/youtube-dl -o "$(uuidgen).%(ext)s" -f $(/usr/local/bin/youtube-dl -o "$(uuidgen).%(ext)s" -F "${1}" | grep best | grep mp4 | head -1 | awk '{print $1}') "${1}"
+    echo ""
+}
+
+dl-mp3(){
+    echo "running dl-mp3 \"${1}\" ..."
+    /usr/local/bin/youtube-dl --extract-audio --audio-format mp3 "${1}"
+    echo ""
+}
+
+youtube-dl-best-until(){
+    until dl-best "${1}" &> /dev/null
+    do
+        echo "running dl-best \"${1}\" ..."
+        sleep 1
+    done
+    echo -e "\nThe mp4 is downloaded."
+}
+
+
+
+youtube-dl-mp3-orig-name-until(){
+    until dl-mp3-orig-name "${1}" &> /dev/null
+    do
+        echo "running dl-mp3-orig-name \"${1}\" ..."
+        sleep $((1 + $RANDOM % 10))
+    done
+    echo -e "\nThe mp3 is downloaded."
+}
+
+
+
+# SOURCE: https://github.com/gko/dotfiles/blob/6f63f4a5ffdfbded718bd1eee8723e02ec2a5335/aliases/youtube-dl.sh
+youtube-dl-aliases () {
+	local YOUTUBE_DL_OPTIONS="--ignore-errors \
+		--restrict-filenames \
+		--no-mark-watched \
+		--geo-bypass \
+		--write-description \
+		--write-info-json \
+		--write-thumbnail \
+		--all-subs \
+		--no-mtime \
+		--embed-thumbnail \
+		--embed-subs \
+		--add-metadata"
+
+	# youtube-dl aliases
+	alias youtube-dl-best='youtube-dl \
+		'"$YOUTUBE_DL_OPTIONS"' \
+		--format "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" '
+	alias youtube-dl-480='youtube-dl \
+		'"$YOUTUBE_DL_OPTIONS"' \
+		--format "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]" '
+	alias youtube-dl-720='youtube-dl \
+		'"$YOUTUBE_DL_OPTIONS"' \
+		--format "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]" '
+	alias youtube-dl-4k='echo -e "This will transcode the video from webm to h264 which could take a long time\n\n"; \
+		youtube-dl -f "bestvideo[ext=webm]+bestaudio[ext=m4a]" \
+		'"$YOUTUBE_DL_OPTIONS"' \
+		--recode-video mp4 '
+	alias youtube-dl-playlist='youtube-dl \
+		'"$YOUTUBE_DL_OPTIONS"' \
+		--download-archive archive.txt \
+		--output "./%(playlist_title)s/%(playlist_index)s_%(title)s.%(ext)s" '
+	alias youtube-dl-mp3='youtube-dl --extract-audio \
+		'"$YOUTUBE_DL_OPTIONS"' \
+		--format bestaudio \
+		--download-archive archive.txt \
+		--audio-format mp3 \
+		--no-playlist '
+	alias youtube-dl-mp3-playlist='youtube-dl --ignore-errors \
+		'"$YOUTUBE_DL_OPTIONS"' \
+		--format bestaudio \
+		--extract-audio \
+		--audio-format mp3 \
+		--audio-quality 160K \
+		--output "./%(playlist_title)s/%(playlist_index)s_%(title)s.%(ext)s" \
+		--yes-playlist '
+}
+
+
+yt-dl-thumb () {
+	echo " [running] youtube-dl -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}"
+	youtube-dl -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}
+}
+yt-dl-thumb-fork () {
+	echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}"
+	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}
+}
+
+alias dl-thumb='yt-dl-thumb'
+alias dl-thumb-fork='yt-dl-thumb-fork'
+
+yt-dl-best-test () {
+	echo " [running] youtube-dl -v -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio\" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}"
+	youtube-dl -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}
+}
+
+yt-best-fork () {
+	echo " [running] yt-dlp -v -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio\" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json ${1}"
+	yt-dlp -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json ${1}
+}
+
+dl-split () {
+	while IFS="" read -r p || [ -n "$p" ]; do
+		yt-best $p
+	done < download.txt
+}
+
+dl-safe () {
+	pyenv activate cerebro-bot399 || true
+	local url=${1}
+
+	dl-thumb ${url}
+
+	_RETVAL=$?
+
+	if [[ "${_RETVAL}" != "0" ]]; then
+			echo "Trying yt-best instead"
+			yt-best ${url}
+
+			_RETVAL=$?
+
+			if [[ "${_RETVAL}" != "0" ]]; then
+					echo "Trying youtube-dl instead"
+					youtube-dl ${url}
+			fi
+	fi
+
+
+}
+
+dl-safe-fork () {
+	pyenv activate cerebro-bot399 || true
+	local url=${1}
+
+	# dl-thumb
+	dl-thumb-fork ${url}
+
+	_RETVAL=$?
+
+	if [[ "${_RETVAL}" != "0" ]]; then
+			echo "Trying yt-best instead"
+			yt-best-fork ${url}
+
+			_RETVAL=$?
+
+			if [[ "${_RETVAL}" != "0" ]]; then
+					echo "Trying youtube-dl instead"
+					yt-dlp --convert-thumbnails jpg ${url}
+			fi
+	fi
+
+
+}
+
+alias dlsf='dl-safe-fork'
+alias dsf='dl-safe-fork'
+
+sleep_dsf() {
+	dsf ${1}
+	progress-bar $(python -c "import random;print(random.randint(5,120))")
+}
+
+prepare_from_square() {
+	pyenv activate ffmpeg-tools399 || true
+	ffmpeg-tools -c prepare-from-square -f "$(PWD)" -r
+	find . -name "white.jpg" -exec rm -rfv {} \;
+}
+
+prepare_from_square_wrong_size() {
+	pyenv activate ffmpeg-tools399 || true
+	ffmpeg-tools -c prepare-from-square-wrong-size -f "$(PWD)" -r
+	find . -name "white.jpg" -exec rm -rfv {} \;
+}
+
+dl_tiktok_no_watermark() {
+	pyenv activate ffmpeg-tools399 || true
+	ffmpeg-tools -c tiktok-no-watermark -f "$(PWD)/download.txt"  --dest "$(PWD)"
+}
+
+unzip_rm(){
+	unzip \*.zip && rm *.zip
+}
+
+
+yt-crunchyroll () {
+	pyenv activate cerebro_bot3 || true
+	echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt  --extractor-args \"youtube:player-client=android_embedded,web;include_live_dash\" --extractor-args \"funimation:version=uncut\" -F ${1}"
+	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --extractor-args "youtube:player-client=android_embedded,web;include_live_dash" --extractor-args "funimation:version=uncut" -F ${1}
+}
+
+dl-tweet() {
+	pyenv activate cerebro-bot399 || true
+	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg ${1}\n"
+	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg ${1}
+}
+
+dl-ig() {
+	pyenv activate cerebro-bot399 || true
+	echo -e " [running] gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata ${1}\n"
+	gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata ${1}
+}
+
+dl-thread() {
+	pyenv activate cerebro-bot399 || true
+	echo -e " [running] gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf ${1}\n"
+	gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf ${1}
+}
+
+dl-subs() {
+	pyenv activate cerebro-bot399 || true
+	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg  --write-subs --sub-langs 'en-orig'  --sub-format srt --write-auto-subs --sub-format srt ${1}\n"
+	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-langs 'en-orig' --sub-format srt --write-auto-subs --sub-format srt ${1}
+	# yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-subs --sub-langs 'en' ${1}
+	echo -e "\n"
+	echo -e "\n"
+}
+
+dl-metadata(){
+	pyenv activate cerebro-bot399 || true
+	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg  --write-subs --sub-lang en-orig -j ${1} | bat\n"
+	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-lang en-orig -j ${1} | bat
+}
+
+ff-subs() {
+    fname="${1}"
+    predetermined_fname="$(yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-lang en-orig -j ${fname} | jq '.filename')"
+    echo $predetermined_fname
+    dl-subs "${fname}"
+    set -x
+    downloaded_mp4="$(echo $predetermined_fname | sed 's,^",,g'| sed 's,"$,,g')"
+
+
+    outputfile_srt="$(python -c "import pathlib;print(pathlib.Path('$downloaded_mp4').stem)").srt"
+    outputfile_with_subs="$(python -c "import pathlib;print(pathlib.Path('$downloaded_mp4').stem)")_with_subs.mp4"
+
+	OIFS="$IFS"
+	IFS=$'\n'
+    echo -"[running] ffmpeg -y -hide_banner -loglevel warning -i ${downloaded_mp4} -vf subtitles=${outputfile_srt} ${outputfile_with_subs}\n\n"
+    ffmpeg -y -hide_banner -loglevel warning -i "${downloaded_mp4}" -vf subtitles=./${outputfile_srt} "${outputfile_with_subs}"
+    IFS="$OIFS"
+
+    set +x
+}
+
+
+dl-gallery(){
+	pyenv activate cerebro-bot399 || true
+	uri="${1}"
+	echo -e " [running] gallery-dl --no-mtime --netrc -o downloader.http.headers.User-Agent=Wget/1.21.1 -v --write-info-json --write-metadata ${uri}"
+	gallery-dl --no-mtime --netrc -o downloader.http.headers.User-Agent=Wget/1.21.1 -v --write-info-json --write-metadata ${uri}
+}
+
+
+prepare_from_large_square() {
+        pyenv activate ffmpeg-tools399 || true
+        ffmpeg-tools -c prepare-from-large-square -f "$(PWD)" -r
+}
+prepare_from_large_square_color() {
+        pyenv activate ffmpeg-tools399 || true
+        ffmpeg-tools -c prepare-from-large-square-identify-color -f "$(PWD)" -r
+}
+
+# New best command
+# SOURCE: https://www.linuxfordevices.com/tutorials/linux/yt-dlp-download-youtube-videos
+dl-only () {
+    pyenv activate ffmpeg-tools399 || true
+    echo " [running] yt-dlp -v -f 'bv*+ba' -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-dlp-cookies.txt ${1}"
+    yt-dlp -v -f 'bv*+ba' -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-dlp-cookies.txt ${1}
+}
+
+unzip_nuke() {
+  unzip \*.zip && rm *.zip
+}
+
+imagemagick_white_jpg(){
+    # create white background first
+    convert -size 1080x1080 xc:white white.jpg
+}
+
+imagemagick_resize_square_batch() {
+    imagemagick_white_jpg
+    rm -fv loop.txt
+    touch loop.txt
+    OIFS="$IFS"
+    IFS=$'\n'
+    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.png"`
+    do
+        echo "file = $file"
+        echo imagemagick_resize_square "$file" >> loop.txt
+    done
+    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.jpg"`
+    do
+        echo "file = $file"
+        echo imagemagick_resize_square "$file" >> loop.txt
+    done
+    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.jpeg"`
+    do
+        echo "file = $file"
+        echo imagemagick_resize_square "$file" >> loop.txt
+    done
+    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.JPG"`
+    do
+        echo "file = $file"
+        echo imagemagick_resize_square "$file" >> loop.txt
+    done
+    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.JPEG"`
+    do
+        echo "file = $file"
+        echo imagemagick_resize_square "$file" >> loop.txt
+    done
+
+    cat loop.txt
+    gsed -i "s,\.\/,'\.\/,g" loop.txt
+    gsed -i "s,$,',g" loop.txt
+    sort -ru loop.txt > loop.sh
+    cat loop.sh
+    bash loop.sh
+    rm loop.sh
+    rm loop.txt
+    ls -lta
+    IFS="$OIFS"
+}
+
+
+imagemagick_jpg_to_png(){
+    mogrify -format png *.JPG
+    mogrify -format png *.JPEG
+    mogrify -format png *.jpg
+    mogrify -format png *.jpeg
+    mkdir pngs || true
+    mv -fv *.png pngs/
+}
+
+webp_to_jpg(){
+    magick mogrify -format JPEG *.webp
+    mkdir webps || true
+    mv -fv *.webp webps/
+}
+
+
 
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh

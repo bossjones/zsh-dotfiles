@@ -1,5 +1,4 @@
-{{- if (eq .chezmoi.os "linux") -}}
-{{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+{{- if (eq .chezmoi.os "darwin") -}}
 
 #!/usr/bin/env zsh
 
@@ -13,15 +12,18 @@ then
     fpath+="$HOME/.zsh/completion"
 fi
 
-
+# Check if the file exists
 # if sheldon completion doesn't exist, initialize it
 if [ ! -f ~/.zsh/completion/_sheldon ]
 then
+    # # Check if the file size is greater than zero
+    # if [ ! -s ~/.zsh/completion/_sheldon ]
+    # then
     mkdir -p  $HOME/.zsh/completion || true
     ~/.local/bin/sheldon completions --shell zsh > ~/.zsh/completion/_sheldon
     fpath+="$HOME/.zsh/completion"
+    # fi
 fi
 
 
-{{ end -}}
 {{ end -}}
