@@ -1,0 +1,53 @@
+name: GitHub Actions CI
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+jobs:
+  # style:
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Set up Git repository
+  #       uses: actions/checkout@main
+
+  #     - name: Set up Homebrew
+  #       uses: Homebrew/actions/setup-homebrew@master
+
+  #     - name: Install shfmt
+  #       run: brew install shfmt
+
+  #     - run: contrib/style.sh
+
+  tests:
+    runs-on: macos-12
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@main
+
+      - run: brew test-bot --only-cleanup-before
+
+      - name: Run zsh-dotfiles-prep
+        env:
+          ZSH_DOTFILES_PREP_CI: 1
+          ZSH_DOTFILES_PREP_DEBUG: 1
+          # NOTE: Skip Brew bundle for now, speed up tests
+          ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
+          ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
+
+      - name: full chezmoi install
+        env:
+          ZSH_DOTFILES_PREP_CI: 1
+          ZSH_DOTFILES_PREP_DEBUG: 1
+          # NOTE: Skip Brew bundle for now, speed up tests
+          ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
+          ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
+        run: |
+          pwd
+          ls -lta
+          chezmoi init -R --debug -v --apply --force --source=.
+
+
