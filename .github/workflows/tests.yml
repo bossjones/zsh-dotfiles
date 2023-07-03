@@ -28,6 +28,12 @@ jobs:
 
       - run: brew test-bot --only-cleanup-before
 
+      - name: brew taps
+        run: |
+            brew tap homebrew/cask || true
+            brew tap homebrew/core || true
+            brew tap schniz/tap || true
+
       - name: Run zsh-dotfiles-prep
         env:
           ZSH_DOTFILES_PREP_CI: 1
