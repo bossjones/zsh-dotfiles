@@ -69,6 +69,6 @@ jobs:
           echo "~/.local/bin" >> $GITHUB_PATH
           export PATH="~/.bin:~/bin:~/.local/bin:$PATH"
 
-          chezmoi init -R --debug -v --apply --force --source=.
+          ~/.bin/chezmoi init -R --debug -v --apply --force --source=.
 
 
