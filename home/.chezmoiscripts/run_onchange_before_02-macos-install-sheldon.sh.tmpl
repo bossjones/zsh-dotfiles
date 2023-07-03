@@ -12,4 +12,29 @@ then
 
 fi
 
+# TODO: Add code to compile sheldon from source if arch is arm64
+# 6183  2023-07-03 18:34  vim /Users/malcolm/.config/chezmoi/chezmoi.toml
+# 6184  2023-07-03 18:35  chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git
+# 6185  2023-07-03 18:39  hich sheldon
+# 6186  2023-07-03 18:39  which sheldon
+# 6187  2023-07-03 18:40  brew info sheldon
+# 6188  2023-07-03 18:43  cargo install cross
+# 6189  2023-07-03 18:45  export PATH="/Users/malcolm/.cargo/bin:$PATH"
+# 6190  2023-07-03 18:45  cd ~/dev
+# 6191  2023-07-03 18:45  gcl git@github.com:rossmacarthur/sheldon.git
+# 6192  2023-07-03 18:45  cd sheldon
+# 6193  2023-07-03 18:46  gco 0.6.6
+# 6194  2023-07-03 18:47  cross build --help
+# 6195  2023-07-03 18:48  cross build --locked --release --target aarch64-apple-darwin
+# 6196  2023-07-03 18:48  ls -lta ~/.cargo/bin
+# 6197  2023-07-03 18:48  ls
+# 6198  2023-07-03 18:49  ls -lta target
+# 6199  2023-07-03 18:49  ls -lta target/aarch64-apple-darwin
+# 6200  2023-07-03 18:49  ls -lta target/aarch64-apple-darwin/release
+# 6201  2023-07-03 18:49  target/aarch64-apple-darwin/release/sheldon --help
+# ~/dev/sheldon tags/0.6.6
+# ❯ sheldon --version
+# sheldon 0.6.6 (31c6df8f7 2022-01-29)
+# rustc 1.70.0 (90c541806 2023-05-31) (built from a source tarball)
+
 {{ end -}}
