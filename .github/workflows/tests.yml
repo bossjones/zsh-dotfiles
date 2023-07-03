@@ -43,6 +43,10 @@ jobs:
 
             brew tap schniz/tap || true
 
+            echo "~/bin" >> $GITHUB_PATH
+            echo "~/.bin" >> $GITHUB_PATH
+            echo "~/.local/bin" >> $GITHUB_PATH
+
             curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
 
       - name: full chezmoi install
