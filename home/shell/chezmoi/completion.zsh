@@ -3,6 +3,7 @@
 if [[ "$OSTYPE" == linux* ]]
 then
     fpath+="$HOME/.zsh/completions"
+    fpath+="$HOME/.zsh/completion"
 fi
 
 OS="`uname`"
