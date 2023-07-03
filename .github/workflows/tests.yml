@@ -88,7 +88,7 @@ jobs:
           echo "~/.local/bin" >> $GITHUB_PATH
           export PATH="~/.bin:~/bin:~/.local/bin:$PATH"
 
-          ~/.bin/chezmoi init -R --debug -v --apply --force --source=.
+          retry -t 4  -- ~/.bin/chezmoi init -R --debug -v --apply --force --source=.
 
 
 
