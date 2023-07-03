@@ -42,11 +42,8 @@ jobs:
           ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
           ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
         run: |
-
             brew tap homebrew/cask || true
-
             brew tap homebrew/core || true
-
             brew tap schniz/tap || true
 
             echo "~/bin" >> $GITHUB_PATH
