@@ -43,7 +43,7 @@ jobs:
 
             brew tap schniz/tap || true
 
-          curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
+            curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
 
       - name: full chezmoi install
         env:
