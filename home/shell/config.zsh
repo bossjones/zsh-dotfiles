@@ -50,3 +50,51 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' '+r:|?=**'
 # alias brew='sudo -Hu ops -i brew'
 # alias c=chezmoi
 # alias e="$EDITOR"
+
+
+# # HISTFILE - Refers to the path/location of the history file
+# export HISTFILE="$HOME/.zsh_history"
+
+# # 2. Increase history size
+# # In bash, Setting the HISTFILESIZE and HISTSIZE variables to an empty string makes the bash history size unlimited. However, it's not possible to set the history to an unlimited size in zsh(theoretically, at least). From an zsh mailing list, it appears the max history size can be LONG_MAX from limits.h header file. That has a (really huge) value of 9223372036854775807, which should be enough to store trillions of commands (a limit we'll probably never hit). This number can be hard to remember - We can just set this to a billion, and forget it.
+# export HISTFILESIZE=1000000000
+# # HISTSIZE - Refers to the number of commands that are loaded into memory from the history file
+# export HISTSIZE=1000000000
+
+# export SAVEHIST=$HISTSIZE
+
+# # set some history options
+# # Appends new history entries to the history file
+# setopt append_history
+# # Records timestamps and durations in history
+# setopt extended_history
+# # Expire older duplicate history entries first
+# setopt hist_expire_dups_first
+# # Ignores all but the most recent of duplicate history entries
+# setopt hist_ignore_all_dups
+# # Ignores consecutive duplicate history entries
+# setopt hist_ignore_dups
+# # Ignores commands starting with spaces in history
+# setopt hist_ignore_space
+# # Reduces multiple consecutive blanks to a single blank in history
+# setopt hist_reduce_blanks
+# # Does not save duplicate history entries
+# setopt hist_save_no_dups
+# # Shows the command with history expansion before running it
+# setopt hist_verify
+# # Increments history file name to avoid overwriting
+# setopt INC_APPEND_HISTORY
+# export HISTTIMEFORMAT="[%F %T] "
+# # Disables the beep sound when accessing non-existent history entries
+# unsetopt HIST_BEEP
+
+# # Share your history across all your terminal windows
+# setopt share_history
+# #setopt noclobber
+
+# # Larger bash history (allow 32³ entries; default is 500)
+
+
+
+# # SAVEHIST - Refers to the number of commands that are stored in the zsh history file
+# # SAVEHIST=100000
