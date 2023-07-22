@@ -19,6 +19,10 @@ export VEDITOR=code
 # https://github.com/x-motemen/ghq#environment-variables
 export GHQ_ROOT=$CODE_WORKSPACE
 
+# python better exceptions
+export BETTER_EXCEPTIONS=1
+
+export KUBECONFIG="${HOME}/dev/adobe-platform/k8s-kubeconfig/kubeconfig.yaml"
 
 export GOPATH="$HOME/go"
 export TERM="xterm-256color"
