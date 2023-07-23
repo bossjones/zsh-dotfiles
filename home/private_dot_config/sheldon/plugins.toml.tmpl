@@ -191,9 +191,6 @@ use = ["custom.zsh"]
 local = "~/.local/share/chezmoi/home/shell/customs"
 use = ["aliases.zsh"]
 
-[plugins.aliases]
-local = "~/.local/share/chezmoi/home/shell"
-use = ["**/aliases.zsh"]
 
 {{if (eq .chezmoi.os "linux") -}}
 {{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
