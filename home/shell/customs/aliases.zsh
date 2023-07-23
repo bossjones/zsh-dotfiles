@@ -166,7 +166,7 @@ open_ig_hashtag() {
 }
 
 split_scenes(){
-    pyenv activate cerebro_bot3 || true
+    pyenv activate yt-dlp3 || true
     echo '#!/usr/bin/env bash' > redo.sh
     [ "$(ls *.mp4 | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*mp4*; do echo scenedetect -i "$filename" -o processed/ detect-content split-video; done >> redo.sh
     echo "Script created. cat redo.sh"
