@@ -23,6 +23,8 @@ export GHQ_ROOT=$CODE_WORKSPACE
 export BETTER_EXCEPTIONS=1
 
 export KUBECONFIG="${HOME}/dev/adobe-platform/k8s-kubeconfig/kubeconfig.yaml"
+export SHELDON_CONFIG_DIR="$HOME/.sheldon"
+export SHELDON_DATA_DIR="$HOME/.sheldon"
 
 export GOPATH="$HOME/go"
 export TERM="xterm-256color"
