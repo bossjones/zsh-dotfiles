@@ -209,12 +209,12 @@ run_filebrowser() {
 }
 
 dl-ig-wavy() {
-    pyenv activate cerebro-bot399 || true
+    pyenv activate yt-dlp3 || true
     gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/wavy-cookies-instagram.txt ${1}
 }
 
 dl-ig-hlm() {
-    pyenv activate cerebro-bot399 || true
+    pyenv activate yt-dlp3 || true
     gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/hlm-cookies-instagram.txt ${1}
 }
 
@@ -350,7 +350,7 @@ dl-split () {
 }
 
 dl-safe () {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	local url=${1}
 
 	dl-thumb ${url}
@@ -373,7 +373,7 @@ dl-safe () {
 }
 
 dl-safe-fork () {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	local url=${1}
 
 	# dl-thumb
@@ -433,25 +433,25 @@ yt-crunchyroll () {
 }
 
 dl-tweet() {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg ${1}\n"
 	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg ${1}
 }
 
 dl-ig() {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata ${1}\n"
 	gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata ${1}
 }
 
 dl-thread() {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf ${1}\n"
 	gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf ${1}
 }
 
 dl-subs() {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg  --write-subs --sub-langs 'en-orig'  --sub-format srt --write-auto-subs --sub-format srt ${1}\n"
 	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-langs 'en-orig' --sub-format srt --write-auto-subs --sub-format srt ${1}
 	# yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-subs --sub-langs 'en' ${1}
@@ -460,7 +460,7 @@ dl-subs() {
 }
 
 dl-metadata(){
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg  --write-subs --sub-lang en-orig -j ${1} | bat\n"
 	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-lang en-orig -j ${1} | bat
 }
@@ -488,7 +488,7 @@ ff-subs() {
 
 
 dl-gallery(){
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	uri="${1}"
 	echo -e " [running] gallery-dl --no-mtime --netrc -o downloader.http.headers.User-Agent=Wget/1.21.1 -v --write-info-json --write-metadata ${uri}"
 	gallery-dl --no-mtime --netrc -o downloader.http.headers.User-Agent=Wget/1.21.1 -v --write-info-json --write-metadata ${uri}
