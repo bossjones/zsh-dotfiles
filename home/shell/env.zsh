@@ -39,7 +39,7 @@ then
     else
         SHELL="/usr/local/bin/zsh"
     fi
-
+else
     SHELL="/usr/bin/zsh"
 fi
 
