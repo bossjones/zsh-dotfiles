@@ -1,0 +1,9 @@
+libtmux
+pytest-sugar
+pytest-cov
+pytest-rerunfailures
+pytest==7.2.0
+better_exceptions
+rich
+bpython
+ptpython
