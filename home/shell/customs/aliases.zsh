@@ -868,7 +868,7 @@ prepare_for_ig_large(){
     # full_path_input_file=$1
     # full_path_output_file=fast.mp4
 
-    full_path_input_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)").mp4"
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
     full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_larger.mp4"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
@@ -896,8 +896,8 @@ prepare_for_ig_large(){
 
 prepare_for_ig_small(){
 
-    full_path_input_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)").mp4"
-    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_larger.mp4"
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_smaller.mp4"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
 
@@ -924,7 +924,7 @@ prepare_for_ig_small(){
 
 get_primary_color(){
 
-    full_path_input_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)").mp4"
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
     full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_primary_color.png"
 
     ffmpeg -y \
@@ -933,11 +933,12 @@ get_primary_color(){
 
     primary_color="0x$(magick identify -format "%[hex:p{1,1}]" ${full_path_output_file})"
     echo $primary_color
+    rm -f "${full_path_output_file}"
 }
 
 prepare_for_ig_large_primary_color(){
-    full_path_input_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)").mp4"
-    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_larger.mp4"
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_larger_pc.mp4"
     primary_color=$(get_primary_color "${full_path_input_file}")
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
@@ -962,6 +963,57 @@ prepare_for_ig_large_primary_color(){
     -ac 2 \
     "${full_path_output_file}"
 
+}
+
+prepare_for_ig_small_primary_color(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_smaller_pc.mp4"
+    primary_color=$(get_primary_color "${full_path_input_file}")
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+    echo -e "primary_color: ${primary_color}\n"
+
+    time ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${full_path_input_file}" \
+    -c:v h264_videotoolbox \
+    -bufsize 5200K \
+    -b:v 5200K \
+    -maxrate 5200K \
+    -level 42 \
+    -bf 2 \
+    -g 63 \
+    -refs 4 \
+    -threads 16 \
+    -preset:v fast \
+    -vf "scale=1080:1080:force_original_aspect_ratio=decrease,pad=width=1080:height=1080:x=-1:y=-1:color=${primary_color}" \
+    -c:a aac \
+    -ar 44100 \
+    -ac 2 \
+    "${full_path_output_file}"
+
+}
+
+mov_to_mp4(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)").mp4"
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+    time ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${full_path_input_file}" \
+    -c:v h264_videotoolbox \
+    -c:a aac \
+    -strict experimental \
+    -bufsize 5200K \
+    -b:v 5200K \
+    -maxrate 5200K \
+    -level 42 \
+    -bf 2 \
+    -g 63 \
+    -refs 4 \
+    -threads 16 \
+    -preset:v fast "${full_path_output_file}"
 }
 
 # ---------------------------------------------------------
