@@ -187,9 +187,10 @@ use = ["custom.zsh"]
 {{ end }}
 {{ end }}
 
-[plugins.boss_aliases]
+[plugins.bossaliases]
 local = "~/.local/share/chezmoi/home/shell/customs"
 use = ["aliases.zsh"]
+
 
 {{if (eq .chezmoi.os "linux") -}}
 {{if (eq .chezmoi.osRelease.name "Ubuntu") -}}

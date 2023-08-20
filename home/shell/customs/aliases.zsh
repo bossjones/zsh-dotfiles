@@ -166,7 +166,7 @@ open_ig_hashtag() {
 }
 
 split_scenes(){
-    pyenv activate cerebro_bot3 || true
+    pyenv activate yt-dlp3 || true
     echo '#!/usr/bin/env bash' > redo.sh
     [ "$(ls *.mp4 | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*mp4*; do echo scenedetect -i "$filename" -o processed/ detect-content split-video; done >> redo.sh
     echo "Script created. cat redo.sh"
@@ -209,12 +209,12 @@ run_filebrowser() {
 }
 
 dl-ig-wavy() {
-    pyenv activate cerebro-bot399 || true
+    pyenv activate yt-dlp3 || true
     gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/wavy-cookies-instagram.txt ${1}
 }
 
 dl-ig-hlm() {
-    pyenv activate cerebro-bot399 || true
+    pyenv activate yt-dlp3 || true
     gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/hlm-cookies-instagram.txt ${1}
 }
 
@@ -350,7 +350,7 @@ dl-split () {
 }
 
 dl-safe () {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	local url=${1}
 
 	dl-thumb ${url}
@@ -373,7 +373,7 @@ dl-safe () {
 }
 
 dl-safe-fork () {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	local url=${1}
 
 	# dl-thumb
@@ -433,25 +433,25 @@ yt-crunchyroll () {
 }
 
 dl-tweet() {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg ${1}\n"
 	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg ${1}
 }
 
 dl-ig() {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata ${1}\n"
 	gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata ${1}
 }
 
 dl-thread() {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf ${1}\n"
 	gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf ${1}
 }
 
 dl-subs() {
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg  --write-subs --sub-langs 'en-orig'  --sub-format srt --write-auto-subs --sub-format srt ${1}\n"
 	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-langs 'en-orig' --sub-format srt --write-auto-subs --sub-format srt ${1}
 	# yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-subs --sub-langs 'en' ${1}
@@ -460,7 +460,7 @@ dl-subs() {
 }
 
 dl-metadata(){
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg  --write-subs --sub-lang en-orig -j ${1} | bat\n"
 	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-lang en-orig -j ${1} | bat
 }
@@ -488,7 +488,7 @@ ff-subs() {
 
 
 dl-gallery(){
-	pyenv activate cerebro-bot399 || true
+	pyenv activate yt-dlp3 || true
 	uri="${1}"
 	echo -e " [running] gallery-dl --no-mtime --netrc -o downloader.http.headers.User-Agent=Wget/1.21.1 -v --write-info-json --write-metadata ${uri}"
 	gallery-dl --no-mtime --netrc -o downloader.http.headers.User-Agent=Wget/1.21.1 -v --write-info-json --write-metadata ${uri}
@@ -581,7 +581,440 @@ webp_to_jpg(){
     mv -fv *.webp webps/
 }
 
+# ----------------------
+# adobe
+# ----------------------
 
+
+vault_dev(){
+    export VAULT_ADDR="https://vault.dev.or1.adobe.net"
+
+}
+vault_prod(){
+    export VAULT_ADDR="https://vault.or1.adobe.net"
+
+}
+
+alias fixvideo='sudo killall VDCAssistant'
+
+
+# bash function to setup eks env vars prior to cluter create or access
+eks_env(){
+  local num="${1}"
+
+  [[ -z "$num" ]] && { echo "Error: variable num is not set $num"; exit 1; }
+  # used to tab completion in vscode etc
+  pyenv activate k8s-infrastructure3101 || true
+
+  cd ~/dev/malcolm/k8s-infrastructure4 || true
+  # path to manual created cluster config file
+  echo -e "Setting CONFIG_LOCATION=$(pwd)/demo${num}.yaml"
+  export CONFIG_LOCATION="$(pwd)/demo${num}.yaml"
+
+  # cached version of AWS env vars so that I can use them in multiple windows
+  source ~/.aws/cache.be-sandbox
+
+  # Not needed if you are using docker for mac
+  # eval $(docker-machine env dev)
+
+  unset KUBECONFIG
+  # export KUBECONFIG="$(pwd)/kubeconfig.yaml"
+
+  echo -e "Verify KUBECONFIG is unset = ${KUBECONFIG}"
+  echo -e "Verify CONFIG_LOCATION = ${CONFIG_LOCATION}"
+
+  # . "$(brew --prefix asdf)/libexec/asdf.sh"
+
+  kubectl cluster-info
+
+  echo -e "Starting k9s ....\n"
+
+  k9s
+
+}
+# bash function to setup eks env vars prior to cluter create or access
+kind_env(){
+    # used to tab completion in vscode etc
+    pyenv activate k8s-infrastructure3101 || true
+
+    cd ~/dev/malcolm/janus || true
+
+    export KUBECONFIG="$(pwd)/kubeconfig.yaml"
+
+    kubectl cluster-info
+
+    k9s
+
+}
+
+eks_sandbox(){
+  local num="${1}"
+
+  cd ~/dev/malcolm/k8s-infrastructure2
+
+  [[ -z "$num" ]] && { echo "Error: variable num is not set $num"; exit 1; }
+  # used to tab completion in vscode etc
+  pyenv activate k8s-infastructure3 || true
+
+  # path to manual created cluster config file
+  echo -e "Setting CONFIG_LOCATION=$(pwd)/demo${num}.yaml"
+  export CONFIG_LOCATION="$(pwd)/demo${num}.yaml"
+
+  # cached version of AWS env vars so that I can use them in multiple windows
+  source ~/.aws/cache.be-sandbox
+
+  # Not needed if you are using docker for mac
+  # eval $(docker-machine env dev)
+
+  unset KUBECONFIG
+  export KUBECONFIG="$(pwd)/kubeconfig.yaml"
+
+  echo -e "Verify KUBECONFIG is unset = ${KUBECONFIG}"
+  echo -e "Verify CONFIG_LOCATION = ${CONFIG_LOCATION}"
+
+  kubectl cluster-info
+
+  echo -e "Starting k9s ....\n"
+
+  cd -
+
+  #   k9s
+
+
+}
+
+
+eks_echoserver() {
+    eks_sandbox 5
+    cd ~/dev/malcolm/echoserver-k8s
+    k9s
+}
+
+eks_sqs() {
+    eks_sandbox 5
+    cd ~/dev/malcolm/sqs-pubsub-k8s
+    k9s
+}
+
+get_1pass(){
+    cat ~/.secrets.txt | head -1 | pbcopy
+}
+
+alias ssh-bossjones-workstation="ssh -i ~/.ssh/cloudops-beh-app-dev.pem -vvvv -F ~/.ssh/config-balabit ubuntu@10.71.252.237"
+
+get-gpu-ips() {
+
+    aws ec2 describe-instances \
+    --filters "Name=instance-type,Values=p2.xlarge" \
+    --query "Reservations[*].Instances[*].[PrivateIpAddress]" \
+    --output text
+
+}
+
+k8s-e2e(){
+
+    sonobuoy run --wait --level=debug --config=./sonobuoy-config.json
+    results=$(sonobuoy retrieve)
+    sonobuoy results $results
+    sonobuoy delete --wait
+
+}
+
+function dex {
+    if docker version &> /dev/null; then
+        docker run -v $(pwd):/root/workspace --workdir /root/workspace --rm -ti "$@"
+    else
+        echo "Docker isn't installed or has not been started."
+    fi
+}
+
+function dk8s {
+    dex --hostname docker-k8s-dev docker-ethos-release.dr-uw2.adobeitc.com/adobe-platform/k8s-toolbox:latest
+}
+
+git-fork-sync() {
+    git fetch upstream master && git rebase upstream/master
+}
+
+git-fork-sync-main() {
+    git fetch upstream main && git rebase upstream/main
+}
+
+alias lsr='/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister'
+
+function vault-login() {
+    export VAULT_ADDR="https://vault-amer.adobe.net"
+    export VAULT_TOKEN=$(vault login -token-only -method oidc)
+}
+
+# ---------------------------------------------------------
+# kubectl
+# ---------------------------------------------------------
+
+
+
+ethos_kubeconfig() {
+    export KUBECONFIG=~/dev/adobe-platform/k8s-kubeconfig/kubeconfig.yaml
+    echo "[ethos_kubeconfig] exported KUBECONFIG=${KUBECONFIG}"
+    echo "[ethos_kubeconfig] running kubectl config get-contexts"
+    kubectl config get-contexts
+}
+
+kubectl_get_logs_of_previous_container() {
+    # SOURCE: https://wiki.corp.adobe.com/display/~apratina/Kubectl+cheat+sheet
+    kubectl -n NAMESPACE logs --previous POD -c CONTAINER
+}
+
+kubectl_use_ethos51_stage_va6(){
+    local _VERSION=1.18.6
+    echo "[kubectl_use_ethos51_stage_va6] switching to correct version kubectl=${_VERSION}"
+    asdf global kubectl ${_VERSION}
+    echo "[kubectl_use_ethos51_stage_va6] confirming kubectl=${_VERSION}"
+    asdf current
+
+    echo "[kubectl_use_ethos51_stage_va6] setting up KUBECONFIG to ethos now"
+    ethos_kubeconfig
+    echo "[kubectl_use_ethos51_stage_va6] attempting to set context for ethos51-stage-va6"
+    kubectl config use-context ethos51-stage-va6
+
+    echo "[kubectl_use_ethos51_stage_va6] sourcing kubectl completion along with ~/.kubectl_fzf.plugin.zsh"
+    source <(kubectl completion zsh)
+    source ~/.kubectl_fzf.plugin.zsh
+}
+
+kubectl_use_ethos51_prod_va6(){
+    local _VERSION=1.18.6
+    echo "[kubectl_use_ethos51_prod_va6] switching to correct version kubectl=${_VERSION}"
+    asdf global kubectl ${_VERSION}
+    echo "[kubectl_use_ethos51_prod_va6] confirming kubectl=${_VERSION}"
+    asdf current
+
+    echo "[kubectl_use_ethos51_prod_va6] setting up KUBECONFIG to ethos now"
+    ethos_kubeconfig
+    echo "[kubectl_use_ethos51_prod_va6] attempting to set context for ethos51-prod-va6"
+    kubectl config use-context ethos51-prod-va6
+
+    echo "[kubectl_use_ethos51_prod_va6] sourcing kubectl completion along with ~/.kubectl_fzf.plugin.zsh"
+    source <(kubectl completion zsh)
+    source ~/.kubectl_fzf.plugin.zsh
+}
+
+kubectl_cache_builder_for_ethos51_stage_va6(){
+    kubectl_use_ethos51_stage_va6
+    # DEBUG MODE cache_builder
+    cache_builder --logtostderr -v 14
+}
+
+kubectl_list_aliases(){
+    # https://unix.stackexchange.com/questions/292903/list-names-of-aliases-functions-and-variables-in-zsh
+    echo "[kubectl_list_aliases] listing all custom zsh aliases"
+    print -rl -- ${(k)aliases} ${(k)functions} ${(k)parameters} | grep "kubectl\|ethos"
+}
+
+kubetail_stage_bar_network() {
+    echo " [run] kubetail --namespace ns-ethos-e7aa052e69a4e3845f2bd0a1-stage1"
+    kubetail --namespace ns-ethos-e7aa052e69a4e3845f2bd0a1-stage1
+}
+
+check_cluster_dns() {
+    kubectx ${1}
+    [[ "${?}" = 1 ]] && return 1
+    _NET_TOOLS_CONTAINER_ID=$(kubectl -n menagerie get pods | grep net-tools | cut -d" " -f1)
+    _CONTAINER_ID=$(kubectl -n menagerie get pods ${_NET_TOOLS_CONTAINER_ID} -o json | jq '.status.containerStatuses[0].containerID' | sed 's,\",,g'| sed 's,cri\-o\:\/\/,,g')
+    echo "${_NET_TOOLS_CONTAINER_ID}"
+    kubectl -n menagerie exec -it ${_NET_TOOLS_CONTAINER_ID} -- dig @${2} alex.adobe.net
+}
+
+# test -d "${KREW_ROOT:-$HOME/.krew}/bin" && {
+#     export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+# }
+
+sed-kubeconfig() {
+    gsed -i 's/v1alpha1/v1beta1/' kubeconfig.yaml
+    bat kubeconfig.yaml
+}
+
+# SOURCE: https://stackoverflow.com/questions/47691479/listing-all-resources-in-a-namespace
+# eg. kubectlgetall ns-team-behance--bossjones-ethos-flex-test-deploy--be-0d858c80
+function kubectlgetall {
+  for i in $(kubectl api-resources --verbs=list --namespaced -o name | grep -v "events.events.k8s.io" | grep -v "events" | sort | uniq); do
+    echo "Resource:" $i
+
+    if [ -z "$1" ]
+    then
+        kubectl get --ignore-not-found ${i} 2>&1 | grep -i -v "Warn" | grep -i -v "Deprecat" | grep -i -v 'https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins'
+    else
+        kubectl -n ${1} get --ignore-not-found ${i} 2>&1 | grep -i -v "Warn" | grep -i -v "Deprecat"  | grep -i -v 'https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins'
+    fi
+  done
+}
+
+alias k="kubectl"
+
+show_kubeprompt(){
+    source ~/dev/kube-ps1/kube-ps1.sh
+    PURE_PROMPT_SYMBOL="$(kube_ps1) ❯"
+}
+
+kx(){
+    show_kubeprompt
+    kubectx ${1}
+    export PURE_PROMPT_SYMBOL="$(kube_ps1) ❯"
+}
+
+alias ck='\cat ~/dev/adobe-platform/k8s-kubeconfig/kubeconfig.yaml | grep name | grep - | grep -v '\''^-'\'' | awk '\''{print $2}'\'
+
+prepare_for_ig_large(){
+    # full_path_input_file=$1
+    # full_path_output_file=fast.mp4
+
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_larger.mp4"
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+
+    time ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${full_path_input_file}" \
+    -c:v h264_videotoolbox \
+    -bufsize 5200K \
+    -b:v 5200K \
+    -maxrate 5200K \
+    -level 42 \
+    -bf 2 \
+    -g 63 \
+    -refs 4 \
+    -threads 16 \
+    -preset:v fast \
+    -vf "scale=1080:1350:force_original_aspect_ratio=decrease,pad=width=1080:height=1350:x=-1:y=-1:color=0x16202A" \
+    -c:a aac \
+    -ar 44100 \
+    -ac 2 \
+    "${full_path_output_file}"
+
+}
+
+prepare_for_ig_small(){
+
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_smaller.mp4"
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+
+    time ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${full_path_input_file}" \
+    -c:v h264_videotoolbox \
+    -bufsize 5200K \
+    -b:v 5200K \
+    -maxrate 5200K \
+    -level 42 \
+    -bf 2 \
+    -g 63 \
+    -refs 4 \
+    -threads 16 \
+    -preset:v fast \
+    -vf "scale=1080:1080:force_original_aspect_ratio=decrease,pad=width=1080:height=1080:x=-1:y=-1:color=0x16202A" \
+    -c:a aac \
+    -ar 44100 \
+    -ac 2 \
+    "${full_path_output_file}"
+
+}
+
+get_primary_color(){
+
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_primary_color.png"
+
+    ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${full_path_input_file}" -ss 00:00:01 -vframes 1 "${full_path_output_file}" > /dev/null 2>&1
+
+    primary_color="0x$(magick identify -format "%[hex:p{1,1}]" ${full_path_output_file})"
+    echo $primary_color
+    rm -f "${full_path_output_file}"
+}
+
+prepare_for_ig_large_primary_color(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_larger_pc.mp4"
+    primary_color=$(get_primary_color "${full_path_input_file}")
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+    echo -e "primary_color: ${primary_color}\n"
+
+    time ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${full_path_input_file}" \
+    -c:v h264_videotoolbox \
+    -bufsize 5200K \
+    -b:v 5200K \
+    -maxrate 5200K \
+    -level 42 \
+    -bf 2 \
+    -g 63 \
+    -refs 4 \
+    -threads 16 \
+    -preset:v fast \
+    -vf "scale=1080:1350:force_original_aspect_ratio=decrease,pad=width=1080:height=1350:x=-1:y=-1:color=${primary_color}" \
+    -c:a aac \
+    -ar 44100 \
+    -ac 2 \
+    "${full_path_output_file}"
+
+}
+
+prepare_for_ig_small_primary_color(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_smaller_pc.mp4"
+    primary_color=$(get_primary_color "${full_path_input_file}")
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+    echo -e "primary_color: ${primary_color}\n"
+
+    time ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${full_path_input_file}" \
+    -c:v h264_videotoolbox \
+    -bufsize 5200K \
+    -b:v 5200K \
+    -maxrate 5200K \
+    -level 42 \
+    -bf 2 \
+    -g 63 \
+    -refs 4 \
+    -threads 16 \
+    -preset:v fast \
+    -vf "scale=1080:1080:force_original_aspect_ratio=decrease,pad=width=1080:height=1080:x=-1:y=-1:color=${primary_color}" \
+    -c:a aac \
+    -ar 44100 \
+    -ac 2 \
+    "${full_path_output_file}"
+
+}
+
+mov_to_mp4(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)").mp4"
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+    time ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${full_path_input_file}" \
+    -c:v h264_videotoolbox \
+    -c:a aac \
+    -strict experimental \
+    -bufsize 5200K \
+    -b:v 5200K \
+    -maxrate 5200K \
+    -level 42 \
+    -bf 2 \
+    -g 63 \
+    -refs 4 \
+    -threads 16 \
+    -preset:v fast "${full_path_output_file}"
+}
 
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
