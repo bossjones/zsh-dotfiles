@@ -3,14 +3,34 @@
 #!/bin/sh
 
 # Install sheldon
+{{ if eq .chezmoi.arch "arm64" -}}
+if [ ! -f ~/.cargo/env ]; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	source $HOME/.cargo/env
+	cargo install ripgrep fd-find
+	fd /root
+fi
 
+mkdir -p ~/.local/src || true
+cd ~/.local/src
+git clone https://github.com/rossmacarthur/sheldon.git
+cd sheldon
+git checkout {{ .mySheldonVersion}}
+cross build --locked --release --target aarch64-apple-darwin
+./target/aarch64-apple-darwin/release/sheldon --help
+cp -a ./target/aarch64-apple-darwin/release/sheldon ~/.local/bin/sheldon
+cd -
+{{   else -}}
 printf "${green}[10 - macos] ${reset}"
 if [ ! -f ~/.local/bin/sheldon ]
 then
     printf "${yellow}[11 - sheldon does not exist, downloading] ${reset}"
+    set -x
     curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin --tag {{ .mySheldonVersion}}
+    set +x
 
 fi
+{{   end -}}
 
 # TODO: Add code to compile sheldon from source if arch is arm64
 # 6183  2023-07-03 18:34  vim /Users/malcolm/.config/chezmoi/chezmoi.toml
