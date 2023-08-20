@@ -4,6 +4,7 @@
 
 # Install sheldon
 {{ if eq .chezmoi.arch "arm64" -}}
+echo "arm64 detected ...."
 if [ ! -f ~/.cargo/env ]; then
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 	source $HOME/.cargo/env
@@ -30,7 +31,7 @@ then
     set +x
 
 fi
-{{   end -}}
+{{   end }}
 
 # TODO: Add code to compile sheldon from source if arch is arm64
 # 6183  2023-07-03 18:34  vim /Users/malcolm/.config/chezmoi/chezmoi.toml
