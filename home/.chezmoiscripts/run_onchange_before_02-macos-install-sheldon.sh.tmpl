@@ -13,6 +13,7 @@ if [ ! -f ~/.cargo/env ]; then
 fi
 
 mkdir -p ~/.local/src || true
+mkdir -p ~/.local/bin || true
 cd ~/.local/src
 git clone https://github.com/rossmacarthur/sheldon.git
 cd sheldon
