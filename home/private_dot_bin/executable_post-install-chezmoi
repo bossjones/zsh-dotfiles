@@ -15,9 +15,11 @@ mkdir ~/.local/src || true
 # git checkout 29370c9b89963539bbe36ca1aa4cd1dbd1bcfb53 || true
 
 if [ ! -d /usr/local/n ]; then
+  set +e
   # need nodejs
   curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s lts
   npm install -g n
+  set -e
 else
   echo "n already installed. skipping"
 fi
@@ -25,12 +27,14 @@ fi
 mkdir ~/.local/src || true
 
 if [ "$(uname -m)" = "aarch64" ]; then
+  set +e
   asdf uninstall neovim || true
   git clone -b v0.9.0 https://github.com/neovim/neovim ~/.local/src/neovim
   cd ~/.local/src/neovim || exit
   make CMAKE_BUILD_TYPE=RelWithDebInfo
   make install
   nvim --version
+  set -e
 else
   echo "not centos or aarch64. skipping"
 fi
