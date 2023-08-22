@@ -7,7 +7,7 @@ if [ ! -f ~/.cargo/env ]; then
   fd /root
 fi
 
-mkdir ~/.local/src || true
+mkdir -p ~/.local/src || true
 # SOURCE: https://www.reddit.com/r/neovim/comments/12x9bxs/nvim_install_script/
 # cd ~/.local/src
 # git clone https://github.com/ksk0/nvim-install || true
@@ -24,7 +24,7 @@ else
   echo "n already installed. skipping"
 fi
 
-mkdir ~/.local/src || true
+mkdir -p ~/.local/src || true
 
 if [ "$(uname -m)" = "aarch64" ]; then
   set +e
