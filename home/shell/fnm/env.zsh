@@ -1,6 +1,7 @@
-FNM_BIN="`which fnm`"
+KLAMEXT_BIN="$(which klam-ext)"
 
-if [ -x "$FNM_BIN" ];
-then
-    eval "$($FNM_BIN env --use-on-cd)"
+if [ -x "$KLAMEXT_BIN" ]; then
+    if command -v klam-ext &>/dev/null; then
+        eval "$(env klam-ext zsh-integration)"
+    fi
 fi

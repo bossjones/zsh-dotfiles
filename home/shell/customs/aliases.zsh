@@ -864,6 +864,10 @@ kx(){
 
 alias ck='\cat ~/dev/adobe-platform/k8s-kubeconfig/kubeconfig.yaml | grep name | grep - | grep -v '\''^-'\'' | awk '\''{print $2}'\'
 
+get_open_ports(){
+    lsof -i -P | grep -i "listen"
+}
+
 prepare_for_ig_large(){
     # full_path_input_file=$1
     # full_path_output_file=fast.mp4
@@ -1014,6 +1018,12 @@ mov_to_mp4(){
     -refs 4 \
     -threads 16 \
     -preset:v fast "${full_path_output_file}"
+}
+
+klam_env() {
+    echo "setting klam env to us-west-2 ..."
+    export KLAM_BROWSER="Google Chrome"
+    export AWS_DEFAULT_REGION=us-west-2
 }
 
 # ---------------------------------------------------------
