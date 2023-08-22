@@ -1,5 +1,39 @@
 #!/usr/bin/env bash
 
+# SOURCE: https://rtx.pub/install.sh
+#region environment setup
+get_os() {
+  os="$(uname -s)"
+  if [ "$os" = Darwin ]; then
+    echo "macos"
+  elif [ "$os" = Linux ]; then
+    echo "linux"
+  else
+    error "unsupported OS: $os"
+  fi
+}
+
+# SOURCE: https://rtx.pub/install.sh
+get_arch() {
+  arch="$(uname -m)"
+  if [ "$arch" = x86_64 ]; then
+    echo "x64"
+  elif [ "$arch" = aarch64 ] || [ "$arch" = arm64 ]; then
+    echo "arm64"
+  else
+    error "unsupported architecture: $arch"
+  fi
+}
+
+CURRENT_OS="$(get_os)"
+# shellcheck disable=SC2034  # Unused variables left for readability
+CURRENT_ARCH="$(get_arch)"
+
+get_system() {
+  os="$(get_os)"
+  arch="$(get_arch)"
+}
+
 if [ ! -f ~/.cargo/env ]; then
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
   source "$HOME"/.cargo/env
@@ -14,29 +48,32 @@ mkdir -p ~/.local/src || true
 # cd nvim-install
 # git checkout 29370c9b89963539bbe36ca1aa4cd1dbd1bcfb53 || true
 
-if [ ! -d /usr/local/n ]; then
-  set +e
-  # need nodejs
-  curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s lts
-  npm install -g n
-  set -e
-else
-  echo "n already installed. skipping"
+if [ "$CURRENT_OS" = "centos" ]; then
+  if [ ! -d /usr/local/n ]; then
+    set +e
+    # need nodejs
+    curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s lts
+    npm install -g n
+    set -e
+  else
+    echo "n already installed. skipping"
+  fi
 fi
 
 mkdir -p ~/.local/src || true
-
-if [ "$(uname -m)" = "aarch64" ]; then
-  set +e
-  asdf uninstall neovim || true
-  git clone -b v0.9.0 https://github.com/neovim/neovim ~/.local/src/neovim
-  cd ~/.local/src/neovim || exit
-  make CMAKE_BUILD_TYPE=RelWithDebInfo
-  make install
-  nvim --version
-  set -e
-else
-  echo "not centos or aarch64. skipping"
+if [ "$CURRENT_OS" = "macos" ]; then
+  if [ "$(uname -m)" = "aarch64" ]; then
+    set +e
+    asdf uninstall neovim || true
+    git clone -b v0.9.1 https://github.com/neovim/neovim ~/.local/src/neovim
+    cd ~/.local/src/neovim || exit
+    make CMAKE_BUILD_TYPE=RelWithDebInfo
+    make install
+    nvim --version
+    set -e
+  else
+    echo "not centos or aarch64. skipping"
+  fi
 fi
 
 # FIXME: Note, neovim for asdf doesn't work on arm machines yet.
@@ -122,26 +159,27 @@ display_tarball_platform_underscore() {
   echo "${os}_${arch}"
 }
 
-# Get the name of the operating system
-os_name=$(cat /etc/os-release | grep -oP '^NAME="\K[^"]+')
-
-# Check if the operating system is Ubuntu
-if [ "${os_name}" = "Ubuntu" ]; then
-  echo "The operating system is Ubuntu."
-  sudo apt install luarocks -y
-  sudo luarocks install luacheck
-  curl -L "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-$(display_tarball_platform_dash)" >~/.local/bin/hadolint &&
-    chmod +x ~/.local/bin/hadolint &&
-    pip install vim-vint &&
-    npm install -g @fsouza/prettierd &&
-    pip install yapf flake8 black &&
-    cd ~/.local/src &&
-    wget "https://github.com/errata-ai/vale/releases/download/v2.26.0/vale_2.26.0_$(display_tarball_platform_underscore).tar.gz" -O vale.tar.gz &&
-    tar -xvzf vale.tar.gz -C ~/.local/bin &&
-    rm vale.tar.gz &&
-    npm install -g markdownlint-cli
-else
-  echo "The operating system is not Ubuntu."
+if [ "$CURRENT_OS" != "macos" ]; then
+  # shellcheck disable=SC2002 # Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead
+  os_name=$(cat /etc/os-release | grep -oP '^NAME="\K[^"]+')
+  # Check if the operating system is Ubuntu
+  if [ "${os_name}" = "Ubuntu" ]; then
+    echo "The operating system is Ubuntu."
+    sudo apt install luarocks -y
+    sudo luarocks install luacheck
+    curl -L "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-$(display_tarball_platform_dash)" >~/.local/bin/hadolint &&
+      chmod +x ~/.local/bin/hadolint &&
+      pip install vim-vint &&
+      npm install -g @fsouza/prettierd &&
+      pip install yapf flake8 black &&
+      cd ~/.local/src &&
+      wget "https://github.com/errata-ai/vale/releases/download/v2.26.0/vale_2.26.0_$(display_tarball_platform_underscore).tar.gz" -O vale.tar.gz &&
+      tar -xvzf vale.tar.gz -C ~/.local/bin &&
+      rm vale.tar.gz &&
+      npm install -g markdownlint-cli
+  else
+    echo "The operating system is not Ubuntu."
+  fi
 fi
 
 echo "run the following when confirmed installed"
