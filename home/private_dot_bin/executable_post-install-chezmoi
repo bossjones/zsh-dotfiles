@@ -60,21 +60,21 @@ if [ "$CURRENT_OS" = "centos" ]; then
   fi
 fi
 
-mkdir -p ~/.local/src || true
-if [ "$CURRENT_OS" = "macos" ]; then
-  if [ "$(uname -m)" = "aarch64" ]; then
-    set +e
-    asdf uninstall neovim || true
-    git clone -b v0.9.1 https://github.com/neovim/neovim ~/.local/src/neovim
-    cd ~/.local/src/neovim || exit
-    make CMAKE_BUILD_TYPE=RelWithDebInfo
-    make install
-    nvim --version
-    set -e
-  else
-    echo "not centos or aarch64. skipping"
-  fi
-fi
+# mkdir -p ~/.local/src || true
+# if [ "$CURRENT_OS" != "macos" ]; then
+#   if [ "$(uname -m)" = "aarch64" ]; then
+#     set +e
+#     asdf uninstall neovim 0.9.1 || true
+#     git clone -b v0.9.1 https://github.com/neovim/neovim ~/.local/src/neovim
+#     cd ~/.local/src/neovim || exit
+#     make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=~/.local
+#     make install
+#     nvim --version
+#     set -e
+#   else
+#     echo "not centos or aarch64. skipping"
+#   fi
+# fi
 
 # FIXME: Note, neovim for asdf doesn't work on arm machines yet.
 # FIXME: You need to compile from SOURCE.
