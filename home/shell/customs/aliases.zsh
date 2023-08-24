@@ -1026,6 +1026,40 @@ klam_env() {
     export AWS_DEFAULT_REGION=us-west-2
 }
 
+get_all_images(){
+    image_list=$(fd -p -e jpg -e png -e jpeg)
+    echo "$image_list"
+}
+
+get_all_videos(){
+    video_list=$(fd -p -e mp4)
+    echo "$video_list"
+}
+
+image_prepare_primary_color(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}_larger{p.suffix}\")")"
+    primary_color=$(magick "${full_path_input_file}" -format "%[hex:p{0,0}]" info:)
+
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+    echo -e "primary_color: ${primary_color}\n"
+
+    convert -size 1080x1350 xc:#${primary_color} background.png
+
+    magick "${full_path_input_file}" -resize 1080x1350 -background "#${primary_color}" -compose Copy -gravity center -extent 1080x1350 -quality 92 "${full_path_output_file}"
+    rm -f background.png
+}
+
+prepare_images_pc(){
+    fd -p -e jpg -e png -e jpeg -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+}
+
+prepare_videos_pc(){
+    fd -p -e mp4 -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
+}
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
