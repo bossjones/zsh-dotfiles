@@ -167,7 +167,7 @@ if [ "$CURRENT_OS" != "macos" ]; then
   # Check if the operating system is Ubuntu
   if [ "${os_name}" = "Ubuntu" ]; then
     echo "The operating system is Ubuntu."
-    sudo apt install luarocks -y
+    sudo apt install luarocks neofetch -y
     sudo luarocks install luacheck
     curl -L "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-$(display_tarball_platform_dash)" >~/.local/bin/hadolint &&
       chmod +x ~/.local/bin/hadolint &&
