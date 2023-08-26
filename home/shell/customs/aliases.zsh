@@ -1060,6 +1060,20 @@ prepare_videos_pc(){
     fd -p -e mp4 -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
 }
 
+dl-hls() {
+    # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
+    pyenv activate yt-dlp3 || true
+    # yt-dlp -S 'res:500' --downloader ffmpeg --downloader-args "ffmpeg:-t 180" -o testingytdlp-180.mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
+    yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
+}
+
+dl-hls-b() {
+    # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
+    pyenv activate yt-dlp3 || true
+    # yt-dlp -S 'res:500' --downloader ffmpeg --downloader-args "ffmpeg:-t 180" -o testingytdlp-180.mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
+    yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies-from-browser chrome:/Users/malcolm/Library/Application\ Support/Google/Chrome/Profile\ 11 ${1}
+}
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
