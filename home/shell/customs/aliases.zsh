@@ -1060,6 +1060,11 @@ prepare_videos_pc(){
     fd -p -e mp4 -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
 }
 
+prepare_dir_all(){
+    prepare_images_pc
+    prepare_videos_pc
+}
+
 dl-hls() {
     # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
     pyenv activate yt-dlp3 || true
