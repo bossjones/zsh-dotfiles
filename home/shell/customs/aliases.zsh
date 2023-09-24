@@ -1065,6 +1065,8 @@ prepare_dir_all(){
     prepare_videos_pc
 }
 
+alias prepare_all="prepare_dir_all"
+
 dl-hls() {
     # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
     pyenv activate yt-dlp3 || true
