@@ -864,6 +864,10 @@ kx(){
 
 alias ck='\cat ~/dev/adobe-platform/k8s-kubeconfig/kubeconfig.yaml | grep name | grep - | grep -v '\''^-'\'' | awk '\''{print $2}'\'
 
+get_open_ports(){
+    lsof -i -P | grep -i "listen"
+}
+
 prepare_for_ig_large(){
     # full_path_input_file=$1
     # full_path_output_file=fast.mp4
@@ -1015,6 +1019,69 @@ mov_to_mp4(){
     -threads 16 \
     -preset:v fast "${full_path_output_file}"
 }
+
+klam_env() {
+    echo "setting klam env to us-west-2 ..."
+    export KLAM_BROWSER="Google Chrome"
+    export AWS_DEFAULT_REGION=us-west-2
+}
+
+get_all_images(){
+    image_list=$(fd -p -e jpg -e png -e jpeg)
+    echo "$image_list"
+}
+
+get_all_videos(){
+    video_list=$(fd -p -e mp4)
+    echo "$video_list"
+}
+
+image_prepare_primary_color(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}_larger{p.suffix}\")")"
+    primary_color=$(magick "${full_path_input_file}" -format "%[hex:p{0,0}]" info:)
+
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+    echo -e "primary_color: ${primary_color}\n"
+
+    convert -size 1080x1350 xc:#${primary_color} background.png
+
+    magick "${full_path_input_file}" -resize 1080x1350 -background "#${primary_color}" -compose Copy -gravity center -extent 1080x1350 -quality 92 "${full_path_output_file}"
+    rm -f background.png
+}
+
+prepare_images_pc(){
+    fd -p -e jpg -e png -e jpeg -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+}
+
+prepare_videos_pc(){
+    fd -p -e mp4 -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
+}
+
+prepare_dir_all(){
+    prepare_images_pc
+    prepare_videos_pc
+}
+
+alias prepare_all="prepare_dir_all"
+
+dl-hls() {
+    # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
+    pyenv activate yt-dlp3 || true
+    # yt-dlp -S 'res:500' --downloader ffmpeg --downloader-args "ffmpeg:-t 180" -o testingytdlp-180.mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
+    yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
+}
+
+dl-hls-b() {
+    # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
+    pyenv activate yt-dlp3 || true
+    # yt-dlp -S 'res:500' --downloader ffmpeg --downloader-args "ffmpeg:-t 180" -o testingytdlp-180.mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
+    yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies-from-browser chrome:/Users/malcolm/Library/Application\ Support/Google/Chrome/Profile\ 11 ${1}
+}
+
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh

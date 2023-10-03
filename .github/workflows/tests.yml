@@ -22,16 +22,29 @@ jobs:
 
   tests:
     runs-on: macos-12
+    strategy:
+      matrix:
+        python-version: ['3.10']
+
     steps:
       - name: Set up Git repository
-        uses: actions/checkout@main
+        # uses: actions/checkout@main
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: 'requirements-test.txt'
+
 
       # - run: brew test-bot --only-cleanup-before
 
       - name: brew taps
         run: |
-            brew tap homebrew/cask || true
-            brew tap homebrew/core || true
+            # brew tap homebrew/cask || true
+            # brew tap homebrew/core || true
             brew tap schniz/tap || true
 
       - name: Run zsh-dotfiles-prep
@@ -42,8 +55,8 @@ jobs:
           ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
           ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
         run: |
-            brew tap homebrew/cask || true
-            brew tap homebrew/core || true
+            # brew tap homebrew/cask || true
+            # brew tap homebrew/core || true
             brew tap schniz/tap || true
 
             echo "~/bin" >> $GITHUB_PATH
@@ -61,8 +74,8 @@ jobs:
           ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
           ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
         run: |
-            brew tap homebrew/cask || true
-            brew tap homebrew/core || true
+            # brew tap homebrew/cask || true
+            # brew tap homebrew/core || true
             brew tap schniz/tap || true
 
             echo "~/bin" >> $GITHUB_PATH
@@ -90,5 +103,24 @@ jobs:
 
           retry -t 4  -- ~/.bin/chezmoi init -R --debug -v --apply --force --source=.
 
+      - name: pytest
+        run: |
+          exec zsh
+          echo "~/bin" >> $GITHUB_PATH
+          echo "~/.bin" >> $GITHUB_PATH
+          echo "~/.local/bin" >> $GITHUB_PATH
+          export PATH="~/.bin:~/bin:~/.local/bin:$PATH"
+          pwd
+          ls -lta
+          python -m venv venv
+          source ./venv/bin/activate
+          pip install -r requirements-test.txt
+          export ASDF_DIR="${HOME}/.asdf"
+          export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+          . $HOME/.asdf/asdf.sh
+          # export PATH="$HOME/.asdf/shims:$HOME/.asdf/bin:$PATH"
+          echo "$HOME/.asdf/bin" >> $GITHUB_PATH
+          echo "$HOME/.asdf/shims" >> $GITHUB_PATH
 
-
+          make test
+        # shell: zsh
