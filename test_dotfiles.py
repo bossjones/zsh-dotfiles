@@ -181,7 +181,7 @@ class TestDotfiles:
         assert env is not None, "Cannot find usable `env` in PATH."
 
 
-        tmux_fake_session.new_window(attach=True, window_name="test_pure_prompt", window_shell=f"{env} PURE_PROMPT_SYMBOL='❯' zsh")
+        tmux_fake_session.new_window(attach=True, window_name="test_pure_prompt", window_shell=f"{env} PURE_PROMPT_SYMBOL='>' zsh")
 
         # takes a couple seconds to start up
         time.sleep(5)
@@ -193,16 +193,16 @@ class TestDotfiles:
 
         pane.enter()
         pane_contents = "\n".join(pane.capture_pane())
-        assert "❯" in pane_contents
+        assert ">" in pane_contents
 
         # pane.send_keys(r'printf "%s"', literal=True, suppress_history=False)
         # pane_contents = "\n".join(pane.capture_pane())
-        # assert pane_contents == '❯ printf "%s"\n❯'
+        # assert pane_contents == '> printf "%s"\n>'
 
         pane.send_keys("clear -x", literal=True, suppress_history=False)
         pane_contents = "\n".join(pane.capture_pane())
 
-        assert '❯' in pane_contents
+        assert '>' in pane_contents
 
 
     def test_aliases(self, tmux_fake_session: Session) -> None:
@@ -221,7 +221,7 @@ class TestDotfiles:
         assert env is not None, "Cannot find usable `env` in PATH."
 
 
-        tmux_fake_session.new_window(attach=True, window_name="test_pure_prompt", window_shell=f"{env} PURE_PROMPT_SYMBOL='❯' zsh")
+        tmux_fake_session.new_window(attach=True, window_name="test_pure_prompt", window_shell=f"{env} PURE_PROMPT_SYMBOL='>' zsh")
 
         # takes a couple seconds to start up
         time.sleep(5)
@@ -247,13 +247,13 @@ class TestDotfiles:
         pane.send_keys("clear -x", literal=True, suppress_history=False)
         time.sleep(3)
         pane_contents = "\n".join(pane.capture_pane())
-        assert '❯' in pane_contents
+        assert '>' in pane_contents
 
         pane.send_keys('typeset -f dl-hls\n', literal=True, suppress_history=False)
         pane_contents = "\n".join(pane.capture_pane())
 
         # TODO: Figure out how to expand width of pane to fit output
-        expected_contents = """❯ typeset -f dl-hls
+        expected_contents = """> typeset -f dl-hls
 dl-hls () {
         pyenv activate yt-dlp3 || true
         yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Do
