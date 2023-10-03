@@ -105,6 +105,7 @@ jobs:
 
       - name: pytest
         run: |
+          exec zsh
           echo "~/bin" >> $GITHUB_PATH
           echo "~/.bin" >> $GITHUB_PATH
           echo "~/.local/bin" >> $GITHUB_PATH
@@ -122,4 +123,4 @@ jobs:
           echo "$HOME/.asdf/shims" >> $GITHUB_PATH
 
           make test
-        shell: zsh
+        # shell: zsh
