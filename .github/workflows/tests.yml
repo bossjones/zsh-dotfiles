@@ -89,3 +89,17 @@ jobs:
           export PATH="~/.bin:~/bin:~/.local/bin:$PATH"
 
           retry -t 4  -- ~/.bin/chezmoi init -R --debug -v --apply --force --source=.
+
+      - name: pytest
+        run: |
+          echo "~/bin" >> $GITHUB_PATH
+          echo "~/.bin" >> $GITHUB_PATH
+          echo "~/.local/bin" >> $GITHUB_PATH
+          export PATH="~/.bin:~/bin:~/.local/bin:$PATH"
+          pwd
+          ls -lta
+          python -m venv venv
+          source ./venv/bin/activate
+          pip install -r requirements-test.txt
+
+          make test

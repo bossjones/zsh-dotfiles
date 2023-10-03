@@ -7,3 +7,4 @@ better_exceptions
 rich
 bpython
 ptpython
+coverage

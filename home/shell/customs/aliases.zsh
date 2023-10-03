@@ -1081,6 +1081,8 @@ dl-hls-b() {
     yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies-from-browser chrome:/Users/malcolm/Library/Application\ Support/Google/Chrome/Profile\ 11 ${1}
 }
 
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
