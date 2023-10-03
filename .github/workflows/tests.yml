@@ -122,3 +122,4 @@ jobs:
           echo "$HOME/.asdf/shims" >> $GITHUB_PATH
 
           make test
+        shell: zsh
