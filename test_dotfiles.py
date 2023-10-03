@@ -169,6 +169,10 @@ def tmux_fake_session(
     return session
 
 class TestDotfiles:
+    @pytest.mark.skipif(
+        os.getenv("GITHUB_ACTOR"),
+        reason="These tests are meant to only run locally on laptop prior to porting it over to new system",
+    )
     def test_pure_prompt(self, tmux_fake_session: Session) -> None:
         """Verify pure prompt is initialized
 
