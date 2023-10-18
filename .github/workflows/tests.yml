@@ -93,8 +93,10 @@ jobs:
           ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
           ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
         run: |
-          pwd
-          ls -lta
+          set -x;pwd
+          set -x;ls -lta
+          set -x;ls -lta ~/.bin
+          set +x
 
           echo "~/bin" >> $GITHUB_PATH
           echo "~/.bin" >> $GITHUB_PATH
