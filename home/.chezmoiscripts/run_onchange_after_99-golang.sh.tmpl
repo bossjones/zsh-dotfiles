@@ -1,0 +1,40 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+
+#!/usr/bin/env zsh
+
+# NOTE: I modified this after seeing how he treats certain conditionals
+# https://github.com/mcornella/dotfiles/blob/main/zshenv
+OS_NAME="$(/usr/bin/uname -s)"
+UNAME_MACHINE="$(/usr/bin/uname -m)"
+if [ "$OS_NAME" = "Darwin" ]; then
+    if [ "$UNAME_MACHINE" = "arm64" ]; then
+        test -d "/opt/homebrew/opt/go" && {
+            export PATH="/opt/homebrew/opt/go/bin:${PATH}"
+            export PATH=$GOPATH/bin:$PATH
+            export PATH="$HOME/go/bin:$PATH"
+            alias cdgo='CDPATH=.:$GOPATH/src/github.com:$GOPATH/src/golang.org:$GOPATH/src'
+        }
+    else
+        test -d "/usr/local/go" && {
+            export PATH="/usr/local/go/bin:${PATH}"
+            export PATH=$GOPATH/bin:$PATH
+            export PATH="$HOME/go/bin:$PATH"
+            alias cdgo='CDPATH=.:$GOPATH/src/github.com:$GOPATH/src/golang.org:$GOPATH/src'
+        }
+    fi
+fi
+
+if [ "$OS_NAME" = "Linux" ]; then
+    test -d "$HOME/.goenv" && {
+        export GOENV_ROOT="$HOME/.goenv"
+        export PATH="$GOENV_ROOT/bin:$PATH"
+        eval "$(goenv init -)"
+        export PATH="$GOROOT/bin:$PATH"
+        export PATH="$PATH:$GOPATH/bin"
+    }
+fi
+
+go install golang.org/x/tools/gopls@latest
+
+
+{{ end -}}

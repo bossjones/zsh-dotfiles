@@ -8,10 +8,9 @@
 test -d "/opt/homebrew/opt/go" && {
   export PATH="/opt/homebrew/opt/go/bin:${PATH}"
   export PATH=$GOPATH/bin:$PATH
+  export PATH="$HOME/go/bin:$PATH"
   alias cdgo='CDPATH=.:$GOPATH/src/github.com:$GOPATH/src/golang.org:$GOPATH/src'
 }
-
-
 
 test -d "$HOME/.goenv" && {
   export GOENV_ROOT="$HOME/.goenv"

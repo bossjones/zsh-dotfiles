@@ -220,6 +220,7 @@ class TestDotfiles:
         env = shutil.which("env")
         assert env is not None, "Cannot find usable `env` in PATH."
 
+        # breakpoint()
 
         tmux_fake_session.new_window(attach=True, window_name="test_pure_prompt", window_shell=f"{env} PURE_PROMPT_SYMBOL='>' zsh")
 
@@ -259,4 +260,56 @@ dl-hls () {
         yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Do
 wnloads/yt-cookies.txt ${1}
 }"""
+        assert expected_contents in pane_contents
+
+    def test_golang(self, tmux_fake_session: Session) -> None:
+        """Verify golang installed correctly
+
+
+        ~/go/src/git.corp.adobe.com
+        ❯ whence gopls
+        /Users/malcolm/go/bin/gopls
+
+
+
+        """
+        env = shutil.which("env")
+        assert env is not None, "Cannot find usable `env` in PATH."
+
+        # breakpoint()
+
+        tmux_fake_session.new_window(attach=True, window_name="test_pure_prompt", window_shell=f"{env} PURE_PROMPT_SYMBOL='>' zsh")
+
+        # takes a couple seconds to start up
+        time.sleep(5)
+
+        attached_window: libtmux.window.Window = tmux_fake_session.attached_window
+        attached_window.select_layout("main-vertical")
+
+        attached_window.set_window_option("main-pane-height", 80)
+        assert attached_window.show_window_option("main-pane-height") == 80
+
+
+        # get current window
+        pane: libtmux.pane.Pane = attached_window.attached_pane
+        assert pane is not None
+        pane.clear()
+        pane.resize_pane(height=60)
+        pane.set_height(60)
+        pane.set_width(60)
+
+        pane.enter()
+        time.sleep(3)
+
+        pane.send_keys("clear -x", literal=True, suppress_history=False)
+        time.sleep(3)
+        pane_contents = "\n".join(pane.capture_pane())
+
+
+        pane.send_keys('whence gopls\n', literal=True, suppress_history=False)
+        pane_contents = "\n".join(pane.capture_pane())
+
+        # TODO: Figure out how to expand width of pane to fit output
+        expected_contents = """> whence gopls
+/Users/malcolm/go/bin/gopls"""
         assert expected_contents in pane_contents
