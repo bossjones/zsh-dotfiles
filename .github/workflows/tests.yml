@@ -102,18 +102,18 @@ jobs:
           ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
           ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
         run: |
-          set -x;pwd
-          set -x;ls -lta
-          set -x;ls -lta ~/.bin
-          set +x
+          # set -x;pwd
+          # set -x;ls -lta
+          # set -x;ls -lta ~/.bin
+          # set +x
 
           echo "~/bin" >> $GITHUB_PATH
           echo "~/.bin" >> $GITHUB_PATH
           echo "~/.local/bin" >> $GITHUB_PATH
           export PATH="~/.bin:~/bin:~/.local/bin:$PATH"
-          set -x;which chezmoi
-          set -x;whence chezmoi
-          set +x
+          # set -x;which chezmoi
+          # set -x;whence chezmoi
+          # set +x
 
           retry -t 4  -- ~/.bin/chezmoi init -R --debug -v --apply --force --source=.
 
