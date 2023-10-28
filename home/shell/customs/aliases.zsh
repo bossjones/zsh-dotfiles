@@ -1277,12 +1277,12 @@ klam_env() {
 }
 
 get_all_images(){
-    image_list=$(fd -p -e jpg -e png -e jpeg)
+    image_list=$(fd -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*')
     echo "$image_list"
 }
 
 get_all_videos(){
-    video_list=$(fd -p -e mp4)
+    video_list=$(fd -p -e mp4 --exclude '*larger*' --exclude '*smaller*')
     echo "$video_list"
 }
 
@@ -1303,11 +1303,11 @@ image_prepare_primary_color(){
 }
 
 prepare_images_pc(){
-    fd -p -e jpg -e png -e jpeg -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+    fd -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
 }
 
 prepare_videos_pc(){
-    fd -p -e mp4 -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
+    fd -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
 }
 
 prepare_dir_all(){
@@ -1334,7 +1334,7 @@ dl-hls-b() {
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 prepare_videos_small(){
-    fd -p -e mp4 -x zsh -ic 'prepare_for_ig_small "$1"' zsh
+    fd -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_small "$1"' zsh
 }
 
 prepare_dir_small(){
