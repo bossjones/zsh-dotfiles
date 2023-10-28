@@ -1344,6 +1344,14 @@ prepare_dir_small(){
 
 alias prepare_all_small="prepare_dir_small"
 
+dl-twitter() {
+    pyenv activate yt-dlp3 || true
+    echo " [running]: gallery-dl --no-mtime -v --write-info-json --write-metadata ${1}"
+    gallery-dl --no-mtime -v --write-info-json --write-metadata ${1}
+}
+
+alias dlt="dl-twitter"
+
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).
