@@ -418,7 +418,7 @@ open_ig_hashtag() {
 split_scenes(){
     pyenv activate yt-dlp3 || true
     echo '#!/usr/bin/env bash' > redo.sh
-    [ "$(ls *.mp4 | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*mp4*; do echo scenedetect -i "$filename" -o processed/ detect-content split-video; done >> redo.sh
+    [ "$(ls *.mp4 | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*mp4*; do echo scenedetect -i "$filename" -o processed/ split-video; done >> redo.sh
     echo "Script created. cat redo.sh"
     cat redo.sh
     chmod +x redo.sh
@@ -1351,6 +1351,32 @@ dl-twitter() {
 }
 
 alias dlt="dl-twitter"
+
+download_file() {
+  # Check if the argument is provided
+  if [ -z "$1" ]; then
+    echo "Error: URL argument is missing."
+    echo "Usage example: "
+    echo 'download_file "https://d2dsm5y8gyd937.cloudfront.net/82K9-0R59AC4T8B71IVKU.mp4"'
+    return 1
+  fi
+
+  # Parse the filename from the URL
+  filename=$(basename "$1")
+
+  # Use curl to download the file
+  curl -o "$filename" "$1"
+
+  # Check if the download was successful
+  if [ $? -eq 0 ]; then
+    echo "Download successful. File saved as: $filename"
+  else
+    echo "Error: Download failed."
+  fi
+}
+
+
+
 
 # export _LOGGING_RESET='\e[0m'
 
