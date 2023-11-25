@@ -426,6 +426,17 @@ split_scenes(){
     ./redo.sh
 }
 
+split_scenes_content(){
+    pyenv activate yt-dlp3 || true
+    echo '#!/usr/bin/env bash' > redo.sh
+    [ "$(ls *.mp4 | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*mp4*; do echo scenedetect -i "$filename" detect-content --threshold 70.0 split-video -o processed/; done >> redo.sh
+    echo "Script created. cat redo.sh"
+    cat redo.sh
+    chmod +x redo.sh
+    mkdir -p processed/ || true
+    ./redo.sh
+}
+
 tmux-copy-screen () {
         # _zsh_tmux_plugin_run capture-pane -pS -1000000 > file.out
         tmux capture-pane -pS -1000000 > file.out
