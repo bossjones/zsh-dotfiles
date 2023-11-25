@@ -1317,6 +1317,24 @@ prepare_dir_all(){
 
 alias prepare_all="prepare_dir_all"
 
+# -
+
+# Normalized version
+prepare_images_n(){
+    fd -a --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+}
+
+prepare_videos_n(){
+    fd -a --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large "$1"' zsh
+}
+
+prepare_dir_all_n(){
+    prepare_images_n
+    prepare_videos_n
+}
+
+alias prepare_all_n="prepare_dir_all_n"
+
 dl-hls() {
     # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
     pyenv activate yt-dlp3 || true
@@ -1375,6 +1393,10 @@ download_file() {
   fi
 }
 
+dl-sub () {
+	echo " [running] yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}"
+	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}
+}
 
 
 
