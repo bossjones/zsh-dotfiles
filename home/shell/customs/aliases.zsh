@@ -1467,6 +1467,18 @@ prepare_re_encode(){
     fd -a --ignore -p -e mp4 --exclude '*reencoded*' -x zsh -ic 're_encode_videos "$1"' zsh
 }
 
+mp4_to_images(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    prefix_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}\")")"
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "prefix_output_file: ${prefix_output_file}\n"
+    ffmpeg -i "${full_path_input_file}" ${prefix_output_file}%04d.png
+}
+
+prepare_mp4_to_images(){
+    fd -a --ignore -p -e mp4 -x zsh -ic 'mp4_to_images "$1"' zsh
+}
+
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).

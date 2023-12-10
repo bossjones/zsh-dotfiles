@@ -40,4 +40,9 @@
       "dot_zshrc.local.tmpl": "shellscript",
       "dot_zshrc.tmpl": "shellscript",
   },
+  "[go][go.mod]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
 }
