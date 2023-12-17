@@ -1492,12 +1492,12 @@ gif_to_mp4(){
     prefix_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}\")")"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "prefix_output_file: ${prefix_output_file}\n"
-    ffmpeg -i "${full_path_input_file}" -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" "/path/to/mp4s/${prefix_output_file}.mp4"
+    ffmpeg -i "${full_path_input_file}" -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" "${prefix_output_file}.mp4"
 }
 
 
 prepare_gif(){
-    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg -e mp4 --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'gif_to_mp4 "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e gif --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'gif_to_mp4 "$1"' zsh
 }
 
 # export _LOGGING_RESET='\e[0m'
