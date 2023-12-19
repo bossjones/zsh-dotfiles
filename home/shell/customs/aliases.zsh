@@ -1500,6 +1500,18 @@ prepare_gif(){
     fd -a --max-depth=1 --ignore -p -e gif --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'gif_to_mp4 "$1"' zsh
 }
 
+git_search_history(){
+    git log --all -S "$1"
+}
+
+prepare_everything(){
+    prepare_gif
+    unzip_rm
+    webp_to_jpg
+    prepare_all
+    prepare_orig
+}
+
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).
