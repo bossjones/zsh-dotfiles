@@ -1512,6 +1512,14 @@ prepare_everything(){
     prepare_orig
 }
 
+prepare_everything_small(){
+    prepare_gif
+    unzip_rm
+    webp_to_jpg
+    prepare_all_small
+    prepare_orig
+}
+
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).
