@@ -686,6 +686,10 @@ unzip_rm(){
 	unzip \*.zip && rm *.zip
 }
 
+json_rm(){
+	rm *.json
+}
+
 
 yt-crunchyroll () {
 	pyenv activate cerebro_bot3 || true
@@ -1507,6 +1511,7 @@ git_search_history(){
 prepare_everything(){
     prepare_gif
     unzip_rm
+    json_rm
     webp_to_jpg
     prepare_all
     prepare_orig
@@ -1515,10 +1520,13 @@ prepare_everything(){
 prepare_everything_small(){
     prepare_gif
     unzip_rm
+    json_rm
     webp_to_jpg
     prepare_all_small
     prepare_orig
 }
+
+alias reddit_dl='yt-best-fork'
 
 # export _LOGGING_RESET='\e[0m'
 
