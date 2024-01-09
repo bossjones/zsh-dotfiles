@@ -846,6 +846,12 @@ webp_to_jpg(){
     mv -fv *.webp webps/
 }
 
+heic_to_jpg(){
+    mogrify -format jpg *.HEIC
+    mkdir heics || true
+    mv -fv *.HEIC heics/
+}
+
 # ----------------------
 # adobe
 # ----------------------
@@ -1502,6 +1508,7 @@ gif_to_mp4(){
 
 prepare_gif(){
     fd -a --max-depth=1 --ignore -p -e gif --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'gif_to_mp4 "$1"' zsh
+    rm -fv *.gif
 }
 
 git_search_history(){
@@ -1513,6 +1520,7 @@ prepare_everything(){
     unzip_rm
     json_rm
     webp_to_jpg
+    heic_to_jpg
     prepare_all
     prepare_orig
 }
@@ -1522,6 +1530,7 @@ prepare_everything_small(){
     unzip_rm
     json_rm
     webp_to_jpg
+    heic_to_jpg
     prepare_all_small
     prepare_orig
 }
