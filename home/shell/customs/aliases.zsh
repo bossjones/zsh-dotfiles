@@ -1342,11 +1342,11 @@ alias prepare_all="prepare_dir_all"
 
 # Normalized version
 prepare_images_n(){
-    fd -a --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
 }
 
 prepare_videos_n(){
-    fd -a --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large "$1"' zsh
 }
 
 prepare_dir_all_n(){
@@ -1374,7 +1374,7 @@ export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 
 prepare_videos_small(){
-    fd -a --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_small "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_small "$1"' zsh
 }
 
 prepare_dir_small(){
@@ -1477,7 +1477,7 @@ mv_orig_media(){
 }
 
 prepare_orig(){
-    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg -e mp4 --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mv_orig_media "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg -e mp4 -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mv_orig_media "$1"' zsh
 }
 
 show_images_pc(){
@@ -1511,6 +1511,12 @@ prepare_gif(){
     rm -fv *.gif
 }
 
+prepare_mov_to_mp4(){
+    fd -a --max-depth=1 --ignore -p -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mov_to_mp4 "$1"' zsh
+    rm -fv *.mov
+    rm -fv *.MOV
+}
+
 git_search_history(){
     git log --all -S "$1"
 }
@@ -1521,6 +1527,7 @@ prepare_everything(){
     json_rm
     webp_to_jpg
     heic_to_jpg
+    prepare_mov_to_mp4
     prepare_all
     prepare_orig
 }
@@ -1531,11 +1538,18 @@ prepare_everything_small(){
     json_rm
     webp_to_jpg
     heic_to_jpg
+    prepare_mov_to_mp4
     prepare_all_small
     prepare_orig
 }
 
 alias reddit_dl='yt-best-fork'
+
+download_magnet(){
+    # aria2c -d ~/Downloads --seed-time=0 "magnet:?xt=urn:btih:248D0A1CD08284299DE78D5C1ED359BB46717D8C"
+    echo 'aria2c -d ~/Downloads --seed-time=0 "${1}"'
+    # aria2c -d ~/Downloads --seed-time=0 "${1}"
+}
 
 # export _LOGGING_RESET='\e[0m'
 
