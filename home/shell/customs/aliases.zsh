@@ -1565,6 +1565,9 @@ EOF
 # See docs/kernel.md for details (please **update docs/kernel.md** if updating this file)
 fs.inotify.max_user_instances=8192
 fs.inotify.max_user_watches=128000
+fs.suid_dumpable=0
+kernel.core_pattern=|/dev/null
+kernel.dmesg_restrict=1
 kernel.pid_max=4194304
 net.core.netdev_max_backlog=300000
 net.core.rmem_default=1048576
