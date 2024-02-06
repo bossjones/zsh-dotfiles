@@ -1619,6 +1619,73 @@ EOF
 
 }
 
+
+
+# examples:
+#     ./execsnoop                      # trace all exec() syscalls
+#     ./execsnoop -x                   # include failed exec()s
+#     ./execsnoop -T                   # include time (HH:MM:SS)
+#     ./execsnoop -P 181               # only trace new processes whose parent PID is 181
+#     ./execsnoop -U                   # include UID
+#     ./execsnoop -u 1000              # only trace UID 1000
+#     ./execsnoop -u user              # get user UID and trace only them
+#     ./execsnoop -t                   # include timestamps
+#     ./execsnoop -q                   # add "quotemarks" around arguments
+#     ./execsnoop -n main              # only print command lines containing "main"
+#     ./execsnoop -l tpkg              # only print command where arguments contains "tpkg"
+#     ./execsnoop --cgroupmap mappath  # only trace cgroups in this BPF map
+#     ./execsnoop --mntnsmap mappath   # only trace mount namespaces in the map
+
+# examples:
+#     ./opensnoop                        # trace all open() syscalls
+#     ./opensnoop -T                     # include timestamps
+#     ./opensnoop -U                     # include UID
+#     ./opensnoop -x                     # only show failed opens
+#     ./opensnoop -p 181                 # only trace PID 181
+#     ./opensnoop -t 123                 # only trace TID 123
+#     ./opensnoop -u 1000                # only trace UID 1000
+#     ./opensnoop -d 10                  # trace for 10 seconds only
+#     ./opensnoop -n main                # only print process names containing "main"
+#     ./opensnoop -e                     # show extended fields
+#     ./opensnoop -f O_WRONLY -f O_RDWR  # only print calls for writing
+#     ./opensnoop -F                     # show full path for an open file with relative path
+#     ./opensnoop --cgroupmap mappath    # only trace cgroups in this BPF map
+#     ./opensnoop --mntnsmap mappath     # only trace mount namespaces in the map
+
+# examples:
+#     ./ext4slower             # trace operations slower than 10 ms (default)
+#     ./ext4slower 1           # trace operations slower than 1 ms
+#     ./ext4slower -j 1        # ... 1 ms, parsable output (csv)
+#     ./ext4slower 0           # trace all operations (warning: verbose)
+#     ./ext4slower -p 185      # trace PID 185 only
+
+system_analysis_bcc() {
+    mkdir -p ~/analysis/$(date +%Y%m%d)/ || true
+#   sudo /usr/share/bcc/tools/opensnoop -TUe
+    sudo /bin/python3 /usr/share/bcc/tools/execsnoop -xTUt > ~/analysis/$(date +%Y%m%d)/execsnoop.log
+    sudo /bin/python3 /usr/share/bcc/tools/opensnoop -TUFe -d 10 > ~/analysis/$(date +%Y%m%d)/opensnoop.log
+    sudo /bin/python3 /usr/share/bcc/tools/ext4slower > ~/analysis/$(date +%Y%m%d)/ext4slower.log
+#   sudo /bin/python3 /usr/share/bcc/tools/sofdsnoop -d 10
+#   sudo /bin/python3 /usr/share/bcc/tools/syscount
+#   sudo /bin/python3 /usr/share/bcc/tools/syscount -P
+#   sudo /bin/python3 /usr/share/bcc/tools/syscount -P -d 30
+#   sudo /bin/python3 /usr/share/bcc/tools/ext4dist -m 5
+execsnoop
+opensnoop
+ext4slower (or btrfs*, xfs*, zfs*)
+biolatency
+biosnoop
+cachestat
+tcpconnect
+tcpaccept
+tcpretrans
+runqlat
+profile
+
+
+
+}
+
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).
