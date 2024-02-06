@@ -1,4 +1,5 @@
-#!/usr/bin/env bash -x
+#!/usr/bin/env bash
+set -x
 
 # SOURCE: https://github.com/philkuz/pixie/blob/main/experimental/bcc_perf/bcc_commands.sh
 
@@ -51,29 +52,36 @@ while getopts 'hi:t:o:' c; do
   esac
 done
 
-# mount -t debugfs none /sys/kernel/debug
-sudo cd /usr/share/bcc/tools
+# mount -t debugfs none || exit /sys/kernel/debug
+cd /usr/share/bcc/tools || exit
 sudo mkdir -p bcc_data
 sudo mkdir -p "$outdir"
 
-echo -- sudo env >./"$outdir"/env.txt
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/cachestat -T "$interval_secs" >./"$outdir"/cachestat.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/execsnoop >./"$outdir"/execsnoop.txt &
-# sudo /bin/python3 /usr/share/bcc/tools/opensnoop -d "$capture_secs" >./"$outdir"/opensnoop.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/ext4slower >./"$outdir"/ext4slower.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/biolatency >./"$outdir"/biolatency.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/biosnoop >./"$outdir"/biosnoop.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/tcpconnect >./"$outdir"/tcpconnect.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/tcpaccept >./"$outdir"/tcpaccept.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/tcpretrans >./"$outdir"/tcpretrans.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/runqlat >./"$outdir"/runqlat.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/profile >./"$outdir"/profile.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/funccount 'vfs_*' >./"$outdir"/funccount_vfs.txt &
-# sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/funccount 'c:malloc_*' >./"$outdir"/funccount_malloc.txt &
+sudo env | sudo tee ./"$outdir"/env.txt
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/cachestat -T "$interval_secs" | sudo tee ./"$outdir"/cachestat.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/execsnoop | sudo tee ./"$outdir"/execsnoop.txt &
+sudo /bin/python3 /usr/share/bcc/tools/opensnoop -d "$capture_secs" | sudo tee ./"$outdir"/opensnoop.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/ext4slower | sudo tee ./"$outdir"/ext4slower.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/biolatency | sudo tee ./"$outdir"/biolatency.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/biosnoop | sudo tee ./"$outdir"/biosnoop.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/tcpconnect | sudo tee ./"$outdir"/tcpconnect.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/tcpaccept | sudo tee ./"$outdir"/tcpaccept.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/tcpretrans | sudo tee ./"$outdir"/tcpretrans.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/runqlat | sudo tee ./"$outdir"/runqlat.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/profile | sudo tee ./"$outdir"/profile.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/funccount 'vfs_*' | sudo tee ./"$outdir"/funccount_vfs.txt &
+sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/funccount 'c:malloc_*' | sudo tee ./"$outdir"/funccount_malloc.txt &
+sudo lsof | sudo tee ./"$outdir"/lsof.txt &
+sudo ps auxef | sudo tee ./"$outdir"/ps.txt &
+sudo dpkg -l | sudo tee ./"$outdir"/ps.txt &
 
-# sleep $(expr "$capture_secs" + 30)
-# sudo mkdir -p bcc_data/"$outdir"
+sleep $(expr "$capture_secs" + 30)
+sudo mkdir -p bcc_data/"$outdir"
 # # gcsfuse takes its sweet time to create a directory
-# sleep 10
-# sudo cp -rf "$outdir"/*.txt bcc_data/"$outdir"/
-# sudo sync -f bcc_data/"$outdir"/*.txt
+sleep 10
+sudo cp -rf "$outdir"/*.txt bcc_data/"$outdir"/
+sudo sync -f bcc_data/"$outdir"/*.txt
+sudo chown pi:pi -R bcc_data
+tree bcc_data
+
+find /usr/share/bcc/tools/bcc_data -type f -name '*.txt' -exec cat {} \;
