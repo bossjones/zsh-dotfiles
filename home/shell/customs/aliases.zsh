@@ -1551,6 +1551,71 @@ download_magnet(){
     # aria2c -d ~/Downloads --seed-time=0 "${1}"
 }
 
+kernel_tuning(){
+    cat << EOF | sudo tee /etc/security/limits.d/limits.conf
+# see /usr/lib/pam/limits.conf for documentation
+# see docs/kernel.md for more details
+# update the docs if updating this file
+#
+# 1048576 == 2**20; https://stackoverflow.com/a/1213069/4179075
+* soft nofile 1048576
+* hard nofile 1048576
+EOF
+    cat << EOF | sudo tee /etc/sysctl.d/00-kernel-tuning.conf
+# See docs/kernel.md for details (please **update docs/kernel.md** if updating this file)
+fs.inotify.max_user_instances=8192
+fs.inotify.max_user_watches=128000
+kernel.pid_max=4194304
+net.core.netdev_max_backlog=300000
+net.core.rmem_default=1048576
+net.core.rmem_max=10485760
+net.core.somaxconn=16384
+net.core.wmem_default=1048576
+net.core.wmem_max=10485760
+net.ipv4.conf.all.accept_redirects=0
+net.ipv4.conf.all.accept_source_route=0
+net.ipv4.conf.all.log_martians=1
+net.ipv4.conf.all.rp_filter=1
+net.ipv4.conf.all.secure_redirects=0
+net.ipv4.conf.all.send_redirects=0
+net.ipv4.conf.default.accept_redirects=0
+net.ipv4.conf.default.accept_source_route=0
+net.ipv4.conf.default.log_martians=1
+net.ipv4.conf.default.rp_filter=1
+net.ipv4.conf.default.secure_redirects=0
+net.ipv4.conf.default.send_redirects=0
+net.ipv4.icmp_echo_ignore_broadcasts=1
+net.ipv4.icmp_ignore_bogus_error_responses=1
+# net.ipv4.ip_local_port_range=1024 65535
+net.ipv4.neigh.default.gc_thresh1=80000
+net.ipv4.neigh.default.gc_thresh2=90000
+net.ipv4.neigh.default.gc_thresh3=100000
+net.ipv4.tcp_ecn=1
+net.ipv4.tcp_keepalive_intvl=90
+net.ipv4.tcp_keepalive_probes=3
+net.ipv4.tcp_keepalive_time=120
+net.ipv4.tcp_max_syn_backlog=32768
+net.ipv4.tcp_mtu_probing=1
+net.ipv4.tcp_rmem=4096 1048576 10485760
+net.ipv4.tcp_slow_start_after_idle=0
+net.ipv4.tcp_syncookies=1
+net.ipv4.tcp_tw_reuse=1
+net.ipv4.tcp_window_scaling=1
+net.ipv4.tcp_wmem=4096 1048576 10485760
+net.ipv6.conf.all.accept_ra=0
+net.ipv6.conf.all.accept_redirects=0
+net.ipv6.conf.all.accept_source_route=0
+net.ipv6.conf.default.accept_ra=0
+net.ipv6.conf.default.accept_redirects=0
+net.ipv6.conf.default.accept_source_route=0
+net.netfilter.nf_conntrack_buckets=524288
+net.netfilter.nf_conntrack_max=2097152
+vm.max_map_count=262144
+EOF
+    sudo sysctl -p /etc/sysctl.d/00-kernel-tuning.conf
+
+}
+
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).
