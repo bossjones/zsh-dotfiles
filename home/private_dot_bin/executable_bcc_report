@@ -73,7 +73,8 @@ sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/funccou
 sudo timeout -s SIGINT "$capture_secs" /bin/python3 /usr/share/bcc/tools/funccount 'c:malloc_*' | sudo tee ./"$outdir"/funccount_malloc.txt &
 sudo lsof | sudo tee ./"$outdir"/lsof.txt &
 sudo ps auxef | sudo tee ./"$outdir"/ps.txt &
-sudo dpkg -l | sudo tee ./"$outdir"/ps.txt &
+sudo dpkg -l | sudo tee ./"$outdir"/dpkg.txt &
+sudo docker ps --no-trunc | sudo tee ./"$outdir"/docker.txt &
 
 sleep $(expr "$capture_secs" + 30)
 sudo mkdir -p bcc_data/"$outdir"
