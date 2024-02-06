@@ -110,4 +110,4 @@ tree /usr/share/bcc/tools/bcc_data
 ls -ltah /usr/share/bcc/tools/bcc_data/output
 
 echo "To see the report, run the following: "
-echo find /usr/share/bcc/tools/bcc_data -type f -name '*.txt' -exec cat {} \\\;
+echo find /usr/share/bcc/tools/bcc_data -type f -name '*.txt' -exec bat {} \\\;
