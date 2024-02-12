@@ -1659,32 +1659,39 @@ EOF
 #     ./ext4slower 0           # trace all operations (warning: verbose)
 #     ./ext4slower -p 185      # trace PID 185 only
 
-system_analysis_bcc() {
-    mkdir -p ~/analysis/$(date +%Y%m%d)/ || true
-#   sudo /usr/share/bcc/tools/opensnoop -TUe
-    sudo /bin/python3 /usr/share/bcc/tools/execsnoop -xTUt > ~/analysis/$(date +%Y%m%d)/execsnoop.log
-    sudo /bin/python3 /usr/share/bcc/tools/opensnoop -TUFe -d 10 > ~/analysis/$(date +%Y%m%d)/opensnoop.log
-    sudo /bin/python3 /usr/share/bcc/tools/ext4slower > ~/analysis/$(date +%Y%m%d)/ext4slower.log
-#   sudo /bin/python3 /usr/share/bcc/tools/sofdsnoop -d 10
-#   sudo /bin/python3 /usr/share/bcc/tools/syscount
-#   sudo /bin/python3 /usr/share/bcc/tools/syscount -P
-#   sudo /bin/python3 /usr/share/bcc/tools/syscount -P -d 30
-#   sudo /bin/python3 /usr/share/bcc/tools/ext4dist -m 5
-execsnoop
-opensnoop
-ext4slower (or btrfs*, xfs*, zfs*)
-biolatency
-biosnoop
-cachestat
-tcpconnect
-tcpaccept
-tcpretrans
-runqlat
-profile
+# system_analysis_bcc() {
+#     mkdir -p ~/analysis/$(date +%Y%m%d)/ || true
+# #   sudo /usr/share/bcc/tools/opensnoop -TUe
+#     sudo /bin/python3 /usr/share/bcc/tools/execsnoop -xTUt > ~/analysis/$(date +%Y%m%d)/execsnoop.log
+#     sudo /bin/python3 /usr/share/bcc/tools/opensnoop -TUFe -d 10 > ~/analysis/$(date +%Y%m%d)/opensnoop.log
+#     sudo /bin/python3 /usr/share/bcc/tools/ext4slower > ~/analysis/$(date +%Y%m%d)/ext4slower.log
+# #   sudo /bin/python3 /usr/share/bcc/tools/sofdsnoop -d 10
+# #   sudo /bin/python3 /usr/share/bcc/tools/syscount
+# #   sudo /bin/python3 /usr/share/bcc/tools/syscount -P
+# #   sudo /bin/python3 /usr/share/bcc/tools/syscount -P -d 30
+# #   sudo /bin/python3 /usr/share/bcc/tools/ext4dist -m 5
+# execsnoop
+# opensnoop
+# ext4slower (or btrfs*, xfs*, zfs*)
+# biolatency
+# biosnoop
+# cachestat
+# tcpconnect
+# tcpaccept
+# tcpretrans
+# runqlat
+# profile
 
 
 
+# }
+
+git_search(){
+    set -x
+    git log -S "${1}"
+    set +x
 }
+
 
 # export _LOGGING_RESET='\e[0m'
 
