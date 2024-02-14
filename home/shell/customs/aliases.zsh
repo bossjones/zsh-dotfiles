@@ -1167,7 +1167,7 @@ prepare_for_ig_large(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
-    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1197,7 +1197,7 @@ prepare_for_ig_small(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
-    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1242,7 +1242,7 @@ prepare_for_ig_large_primary_color(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
-    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1273,7 +1273,7 @@ prepare_for_ig_small_primary_color(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
-    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1299,7 +1299,7 @@ mov_to_mp4(){
     -refs 4 \
     -threads 16 \
     -preset:v fast "${full_path_output_file}"
-    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 }
 
 klam_env() {
@@ -1333,7 +1333,7 @@ image_prepare_primary_color(){
 
     magick "${full_path_input_file}" -resize 1080x1350 -background "#${primary_color}" -compose Copy -gravity center -extent 1080x1350 -quality 92 "${full_path_output_file}"
     rm -f background.png
-    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 }
 
 prepare_images_pc(){
