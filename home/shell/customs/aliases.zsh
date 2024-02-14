@@ -1147,6 +1147,7 @@ prepare_for_ig_large(){
     full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_larger.mp4"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     time ffmpeg -y \
     -hide_banner -loglevel warning \
@@ -1166,6 +1167,7 @@ prepare_for_ig_large(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
+    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1175,6 +1177,7 @@ prepare_for_ig_small(){
     full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_smaller.mp4"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     time ffmpeg -y \
     -hide_banner -loglevel warning \
@@ -1194,6 +1197,7 @@ prepare_for_ig_small(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
+    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1218,6 +1222,7 @@ prepare_for_ig_large_primary_color(){
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
     echo -e "primary_color: ${primary_color}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     time ffmpeg -y \
     -hide_banner -loglevel warning \
@@ -1237,6 +1242,7 @@ prepare_for_ig_large_primary_color(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
+    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1247,6 +1253,7 @@ prepare_for_ig_small_primary_color(){
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
     echo -e "primary_color: ${primary_color}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     time ffmpeg -y \
     -hide_banner -loglevel warning \
@@ -1266,6 +1273,7 @@ prepare_for_ig_small_primary_color(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
+    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1274,6 +1282,8 @@ mov_to_mp4(){
     full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)").mp4"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
+
     time ffmpeg -y \
     -hide_banner -loglevel warning \
     -i "${full_path_input_file}" \
@@ -1289,6 +1299,7 @@ mov_to_mp4(){
     -refs 4 \
     -threads 16 \
     -preset:v fast "${full_path_output_file}"
+    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
 }
 
 klam_env() {
@@ -1312,6 +1323,7 @@ image_prepare_primary_color(){
     full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
     full_path_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}_larger{p.suffix}\")")"
     primary_color=$(magick "${full_path_input_file}" -format "%[hex:p{0,0}]" info:)
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
@@ -1321,6 +1333,7 @@ image_prepare_primary_color(){
 
     magick "${full_path_input_file}" -resize 1080x1350 -background "#${primary_color}" -compose Copy -gravity center -extent 1080x1350 -quality 92 "${full_path_output_file}"
     rm -f background.png
+    set_timestamp=$(touch -d "$get_timestamp" "${full_path_output_file}")
 }
 
 prepare_images_pc(){
@@ -1439,6 +1452,7 @@ re_encode_videos(){
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
     echo -e "primary_color: ${primary_color}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     ffmpeg \
     -y \
