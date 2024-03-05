@@ -1706,6 +1706,11 @@ git_search(){
     set +x
 }
 
+git_clone_d(){
+    git clone --depth 1 "${1}"
+}
+
+alias gcd='git_clone_d'
 
 fetch_subs () {
     # SOURCE: https://github.com/wtechgo/vidhop-linux/blob/master/bin/dlv
