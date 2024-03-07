@@ -1743,6 +1743,12 @@ dl-sub () {
 	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}
 }
 
+alias kge="kubectl get events --sort-by='.lastTimestamp'"
+
+curl_download() {
+  echo "downloading $1 config: $2"
+  curl -fsSL "$1" -o "./$2"
+}
 
 # export _LOGGING_RESET='\e[0m'
 
