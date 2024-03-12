@@ -1633,6 +1633,25 @@ EOF
 
 }
 
+more_kernel_tuning(){
+    cat << EOF | sudo tee /etc/modules-load.d/nf.conf
+nf_conntrack
+EOF
+    cat << EOF | sudo tee /etc/systemd/network/20-dnsmasq.network
+[Match]
+Name=dnsmasq*
+
+[Link]
+Unmanaged=yes
+EOF
+    cat << EOF | sudo tee /etc/systemd/network/21-dummy.network
+[Match]
+Name=dummy*
+
+[Link]
+Unmanaged=yes
+EOF
+}
 
 
 # examples:
