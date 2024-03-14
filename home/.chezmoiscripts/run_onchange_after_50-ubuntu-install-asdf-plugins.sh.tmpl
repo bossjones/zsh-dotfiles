@@ -21,6 +21,16 @@ exit 0
 echo "Install asdf plugins"
 {{- end }}
 
+# install custom plugin repos
+asdf plugin-add kubectl https://github.com/asdf-community/asdf-kubectl.git || true
+asdf plugin-add helm https://github.com/Antiarchitect/asdf-helm.git || true
+asdf plugin-add k9s https://github.com/looztra/asdf-k9s || true
+asdf plugin-add kubectx https://github.com/virtualstaticvoid/asdf-kubectx.git || true
+asdf plugin-add mkcert https://github.com/salasrod/asdf-mkcert.git || true
+asdf plugin add opa https://github.com/tochukwuvictor/asdf-opa.git || true
+asdf plugin-add helm-docs https://github.com/sudermanjr/asdf-helm-docs.git || true
+
+
 {{ $plugins := dict
   "ruby"    (.myAsdfRubyVersion)
   "golang"    (.myAsdfGolangVersion)
@@ -31,6 +41,14 @@ echo "Install asdf plugins"
   "shellcheck" (.myAsdfShellcheckVersion)
   "shfmt" (.myAsdfShfmtVersion)
   "yq" (.myAsdfYqVersion)
+  "helm" (.myAsdfHelmVersion)
+  "helmfile" (.myAsdfHelmfileVersion)
+  "helm-docs" (.myAsdfHelmdocsVersion)
+  "k9s" (.myAsdfK9sVersion)
+  "kubectx" (.myAsdfKubectxVersion)
+  "mkcert" (.myAsdfMkcertVersion)
+  "opa" (.myAsdfOpaVersion)
+  "kubectl" (.myAsdfKubectlVersion)
 }}
 
 # Add plugins & install versions

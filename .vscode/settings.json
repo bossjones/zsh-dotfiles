@@ -39,6 +39,7 @@
       "dot_zprofile.tmpl": "shellscript",
       "dot_zshrc.local.tmpl": "shellscript",
       "dot_zshrc.tmpl": "shellscript",
+      ".chez*tmpl": "gotmpl",
   },
   "[go][go.mod]": {
     "editor.codeActionsOnSave": {
