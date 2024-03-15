@@ -75,6 +75,7 @@ fi
 
 if [ -n "$(command which helm 2>/dev/null)" ]; then
     helm completion zsh > "${fpath[1]}/_helm"
+    helm plugin install https://github.com/databus23/helm-diff
 fi
 
 
