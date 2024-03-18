@@ -1769,6 +1769,11 @@ curl_download() {
   curl -fsSL "$1" -o "./$2"
 }
 
+# SOURCE: https://stackoverflow.com/questions/2596805/how-do-i-make-git-use-the-editor-of-my-choice-for-editing-commit-messages
+export VISUAL=vim
+export EDITOR="$VISUAL"
+export GIT_EDITOR="$VISUAL"
+
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).
