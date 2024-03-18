@@ -13,8 +13,12 @@ export YSU_MODE=ALL
 
 export CODE_WORKSPACE=$HOME/dev
 
-export EDITOR=nvim
-export VEDITOR=code
+# SOURCE: https://stackoverflow.com/questions/2596805/how-do-i-make-git-use-the-editor-of-my-choice-for-editing-commit-messages
+export VISUAL=lvim
+export EDITOR="$VISUAL"
+export VEDITOR="$VISUAL"
+export EDITOR="$VISUAL"
+export GIT_EDITOR="$VISUAL"
 
 # https://github.com/x-motemen/ghq#environment-variables
 export GHQ_ROOT=$CODE_WORKSPACE
