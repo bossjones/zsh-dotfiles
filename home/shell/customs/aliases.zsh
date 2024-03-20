@@ -418,7 +418,18 @@ open_ig_hashtag() {
 split_scenes(){
     pyenv activate yt-dlp3 || true
     echo '#!/usr/bin/env bash' > redo.sh
-    [ "$(ls *.mp4 | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*mp4*; do echo scenedetect -i "$filename" -o processed/ detect-content split-video; done >> redo.sh
+    [ "$(ls *.mp4 | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*mp4*; do echo scenedetect -i "$filename" -o processed/ split-video; done >> redo.sh
+    echo "Script created. cat redo.sh"
+    cat redo.sh
+    chmod +x redo.sh
+    mkdir -p processed/ || true
+    ./redo.sh
+}
+
+split_scenes_content(){
+    pyenv activate yt-dlp3 || true
+    echo '#!/usr/bin/env bash' > redo.sh
+    [ "$(ls *.mp4 | tr " " '\r' | wc -l | awk '{print $1}')" -gt "0" ] && for filename in ./*mp4*; do echo scenedetect -i "$filename" detect-content --threshold 70.0 split-video -o processed/; done >> redo.sh
     echo "Script created. cat redo.sh"
     cat redo.sh
     chmod +x redo.sh
@@ -675,6 +686,10 @@ unzip_rm(){
 	unzip \*.zip && rm *.zip
 }
 
+json_rm(){
+	rm *.json
+}
+
 
 yt-crunchyroll () {
 	pyenv activate cerebro_bot3 || true
@@ -829,6 +844,12 @@ webp_to_jpg(){
     magick mogrify -format JPEG *.webp
     mkdir webps || true
     mv -fv *.webp webps/
+}
+
+heic_to_jpg(){
+    mogrify -format jpg *.HEIC
+    mkdir heics || true
+    mv -fv *.HEIC heics/
 }
 
 # ----------------------
@@ -1126,6 +1147,7 @@ prepare_for_ig_large(){
     full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_larger.mp4"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     time ffmpeg -y \
     -hide_banner -loglevel warning \
@@ -1145,6 +1167,7 @@ prepare_for_ig_large(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1154,6 +1177,7 @@ prepare_for_ig_small(){
     full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_smaller.mp4"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     time ffmpeg -y \
     -hide_banner -loglevel warning \
@@ -1173,6 +1197,7 @@ prepare_for_ig_small(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1197,6 +1222,7 @@ prepare_for_ig_large_primary_color(){
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
     echo -e "primary_color: ${primary_color}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     time ffmpeg -y \
     -hide_banner -loglevel warning \
@@ -1216,6 +1242,7 @@ prepare_for_ig_large_primary_color(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1226,6 +1253,7 @@ prepare_for_ig_small_primary_color(){
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
     echo -e "primary_color: ${primary_color}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     time ffmpeg -y \
     -hide_banner -loglevel warning \
@@ -1245,6 +1273,7 @@ prepare_for_ig_small_primary_color(){
     -ar 44100 \
     -ac 2 \
     "${full_path_output_file}"
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 
 }
 
@@ -1253,6 +1282,8 @@ mov_to_mp4(){
     full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)").mp4"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
+
     time ffmpeg -y \
     -hide_banner -loglevel warning \
     -i "${full_path_input_file}" \
@@ -1268,6 +1299,7 @@ mov_to_mp4(){
     -refs 4 \
     -threads 16 \
     -preset:v fast "${full_path_output_file}"
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 }
 
 klam_env() {
@@ -1277,12 +1309,12 @@ klam_env() {
 }
 
 get_all_images(){
-    image_list=$(fd -p -e jpg -e png -e jpeg)
+    image_list=$(fd -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*')
     echo "$image_list"
 }
 
 get_all_videos(){
-    video_list=$(fd -p -e mp4)
+    video_list=$(fd -p -e mp4 --exclude '*larger*' --exclude '*smaller*')
     echo "$video_list"
 }
 
@@ -1291,6 +1323,7 @@ image_prepare_primary_color(){
     full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
     full_path_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}_larger{p.suffix}\")")"
     primary_color=$(magick "${full_path_input_file}" -format "%[hex:p{0,0}]" info:)
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
@@ -1300,14 +1333,15 @@ image_prepare_primary_color(){
 
     magick "${full_path_input_file}" -resize 1080x1350 -background "#${primary_color}" -compose Copy -gravity center -extent 1080x1350 -quality 92 "${full_path_output_file}"
     rm -f background.png
+    set_timestamp=$(gtouch -d "$get_timestamp" "${full_path_output_file}")
 }
 
 prepare_images_pc(){
-    fd -p -e jpg -e png -e jpeg -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
 }
 
 prepare_videos_pc(){
-    fd -p -e mp4 -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
 }
 
 prepare_dir_all(){
@@ -1316,6 +1350,24 @@ prepare_dir_all(){
 }
 
 alias prepare_all="prepare_dir_all"
+
+# -
+
+# Normalized version
+prepare_images_n(){
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+}
+
+prepare_videos_n(){
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large "$1"' zsh
+}
+
+prepare_dir_all_n(){
+    prepare_images_n
+    prepare_videos_n
+}
+
+alias prepare_all_n="prepare_dir_all_n"
 
 dl-hls() {
     # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
@@ -1333,8 +1385,9 @@ dl-hls-b() {
 
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
+
 prepare_videos_small(){
-    fd -p -e mp4 -x zsh -ic 'prepare_for_ig_small "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_small "$1"' zsh
 }
 
 prepare_dir_small(){
@@ -1343,6 +1396,379 @@ prepare_dir_small(){
 }
 
 alias prepare_all_small="prepare_dir_small"
+
+dl-twitter() {
+    pyenv activate yt-dlp3 || true
+    echo " [running]: gallery-dl --no-mtime -v --write-info-json --write-metadata ${1}"
+    gallery-dl --no-mtime -v --write-info-json --write-metadata ${1}
+}
+
+alias dlt="dl-twitter"
+
+download_file() {
+  # Check if the argument is provided
+  if [ -z "$1" ]; then
+    echo "Error: URL argument is missing."
+    echo "Usage example: "
+    echo 'download_file "https://d2dsm5y8gyd937.cloudfront.net/82K9-0R59AC4T8B71IVKU.mp4"'
+    return 1
+  fi
+
+  # Parse the filename from the URL
+  filename=$(basename "$1")
+
+  # Use curl to download the file
+  curl -o "$filename" "$1"
+
+  # Check if the download was successful
+  if [ $? -eq 0 ]; then
+    echo "Download successful. File saved as: $filename"
+  else
+    echo "Error: Download failed."
+  fi
+}
+
+dl-sub () {
+	echo " [running] yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}"
+	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --skip-download --write-auto-sub --sub-lang en ${1}
+	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}
+}
+
+# convert image cover for video
+ap () {
+    # vid="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    # img="$(python -c "import pathlib;p=pathlib.Path('${2}');print(f\"{p.stem}{p.suffix}\")")"
+    # echo -e "vid: ${vid}\n"
+    # echo -e "img: ${img}\n"
+    # echo -e " [run]: AtomicParsley $vid --artwork $img\n"
+    # AtomicParsley $vid --artwork $img
+    AtomicParsley $1 --artwork $2
+}
+
+re_encode_videos(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_reencoded.mp4"
+    primary_color=$(get_primary_color "${full_path_input_file}")
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "full_path_output_file: ${full_path_output_file}\n"
+    echo -e "primary_color: ${primary_color}\n"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
+
+    ffmpeg \
+    -y \
+    -hide_banner -loglevel warning \
+    -i "${full_path_input_file}" \
+    "${full_path_output_file}"
+
+}
+
+prepare_re_encode(){
+    fd -a --ignore -p -e mp4 --exclude '*reencoded*' -x zsh -ic 're_encode_videos "$1"' zsh
+}
+
+mp4_to_images(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    prefix_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}\")")"
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "prefix_output_file: ${prefix_output_file}\n"
+    ffmpeg -i "${full_path_input_file}" ${prefix_output_file}%04d.png
+}
+
+prepare_mp4_to_images(){
+    fd -a --ignore -p -e mp4 -x zsh -ic 'mp4_to_images "$1"' zsh
+}
+
+mv_orig_media(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    mkdir -p orig || true
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo "cp -a \"${full_path_input_file}\" orig/"
+    echo "rm -fv \"${full_path_input_file}\""
+    echo ""
+    cp -a "${full_path_input_file}" orig/
+    rm -fv "${full_path_input_file}"
+    echo ""
+}
+
+prepare_orig(){
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg -e mp4 -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mv_orig_media "$1"' zsh
+}
+
+show_images_pc(){
+    # fd --absolute-path --ignore --full-path -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' --exec zsh -ic 'echo "$1"' zsh
+    fd --absolute-path --ignore --full-path -e jpg -e png -e jpeg --exclude '*large*' --exclude '*small*'
+}
+
+show_videos_pc(){
+    # fd --absolute-path --ignore --full-path -e mp4 --exclude '*larger*' --exclude '*smaller*' --exec zsh -ic 'echo "$1"' zsh
+    fd --absolute-path --ignore --full-path -e mp4 --exclude '*large*' --exclude '*small*'
+}
+
+show_dir_all(){
+    show_images_pc
+    show_videos_pc
+}
+
+alias show_all="show_dir_all"
+
+gif_to_mp4(){
+    full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    prefix_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}\")")"
+    echo -e "full_path_input_file: ${full_path_input_file}\n"
+    echo -e "prefix_output_file: ${prefix_output_file}\n"
+    ffmpeg -i "${full_path_input_file}" -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" "${prefix_output_file}.mp4"
+}
+
+
+prepare_gif(){
+    fd -a --max-depth=1 --ignore -p -e gif --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'gif_to_mp4 "$1"' zsh
+    rm -fv *.gif
+}
+
+prepare_mov_to_mp4(){
+    fd -a --max-depth=1 --ignore -p -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mov_to_mp4 "$1"' zsh
+    rm -fv *.mov
+    rm -fv *.MOV
+}
+
+git_search_history(){
+    git log --all -S "$1"
+}
+
+prepare_everything(){
+    prepare_gif
+    unzip_rm
+    json_rm
+    webp_to_jpg
+    heic_to_jpg
+    prepare_mov_to_mp4
+    prepare_all
+    prepare_orig
+}
+
+prepare_everything_small(){
+    prepare_gif
+    unzip_rm
+    json_rm
+    webp_to_jpg
+    heic_to_jpg
+    prepare_mov_to_mp4
+    prepare_all_small
+    prepare_orig
+}
+
+alias reddit_dl='yt-best-fork'
+
+download_magnet(){
+    # aria2c -d ~/Downloads --seed-time=0 "magnet:?xt=urn:btih:248D0A1CD08284299DE78D5C1ED359BB46717D8C"
+    echo 'aria2c -d ~/Downloads --seed-time=0 "${1}"'
+    # aria2c -d ~/Downloads --seed-time=0 "${1}"
+}
+
+kernel_tuning(){
+    cat << EOF | sudo tee /etc/security/limits.d/limits.conf
+# see /usr/lib/pam/limits.conf for documentation
+# see docs/kernel.md for more details
+# update the docs if updating this file
+#
+# 1048576 == 2**20; https://stackoverflow.com/a/1213069/4179075
+* soft nofile 1048576
+* hard nofile 1048576
+EOF
+    cat << EOF | sudo tee /etc/sysctl.d/00-kernel-tuning.conf
+# See docs/kernel.md for details (please **update docs/kernel.md** if updating this file)
+fs.inotify.max_user_instances=8192
+fs.inotify.max_user_watches=128000
+fs.suid_dumpable=0
+kernel.core_pattern=|/dev/null
+kernel.dmesg_restrict=1
+kernel.pid_max=4194304
+net.core.netdev_max_backlog=300000
+net.core.rmem_default=1048576
+net.core.rmem_max=10485760
+net.core.somaxconn=16384
+net.core.wmem_default=1048576
+net.core.wmem_max=10485760
+net.ipv4.conf.all.accept_redirects=0
+net.ipv4.conf.all.accept_source_route=0
+net.ipv4.conf.all.log_martians=1
+net.ipv4.conf.all.rp_filter=1
+net.ipv4.conf.all.secure_redirects=0
+net.ipv4.conf.all.send_redirects=0
+net.ipv4.conf.default.accept_redirects=0
+net.ipv4.conf.default.accept_source_route=0
+net.ipv4.conf.default.log_martians=1
+net.ipv4.conf.default.rp_filter=1
+net.ipv4.conf.default.secure_redirects=0
+net.ipv4.conf.default.send_redirects=0
+net.ipv4.icmp_echo_ignore_broadcasts=1
+net.ipv4.icmp_ignore_bogus_error_responses=1
+# net.ipv4.ip_local_port_range=1024 65535
+net.ipv4.neigh.default.gc_thresh1=80000
+net.ipv4.neigh.default.gc_thresh2=90000
+net.ipv4.neigh.default.gc_thresh3=100000
+net.ipv4.tcp_ecn=1
+net.ipv4.tcp_keepalive_intvl=90
+net.ipv4.tcp_keepalive_probes=3
+net.ipv4.tcp_keepalive_time=120
+net.ipv4.tcp_max_syn_backlog=32768
+net.ipv4.tcp_mtu_probing=1
+net.ipv4.tcp_rmem=4096 1048576 10485760
+net.ipv4.tcp_slow_start_after_idle=0
+net.ipv4.tcp_syncookies=1
+net.ipv4.tcp_tw_reuse=1
+net.ipv4.tcp_window_scaling=1
+net.ipv4.tcp_wmem=4096 1048576 10485760
+net.ipv6.conf.all.accept_ra=0
+net.ipv6.conf.all.accept_redirects=0
+net.ipv6.conf.all.accept_source_route=0
+net.ipv6.conf.default.accept_ra=0
+net.ipv6.conf.default.accept_redirects=0
+net.ipv6.conf.default.accept_source_route=0
+net.netfilter.nf_conntrack_buckets=524288
+net.netfilter.nf_conntrack_max=2097152
+vm.max_map_count=262144
+EOF
+    sudo sysctl -p /etc/sysctl.d/00-kernel-tuning.conf
+
+}
+
+more_kernel_tuning(){
+    cat << EOF | sudo tee /etc/modules-load.d/nf.conf
+nf_conntrack
+EOF
+    cat << EOF | sudo tee /etc/systemd/network/20-dnsmasq.network
+[Match]
+Name=dnsmasq*
+
+[Link]
+Unmanaged=yes
+EOF
+    cat << EOF | sudo tee /etc/systemd/network/21-dummy.network
+[Match]
+Name=dummy*
+
+[Link]
+Unmanaged=yes
+EOF
+}
+
+
+# examples:
+#     ./execsnoop                      # trace all exec() syscalls
+#     ./execsnoop -x                   # include failed exec()s
+#     ./execsnoop -T                   # include time (HH:MM:SS)
+#     ./execsnoop -P 181               # only trace new processes whose parent PID is 181
+#     ./execsnoop -U                   # include UID
+#     ./execsnoop -u 1000              # only trace UID 1000
+#     ./execsnoop -u user              # get user UID and trace only them
+#     ./execsnoop -t                   # include timestamps
+#     ./execsnoop -q                   # add "quotemarks" around arguments
+#     ./execsnoop -n main              # only print command lines containing "main"
+#     ./execsnoop -l tpkg              # only print command where arguments contains "tpkg"
+#     ./execsnoop --cgroupmap mappath  # only trace cgroups in this BPF map
+#     ./execsnoop --mntnsmap mappath   # only trace mount namespaces in the map
+
+# examples:
+#     ./opensnoop                        # trace all open() syscalls
+#     ./opensnoop -T                     # include timestamps
+#     ./opensnoop -U                     # include UID
+#     ./opensnoop -x                     # only show failed opens
+#     ./opensnoop -p 181                 # only trace PID 181
+#     ./opensnoop -t 123                 # only trace TID 123
+#     ./opensnoop -u 1000                # only trace UID 1000
+#     ./opensnoop -d 10                  # trace for 10 seconds only
+#     ./opensnoop -n main                # only print process names containing "main"
+#     ./opensnoop -e                     # show extended fields
+#     ./opensnoop -f O_WRONLY -f O_RDWR  # only print calls for writing
+#     ./opensnoop -F                     # show full path for an open file with relative path
+#     ./opensnoop --cgroupmap mappath    # only trace cgroups in this BPF map
+#     ./opensnoop --mntnsmap mappath     # only trace mount namespaces in the map
+
+# examples:
+#     ./ext4slower             # trace operations slower than 10 ms (default)
+#     ./ext4slower 1           # trace operations slower than 1 ms
+#     ./ext4slower -j 1        # ... 1 ms, parsable output (csv)
+#     ./ext4slower 0           # trace all operations (warning: verbose)
+#     ./ext4slower -p 185      # trace PID 185 only
+
+# system_analysis_bcc() {
+#     mkdir -p ~/analysis/$(date +%Y%m%d)/ || true
+# #   sudo /usr/share/bcc/tools/opensnoop -TUe
+#     sudo /bin/python3 /usr/share/bcc/tools/execsnoop -xTUt > ~/analysis/$(date +%Y%m%d)/execsnoop.log
+#     sudo /bin/python3 /usr/share/bcc/tools/opensnoop -TUFe -d 10 > ~/analysis/$(date +%Y%m%d)/opensnoop.log
+#     sudo /bin/python3 /usr/share/bcc/tools/ext4slower > ~/analysis/$(date +%Y%m%d)/ext4slower.log
+# #   sudo /bin/python3 /usr/share/bcc/tools/sofdsnoop -d 10
+# #   sudo /bin/python3 /usr/share/bcc/tools/syscount
+# #   sudo /bin/python3 /usr/share/bcc/tools/syscount -P
+# #   sudo /bin/python3 /usr/share/bcc/tools/syscount -P -d 30
+# #   sudo /bin/python3 /usr/share/bcc/tools/ext4dist -m 5
+# execsnoop
+# opensnoop
+# ext4slower (or btrfs*, xfs*, zfs*)
+# biolatency
+# biosnoop
+# cachestat
+# tcpconnect
+# tcpaccept
+# tcpretrans
+# runqlat
+# profile
+
+
+
+# }
+
+git_search(){
+    set -x
+    git log -S "${1}"
+    set +x
+}
+
+git_clone_d(){
+    git clone --depth 1 "${1}"
+}
+
+alias gcd='git_clone_d'
+
+fetch_subs () {
+    # SOURCE: https://github.com/wtechgo/vidhop-linux/blob/master/bin/dlv
+    pyenv activate yt-dlp3 || true
+    # subs provided by the uploader. https://www.science.co.il/language/Codes.php
+    yt-dlp --cookies=~/Downloads/yt-cookies.txt \
+        --write-subs --convert-subs "srt" --sub-langs="en.*" \
+        --restrict-filenames \
+        --no-download ${1}
+
+    # autogenerated subs
+    yt-dlp --cookies=~/Downloads/yt-cookies.txt \
+        --write-auto-subs --convert-subs "srt" --sub-langs="en.*" \
+        --restrict-filenames \
+        --no-download ${1}
+}
+
+fetch_thumbnail() {
+    # SOURCE: https://github.com/wtechgo/vidhop-linux/blob/master/bin/dlv
+    pyenv activate yt-dlp3 || true
+    yt-dlp --cookies=~/Downloads/yt-cookies.txt \
+        --write-thumbnail --convert-thumbnails jpg \
+        --restrict-filenames \
+        --no-download --verbose ${1}
+}
+
+dl-sub () {
+    pyenv activate yt-dlp3 || true
+	echo " [running] yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}"
+	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}
+}
+
+alias kge="kubectl get events --sort-by='.lastTimestamp'"
+
+curl_download() {
+  echo "downloading $1 config: $2"
+  curl -fsSL "$1" -o "./$2"
+}
+
 
 # export _LOGGING_RESET='\e[0m'
 

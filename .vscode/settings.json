@@ -2,13 +2,13 @@
   "[go]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.organizeImports": true
+      "source.organizeImports": "explicit"
     }
   },
   "[go.mod]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.organizeImports": true
+      "source.organizeImports": "explicit"
     }
   },
   "gopls": {
@@ -39,5 +39,11 @@
       "dot_zprofile.tmpl": "shellscript",
       "dot_zshrc.local.tmpl": "shellscript",
       "dot_zshrc.tmpl": "shellscript",
+      ".chez*tmpl": "gotmpl",
+  },
+  "[go][go.mod]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
   },
 }
