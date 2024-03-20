@@ -26,7 +26,7 @@ export GHQ_ROOT=$CODE_WORKSPACE
 # python better exceptions
 export BETTER_EXCEPTIONS=1
 
-export KUBECONFIG="${HOME}/dev/adobe-platform/k8s-kubeconfig/kubeconfig.yaml"
+# export KUBECONFIG="${HOME}/dev/adobe-platform/k8s-kubeconfig/kubeconfig.yaml"
 export SHELDON_CONFIG_DIR="$HOME/.sheldon"
 export SHELDON_DATA_DIR="$HOME/.sheldon"
 
