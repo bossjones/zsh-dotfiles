@@ -85,4 +85,18 @@ if [ -n "$(command which rye 2>/dev/null)" ]; then
 
 fi
 
+if [ -n "$(command which k3d 2>/dev/null)" ]; then
+    k3d completion zsh > ~/.zsh/completions/_k3d
+    k3d completion zsh > ~/.zsh/completion/_k3d
+fi
+
+# K3D_BIN="$(which k3d)"
+
+# if [ -x "$K3D_BIN" ]; then
+#     if command -v k3d &>/dev/null; then
+#         source <(k3d completion zsh)
+#     fi
+# fi
+
+
 {{ end -}}

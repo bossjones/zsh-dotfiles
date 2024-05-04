@@ -84,7 +84,17 @@ if [ -n "$(command which rye 2>/dev/null)" ]; then
 
 fi
 
+# RYE_BIN="$(which rye)"
+# # # completion
+# # if [ -x "$RYE_BIN" ]; then
+# #     eval "$(rye self completion -s zsh)"
+# # fi
 
+
+if [ -n "$(command which k3d 2>/dev/null)" ]; then
+    k3d completion zsh > ~/.zsh/completions/_k3d
+    k3d completion zsh > ~/.zsh/completion/_k3d
+fi
 
 
 
