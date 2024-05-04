@@ -4,11 +4,10 @@
 
 # Install fnm
 
-printf "${green}[10 - linux] ${reset}"
 if [ ! -d "${HOME}/.local/share/fnm" ]; then
     (
-    set -x; printf "${yellow}[11 - fnm does not exist, downloading] ${reset}" &&
-    curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell &&
+        set -x; printf "${yellow}[11 - fnm does not exist, downloading] ${reset}" &&
+        INSTALLING_FNM="$(curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell)"
     )
 fi
 
