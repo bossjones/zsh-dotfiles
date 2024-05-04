@@ -227,7 +227,7 @@ if [ "$CURRENT_OS" = 'linux' ]; then
   ./install.sh FiraCode
   cd -
 
-  sudo git clone https://github.com/bossjones/debug-tools /usr/local/src/debug-tools
+  sudo git clone https://github.com/bossjones/debug-tools /usr/local/src/debug-tools || true
   sudo chown $(whoami):$(whoami) -R /usr/local/src/debug-tools
   cd /usr/local/src/debug-tools
   ./update-bossjones-debug-tools
