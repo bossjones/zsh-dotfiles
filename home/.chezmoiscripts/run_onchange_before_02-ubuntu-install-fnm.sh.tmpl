@@ -5,12 +5,18 @@
 # Install fnm
 
 printf "${green}[10 - linux] ${reset}"
-if [ ! -f $(which fnm) ]
-then
-    printf "${yellow}[11 - fnm does not exist, downloading] ${reset}"
-    curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell
-    export PATH="$HOME/.local/share/fnm:$PATH"
-    eval "$(fnm env --use-on-cd)"
+if [ ! -d "${HOME}/.local/share/fnm" ]; then
+    (
+    set -x; printf "${yellow}[11 - fnm does not exist, downloading] ${reset}" &&
+    curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell &&
+    )
+fi
+
+export PATH="$HOME/.local/share/fnm:$PATH"
+eval "`fnm env`"
+
+
+if [ -n "$(command which fnm 2>/dev/null)" ]; then
     fnm install v20.11.0
     fnm use v20.11.0
     fnm current
