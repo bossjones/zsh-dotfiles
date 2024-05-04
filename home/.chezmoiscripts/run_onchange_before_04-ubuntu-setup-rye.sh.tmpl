@@ -37,8 +37,8 @@ author = "Malcolm Jones <bossjones@theblacktonystark.com>"
 # https = "http://127.0.0.1:4000"
 
 [behavior]
-# When set to `true` the `managed` flag is always assumed to be `true`.
-force-rye-managed = false
+# # When set to `true` the `managed` flag is always assumed to be `true`.
+# force-rye-managed = false
 
 # Enables global shims when set to `true`.  This means that the installed
 # `python` shim will resolve to a Rye-managed toolchain even outside of
@@ -54,16 +54,16 @@ use-uv = true
 # to `true` when uv is enabled and `false` otherwise.
 autosync = true
 
-# Marks the managed .venv in a way that cloud-based synchronization systems
-# like Dropbox and iCloud Files will not upload it.  This defaults to `true`
-# as a .venv in cloud storage typically does not make sense.  Set this to
-# `false` to disable this behavior.
-venv-mark-sync-ignore = true
+# # Marks the managed .venv in a way that cloud-based synchronization systems
+# # like Dropbox and iCloud Files will not upload it.  This defaults to `true`
+# # as a .venv in cloud storage typically does not make sense.  Set this to
+# # `false` to disable this behavior.
+# venv-mark-sync-ignore = true
 
-# When set to `true` Rye will fetch certain interpreters with build information.
-# This will increase the space requirements, will put the interpreter into an
-# extra folder called `./install/` and place build artifacts adjacent in `./build`.
-fetch-with-build-info = false
+# # When set to `true` Rye will fetch certain interpreters with build information.
+# # This will increase the space requirements, will put the interpreter into an
+# # extra folder called `./install/` and place build artifacts adjacent in `./build`.
+# fetch-with-build-info = false
 
 # An array of tables with optional sources.  Same format as in pyproject.toml
 [[sources]]
