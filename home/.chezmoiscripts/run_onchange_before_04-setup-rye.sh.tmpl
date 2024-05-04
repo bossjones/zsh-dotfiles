@@ -74,5 +74,10 @@ EOF
     rye self install --yes --no-modify-path
     . "$HOME/.rye/env"
 
+    mkdir -p  $HOME/.zsh/completion || true
+    mkdir -p  $HOME/.zsh/completions || true
+    rye self completion -s zsh > ~/.zsh/completions/_rye
+    rye self completion -s zsh > ~/.zsh/completion/_rye
+
 
 fi
