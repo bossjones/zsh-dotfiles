@@ -1,5 +1,6 @@
 # ---------------------------------------------------------
 # chezmoi managed - aliases.zsh
+# # ---------------------------------------------------------
 # #==============================================================#
 # # SOURCE: https://github.com/Vonng/Configuration/blob/master/shit/lib/color.sh
 # #==============================================================#
@@ -300,12 +301,12 @@ sort_by_num_files () {
 
 mkdir_date(){
     mkdir -p $(date +%Y%m%d)/{RAW,staging,normalized,cropped,square,split,more,memelords,titlescreen,tiktoks,story,stories,opener,saved,hunnies,tiktoks} || true
-    cd $(date +%Y%m%d)
+    cd $(date +%Y%m%d) || exit
     pwd
 }
 
 # SOURCE: https://github.com/zaklaus/dotfiles/blob/1e957bd3c43ca30d8a274940a54aa86d9e15a89a/.zshrc
-mcd () { mkdir -p "$1" && cd "$1"; }        # mcd:          Makes new Dir and jumps inside
+mcd () { mkdir -p "$1" && cd "$1" || exit; }        # mcd:          Makes new Dir and jumps inside
 # SOURCE: https://github.com/lazmond3/dotfiles-public-mac/blob/81fd93f99582d71206243c16095aecaf456d2c5e/config/aliases.bash
 alias killf="kill \$(ps aux | fzf -m | awk '{print \$2}')"
 alias mkdir_cd="mcd"
@@ -400,7 +401,7 @@ interactive_meme_categories() {
 ascrape() {
     fname="${1}"
     pyenv activate aioscraper399 || true
-    cd ~/dev/bossjones/sandbox/aioscraper
+    cd ~/dev/bossjones/sandbox/aioscraper || exit
     echo "${fname}" | tee -a scrape.log
     set -x
     python aioscraper/cli.py scrape -- "${fname}"
@@ -464,19 +465,19 @@ git-fork-sync-main() {
 }
 
 run_filebrowser() {
-    cd ~/Downloads
+    cd ~/Downloads || exit
     echo " [running]  filebrowser -a 0.0.0.0 -r ./farming -p 6060"
     filebrowser -a 0.0.0.0 -r ./farming -p 6060
 }
 
 dl-ig-wavy() {
     pyenv activate yt-dlp3 || true
-    gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/wavy-cookies-instagram.txt ${1}
+    gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/wavy-cookies-instagram.txt "${1}"
 }
 
 dl-ig-hlm() {
     pyenv activate yt-dlp3 || true
-    gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/hlm-cookies-instagram.txt ${1}
+    gallery-dl --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/hlm-cookies-instagram.txt "${1}"
 }
 
 alias reload!='exec "$SHELL" -l'
@@ -488,7 +489,7 @@ fixprompt() {
 alias trw="tmux rename-window"
 
 alias dotfiles_provision='chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git'
-alias dotfiles_provision_branch='chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git --branch feature-rye'
+alias dotfiles_provision_branch='chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git --branch feature-dl-twitter'
 # pi@boss-station ~/.zsh.d/after
 # ❯ cat custom_plugins.zsh
 # plugins+=(git-extra-commands zsh-256color zsh-peco-history pyenv rbenv fd fzf zsh-syntax-highlighting tmux conda-zsh-completion)
@@ -701,7 +702,7 @@ yt-crunchyroll () {
 dl-tweet() {
 	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg ${1}\n"
-	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg" ${1}"
+	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg "${1}"
 }
 
 dl-ig() {
@@ -746,7 +747,7 @@ ff-subs() {
 	OIFS="$IFS"
 	IFS=$'\n'
     echo -"[running] ffmpeg -y -hide_banner -loglevel warning -i ${downloaded_mp4} -vf subtitles=${outputfile_srt} ${outputfile_with_subs}\n\n"
-    ffmpeg -y -hide_banner -loglevel warning -i "${downloaded_mp4}" -vf subtitles=./${outputfile_srt} "${outputfile_with_subs}"
+    ffmpeg -y -hide_banner -loglevel warning -i "${downloaded_mp4}" -vf subtitles=./"${outputfile_srt}" "${outputfile_with_subs}"
     IFS="$OIFS"
 
     set +x
@@ -793,27 +794,27 @@ imagemagick_resize_square_batch() {
     touch loop.txt
     OIFS="$IFS"
     IFS=$'\n'
-    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.png"`
+    for file in $(find . -maxdepth 1 -mindepth 1 -type f -name "*.png")
     do
         echo "file = $file"
         echo imagemagick_resize_square "$file" >> loop.txt
     done
-    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.jpg"`
+    for file in $(find . -maxdepth 1 -mindepth 1 -type f -name "*.jpg")
     do
         echo "file = $file"
         echo imagemagick_resize_square "$file" >> loop.txt
     done
-    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.jpeg"`
+    for file in $(find . -maxdepth 1 -mindepth 1 -type f -name "*.jpeg")
     do
         echo "file = $file"
         echo imagemagick_resize_square "$file" >> loop.txt
     done
-    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.JPG"`
+    for file in $(find . -maxdepth 1 -mindepth 1 -type f -name "*.JPG")
     do
         echo "file = $file"
         echo imagemagick_resize_square "$file" >> loop.txt
     done
-    for file in `find . -maxdepth 1 -mindepth 1 -type f -name "*.JPEG"`
+    for file in $(find . -maxdepth 1 -mindepth 1 -type f -name "*.JPEG")
     do
         echo "file = $file"
         echo imagemagick_resize_square "$file" >> loop.txt
@@ -922,7 +923,7 @@ kind_env(){
 eks_sandbox(){
   local num="${1}"
 
-  cd ~/dev/malcolm/k8s-infrastructure2
+  cd ~/dev/malcolm/k8s-infrastructure2 || exit
 
   [[ -z "$num" ]] && { echo "Error: variable num is not set $num"; exit 1; }
   # used to tab completion in vscode etc
@@ -948,7 +949,7 @@ eks_sandbox(){
 
   echo -e "Starting k9s ....\n"
 
-  cd -
+  cd - || exit
 
   #   k9s
 
@@ -958,13 +959,13 @@ eks_sandbox(){
 
 eks_echoserver() {
     eks_sandbox 5
-    cd ~/dev/malcolm/echoserver-k8s
+    cd ~/dev/malcolm/echoserver-k8s || exit
     k9s
 }
 
 eks_sqs() {
     eks_sandbox 5
-    cd ~/dev/malcolm/sqs-pubsub-k8s
+    cd ~/dev/malcolm/sqs-pubsub-k8s || exit
     k9s
 }
 
@@ -1080,7 +1081,7 @@ kubectl_cache_builder_for_ethos51_stage_va6(){
 kubectl_list_aliases(){
     # https://unix.stackexchange.com/questions/292903/list-names-of-aliases-functions-and-variables-in-zsh
     echo "[kubectl_list_aliases] listing all custom zsh aliases"
-    print -rl -- ${(k)aliases} ${(k)functions} ${(k)parameters} | grep "kubectl\|ethos"
+    print -rl -- "${(k)aliases}" "${(k)functions}" "${(k)parameters}" | grep "kubectl\|ethos"
 }
 
 kubetail_stage_bar_network() {
@@ -1116,7 +1117,7 @@ function kubectlgetall {
     then
         kubectl get --ignore-not-found "${i}" 2>&1 | grep -i -v "Warn" | grep -i -v "Deprecat" | grep -i -v 'https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins'
     else
-        kubectl -n ${1} get --ignore-not-found "${i}" 2>&1 | grep -i -v "Warn" | grep -i -v "Deprecat"  | grep -i -v 'https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins'
+        kubectl -n "${1}" get --ignore-not-found "${i}" 2>&1 | grep -i -v "Warn" | grep -i -v "Deprecat"  | grep -i -v 'https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins'
     fi
   done
 }
@@ -1553,166 +1554,6 @@ prepare_everything_small(){
 
 alias reddit_dl='yt-best-fork'
 
-download_magnet(){
-    # aria2c -d ~/Downloads --seed-time=0 "magnet:?xt=urn:btih:248D0A1CD08284299DE78D5C1ED359BB46717D8C"
-    echo 'aria2c -d ~/Downloads --seed-time=0 "${1}"'
-    # aria2c -d ~/Downloads --seed-time=0 "${1}"
-}
-
-kernel_tuning(){
-    cat << EOF | sudo tee /etc/security/limits.d/limits.conf
-# see /usr/lib/pam/limits.conf for documentation
-# see docs/kernel.md for more details
-# update the docs if updating this file
-#
-# 1048576 == 2**20; https://stackoverflow.com/a/1213069/4179075
-* soft nofile 1048576
-* hard nofile 1048576
-EOF
-    cat << EOF | sudo tee /etc/sysctl.d/00-kernel-tuning.conf
-# See docs/kernel.md for details (please **update docs/kernel.md** if updating this file)
-fs.inotify.max_user_instances=8192
-fs.inotify.max_user_watches=128000
-fs.suid_dumpable=0
-kernel.core_pattern=|/dev/null
-kernel.dmesg_restrict=1
-kernel.pid_max=4194304
-net.core.netdev_max_backlog=300000
-net.core.rmem_default=1048576
-net.core.rmem_max=10485760
-net.core.somaxconn=16384
-net.core.wmem_default=1048576
-net.core.wmem_max=10485760
-net.ipv4.conf.all.accept_redirects=0
-net.ipv4.conf.all.accept_source_route=0
-net.ipv4.conf.all.log_martians=1
-net.ipv4.conf.all.rp_filter=1
-net.ipv4.conf.all.secure_redirects=0
-net.ipv4.conf.all.send_redirects=0
-net.ipv4.conf.default.accept_redirects=0
-net.ipv4.conf.default.accept_source_route=0
-net.ipv4.conf.default.log_martians=1
-net.ipv4.conf.default.rp_filter=1
-net.ipv4.conf.default.secure_redirects=0
-net.ipv4.conf.default.send_redirects=0
-net.ipv4.icmp_echo_ignore_broadcasts=1
-net.ipv4.icmp_ignore_bogus_error_responses=1
-# net.ipv4.ip_local_port_range=1024 65535
-net.ipv4.neigh.default.gc_thresh1=80000
-net.ipv4.neigh.default.gc_thresh2=90000
-net.ipv4.neigh.default.gc_thresh3=100000
-net.ipv4.tcp_ecn=1
-net.ipv4.tcp_keepalive_intvl=90
-net.ipv4.tcp_keepalive_probes=3
-net.ipv4.tcp_keepalive_time=120
-net.ipv4.tcp_max_syn_backlog=32768
-net.ipv4.tcp_mtu_probing=1
-net.ipv4.tcp_rmem=4096 1048576 10485760
-net.ipv4.tcp_slow_start_after_idle=0
-net.ipv4.tcp_syncookies=1
-net.ipv4.tcp_tw_reuse=1
-net.ipv4.tcp_window_scaling=1
-net.ipv4.tcp_wmem=4096 1048576 10485760
-net.ipv6.conf.all.accept_ra=0
-net.ipv6.conf.all.accept_redirects=0
-net.ipv6.conf.all.accept_source_route=0
-net.ipv6.conf.default.accept_ra=0
-net.ipv6.conf.default.accept_redirects=0
-net.ipv6.conf.default.accept_source_route=0
-net.netfilter.nf_conntrack_buckets=524288
-net.netfilter.nf_conntrack_max=2097152
-vm.max_map_count=262144
-EOF
-    sudo sysctl -p /etc/sysctl.d/00-kernel-tuning.conf
-
-}
-
-more_kernel_tuning(){
-    cat << EOF | sudo tee /etc/modules-load.d/nf.conf
-nf_conntrack
-EOF
-    cat << EOF | sudo tee /etc/systemd/network/20-dnsmasq.network
-[Match]
-Name=dnsmasq*
-
-[Link]
-Unmanaged=yes
-EOF
-    cat << EOF | sudo tee /etc/systemd/network/21-dummy.network
-[Match]
-Name=dummy*
-
-[Link]
-Unmanaged=yes
-EOF
-}
-
-
-# examples:
-#     ./execsnoop                      # trace all exec() syscalls
-#     ./execsnoop -x                   # include failed exec()s
-#     ./execsnoop -T                   # include time (HH:MM:SS)
-#     ./execsnoop -P 181               # only trace new processes whose parent PID is 181
-#     ./execsnoop -U                   # include UID
-#     ./execsnoop -u 1000              # only trace UID 1000
-#     ./execsnoop -u user              # get user UID and trace only them
-#     ./execsnoop -t                   # include timestamps
-#     ./execsnoop -q                   # add "quotemarks" around arguments
-#     ./execsnoop -n main              # only print command lines containing "main"
-#     ./execsnoop -l tpkg              # only print command where arguments contains "tpkg"
-#     ./execsnoop --cgroupmap mappath  # only trace cgroups in this BPF map
-#     ./execsnoop --mntnsmap mappath   # only trace mount namespaces in the map
-
-# examples:
-#     ./opensnoop                        # trace all open() syscalls
-#     ./opensnoop -T                     # include timestamps
-#     ./opensnoop -U                     # include UID
-#     ./opensnoop -x                     # only show failed opens
-#     ./opensnoop -p 181                 # only trace PID 181
-#     ./opensnoop -t 123                 # only trace TID 123
-#     ./opensnoop -u 1000                # only trace UID 1000
-#     ./opensnoop -d 10                  # trace for 10 seconds only
-#     ./opensnoop -n main                # only print process names containing "main"
-#     ./opensnoop -e                     # show extended fields
-#     ./opensnoop -f O_WRONLY -f O_RDWR  # only print calls for writing
-#     ./opensnoop -F                     # show full path for an open file with relative path
-#     ./opensnoop --cgroupmap mappath    # only trace cgroups in this BPF map
-#     ./opensnoop --mntnsmap mappath     # only trace mount namespaces in the map
-
-# examples:
-#     ./ext4slower             # trace operations slower than 10 ms (default)
-#     ./ext4slower 1           # trace operations slower than 1 ms
-#     ./ext4slower -j 1        # ... 1 ms, parsable output (csv)
-#     ./ext4slower 0           # trace all operations (warning: verbose)
-#     ./ext4slower -p 185      # trace PID 185 only
-
-# system_analysis_bcc() {
-#     mkdir -p ~/analysis/$(date +%Y%m%d)/ || true
-# #   sudo /usr/share/bcc/tools/opensnoop -TUe
-#     sudo /bin/python3 /usr/share/bcc/tools/execsnoop -xTUt > ~/analysis/$(date +%Y%m%d)/execsnoop.log
-#     sudo /bin/python3 /usr/share/bcc/tools/opensnoop -TUFe -d 10 > ~/analysis/$(date +%Y%m%d)/opensnoop.log
-#     sudo /bin/python3 /usr/share/bcc/tools/ext4slower > ~/analysis/$(date +%Y%m%d)/ext4slower.log
-# #   sudo /bin/python3 /usr/share/bcc/tools/sofdsnoop -d 10
-# #   sudo /bin/python3 /usr/share/bcc/tools/syscount
-# #   sudo /bin/python3 /usr/share/bcc/tools/syscount -P
-# #   sudo /bin/python3 /usr/share/bcc/tools/syscount -P -d 30
-# #   sudo /bin/python3 /usr/share/bcc/tools/ext4dist -m 5
-# execsnoop
-# opensnoop
-# ext4slower (or btrfs*, xfs*, zfs*)
-# biolatency
-# biosnoop
-# cachestat
-# tcpconnect
-# tcpaccept
-# tcpretrans
-# runqlat
-# profile
-
-
-
-# }
-
 git_search(){
     set -x
     git log -S "${1}"
@@ -1727,48 +1568,12 @@ alias gcd='git_clone_d'
 
 alias kge="kubectl get events --sort-by='.lastTimestamp'"
 
-fetch_subs () {
-    # SOURCE: https://github.com/wtechgo/vidhop-linux/blob/master/bin/dlv
-    pyenv activate yt-dlp3 || true
-    # subs provided by the uploader. https://www.science.co.il/language/Codes.php
-    yt-dlp --cookies=~/Downloads/yt-cookies.txt \
-        --write-subs --convert-subs "srt" --sub-langs="en.*" \
-        --restrict-filenames \
-        --no-download ${1}
-
-    # autogenerated subs
-    yt-dlp --cookies=~/Downloads/yt-cookies.txt \
-        --write-auto-subs --convert-subs "srt" --sub-langs="en.*" \
-        --restrict-filenames \
-        --no-download ${1}
-}
-
-fetch_thumbnail() {
-    # SOURCE: https://github.com/wtechgo/vidhop-linux/blob/master/bin/dlv
-    pyenv activate yt-dlp3 || true
-    yt-dlp --cookies=~/Downloads/yt-cookies.txt \
-        --write-thumbnail --convert-thumbnails jpg \
-        --restrict-filenames \
-        --no-download --verbose ${1}
-}
-
-dl-sub () {
-    pyenv activate yt-dlp3 || true
-	echo " [running] yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}"
-	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}
-}
-
-alias kge="kubectl get events --sort-by='.lastTimestamp'"
-
-curl_download() {
-  echo "downloading $1 config: $2"
-  curl -fsSL "$1" -o "./$2"
-}
 
 
-bump_ulimit(){
-    ulimit -n 70000
-}
+# get_completion(){
+
+# }
+
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).
