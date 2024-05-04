@@ -70,8 +70,13 @@ autosync = true
 name = "default"
 url = "https://pypi.org/simple/"
 EOF
+    echo -e "\n\n"
+    cat ~/.rye/config.toml
+    echo -e "\n\n"
+
     rye self install --yes --no-modify-path
     . "$HOME/.rye/env"
+
 
 fi
 
