@@ -228,7 +228,7 @@ if [ "$CURRENT_OS" = 'linux' ]; then
   cd -
 
   sudo git clone https://github.com/bossjones/debug-tools /usr/local/src/debug-tools
-  sudo chown ubuntu:ubuntu -R /usr/local/src/debug-tools
+  sudo chown $(whoami):$(whoami) -R /usr/local/src/debug-tools
   cd /usr/local/src/debug-tools
   ./update-bossjones-debug-tools
   install-tmux.sh
