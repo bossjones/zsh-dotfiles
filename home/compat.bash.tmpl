@@ -36,6 +36,8 @@ fi
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "`fnm env`"
+[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
+[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 
 # ---------------------------------------------------------
 # chezmoi managed - end
@@ -129,6 +131,8 @@ fi
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "`fnm env`"
+[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
+[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 
 # ---------------------------------------------------------
 # chezmoi managed - end
