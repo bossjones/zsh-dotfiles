@@ -233,7 +233,7 @@ if [ "$CURRENT_OS" = 'linux' ]; then
   ./update-bossjones-debug-tools
   install-tmux.sh
   cd -
-  mkdir ~/.tmuxinator || true
+  mkdir ~/.tmuxinator || true 2>/dev/null
 
   cat <<"EOF" >~/.tmuxinator/zsh.yml
 # ~/.tmuxinator/zsh.yml
