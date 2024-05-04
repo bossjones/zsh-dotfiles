@@ -6,7 +6,7 @@
 
 if [ -n "$(command which rye 2>/dev/null)" ]; then
     mkdir -p ~/.rye || true
-    cat << EOF >  ~/.rye/config.toml
+    cat <<'EOF' > ~/.rye/config.toml
 [default]
 # # This is the default value that is written into new pyproject.toml
 # # files for the `project.requires-python` key
