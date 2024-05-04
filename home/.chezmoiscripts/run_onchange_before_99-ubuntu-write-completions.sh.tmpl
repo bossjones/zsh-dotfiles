@@ -78,6 +78,14 @@ if [ -n "$(command which helm 2>/dev/null)" ]; then
     helm plugin install https://github.com/databus23/helm-diff
 fi
 
+if [ -n "$(command which rye 2>/dev/null)" ]; then
+    rye self completion -s zsh > ~/.zsh/completions/_rye
+    rye self completion -s zsh > ~/.zsh/completion/_rye
+
+fi
+
+
+
 
 
 {{ end -}}

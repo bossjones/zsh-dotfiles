@@ -25,5 +25,64 @@ then
     # fi
 fi
 
+mkdir -p ~/.sheldon/repos/github.com/ohmyzsh/ohmyzsh/functions || true
+mkdir -p ~/.zsh/completions || true
+
+if [ -n "$(command which k9s 2>/dev/null)" ]; then
+    k9s completion zsh > ~/.zsh/completion/_k9s
+    k9s completion zsh > ~/.zsh/completions/_k9s
+fi
+
+if [ -n "$(command which fnm 2>/dev/null)" ]; then
+    fnm completions --shell zsh > ~/.zsh/completion/_fnm
+    fnm completions --shell zsh > ~/.zsh/completions/_fnm
+fi
+
+if [ -n "$(command which fd 2>/dev/null)" ]; then
+    curl -L 'https://raw.githubusercontent.com/sharkdp/fd/master/contrib/completion/_fd' > ~/.zsh/completion/_fd
+    curl -L 'https://raw.githubusercontent.com/sharkdp/fd/master/contrib/completion/_fd' > ~/.zsh/completions/_fd
+fi
+
+if [ -n "$(command which docker-compose 2>/dev/null)" ]; then
+    curl -L https://raw.githubusercontent.com/docker/compose/1.26.0/contrib/completion/zsh/_docker-compose > ~/.zsh/completion/_docker-compose
+    curl -L https://raw.githubusercontent.com/docker/compose/1.26.0/contrib/completion/zsh/_docker-compose > ~/.zsh/completions/_docker-compose
+fi
+
+if [ -n "$(command which argo 2>/dev/null)" ]; then
+    argo completion zsh > ~/.zsh/completion/_argo
+    argo completion zsh > ~/.zsh/completions/_argo
+fi
+
+
+if [ -n "$(command which argocd 2>/dev/null)" ]; then
+    argocd completion zsh > ~/.zsh/completion/_argocd
+    argocd completion zsh > ~/.zsh/completions/_argocd
+fi
+
+if [ -n "$(command which kubectl 2>/dev/null)" ]; then
+    kubectl completion zsh > ~/.zsh/completion/_kubectl
+    kubectl completion zsh > ~/.zsh/completions/_kubectl
+fi
+
+if [ -n "$(command which kustomize 2>/dev/null)" ]; then
+    kustomize completion zsh > ~/.zsh/completion/_kustomize
+    kustomize completion zsh > ~/.zsh/completions/_kustomize
+fi
+
+if [ -n "$(command which just 2>/dev/null)" ]; then
+    just --completions zsh > ~/.zsh/completion/_just
+    just --completions zsh > ~/.zsh/completions/_just
+fi
+
+if [ -n "$(command which helm 2>/dev/null)" ]; then
+    helm completion zsh > "${fpath[1]}/_helm"
+    helm plugin install https://github.com/databus23/helm-diff
+fi
+
+if [ -n "$(command which rye 2>/dev/null)" ]; then
+    rye self completion -s zsh > ~/.zsh/completions/_rye
+    rye self completion -s zsh > ~/.zsh/completion/_rye
+
+fi
 
 {{ end -}}
