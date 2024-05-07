@@ -5,6 +5,10 @@
 
 printf "${green}[10 - fzf] ${reset}"
 
+{{ if (eq .chezmoi.osRelease.name "Ubuntu") }}
+sudo apt-get uninstall fzf -y
+{{ end }}
+
 set -x
 [ ! -d "${HOME}/.fzf" ] && git clone --depth 1 --branch {{ .myFzfVersion}} https://github.com/junegunn/fzf.git ~/.fzf
 cd ~/.fzf && git checkout {{ .myFzfVersion}} || true

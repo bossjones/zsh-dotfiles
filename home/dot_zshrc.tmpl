@@ -11,6 +11,8 @@
 {{    output "sheldon" "source" | trim }}
 {{  end -}}
 
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
 {{ end -}}
 
 # ------
@@ -28,4 +30,7 @@
 {{    output "sheldon" "source" | trim }}
 {{  end -}}
 
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
+[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 {{ end -}}

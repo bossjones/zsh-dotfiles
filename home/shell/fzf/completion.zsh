@@ -14,4 +14,5 @@ then
     _MY_PATH_TO_FZF_COMPLETION=$HOME/.fzf/shell/completion.zsh
 fi
 
-[[ $- == *i* ]] && source "${_MY_PATH_TO_FZF_COMPLETION}" 2> /dev/null
+# FIXME: temporarily commenting this out. might need to write completion file to disk
+# [[ $- == *i* ]] && source "${_MY_PATH_TO_FZF_COMPLETION}" 2> /dev/null

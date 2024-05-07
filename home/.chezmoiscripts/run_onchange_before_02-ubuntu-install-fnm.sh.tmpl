@@ -1,0 +1,27 @@
+{{- if (eq .chezmoi.os "linux") -}}
+
+#!/bin/sh
+
+# Install fnm
+
+if [ ! -d "${HOME}/.local/share/fnm" ]; then
+    (
+        set -x; printf "${yellow}[11 - fnm does not exist, downloading] ${reset}" &&
+        INSTALLING_FNM="$(curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell)"
+    )
+fi
+
+export PATH="$HOME/.local/share/fnm:$PATH"
+eval "`fnm env`"
+
+
+if [ -n "$(command which fnm 2>/dev/null)" ]; then
+    fnm install v20.11.0
+    fnm use v20.11.0
+    fnm current
+    npm install -g pure-prompt
+    npm install -g pretty-time-zsh
+    npm install -g docker-loghose docker-enter
+fi
+
+{{ end -}}
