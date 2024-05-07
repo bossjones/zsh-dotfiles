@@ -1537,6 +1537,7 @@ prepare_everything(){
     json_rm
     webp_to_jpg
     heic_to_jpg
+    prepare_mov_to_mp4
     prepare_all
     prepare_orig
 }
@@ -1547,6 +1548,7 @@ prepare_everything_small(){
     json_rm
     webp_to_jpg
     heic_to_jpg
+    prepare_mov_to_mp4
     prepare_all_small
     prepare_orig
 }
