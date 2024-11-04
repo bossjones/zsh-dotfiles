@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+
+set -e
+
+
+# SOURCE: https://rtx.pub/install.sh
+#region environment setup
+get_os() {
+  os="$(uname -s)"
+  if [ "$os" = Darwin ]; then
+    echo "macos"
+  elif [ "$os" = Linux ]; then
+    echo "linux"
+  else
+    error "unsupported OS: $os"
+  fi
+}
+
+# SOURCE: https://rtx.pub/install.sh
+get_arch() {
+  arch="$(uname -m)"
+  if [ "$arch" = x86_64 ]; then
+    echo "x64"
+  elif [ "$arch" = aarch64 ] || [ "$arch" = arm64 ]; then
+    echo "arm64"
+  else
+    error "unsupported architecture: $arch"
+  fi
+}
+
+CURRENT_OS="$(get_os)"
+# shellcheck disable=SC2034  # Unused variables left for readability
+CURRENT_ARCH="$(get_arch)"
+
+get_system() {
+  os="$(get_os)"
+  arch="$(get_arch)"
+}
+
+# Function to check if running on macOS
+is_macos() {
+    [ "$(get_os)" = "macos" ]
+}
+
+
+
+# Check for required binaries
+check_dependency() {
+    if ! command -v $1 &> /dev/null; then
+        echo "Error: $1 is not installed. Please install it and try again."
+        echo "You can typically install it using your package manager:"
+        echo "For Ubuntu/Debian: sudo apt-get install $1"
+        echo "For macOS with Homebrew: brew install $1"
+        echo "For Ubuntu/Debian try: apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev"
+        echo "For MacOS try: brew install curl git gnupg zsh fzf perl gettext direnv vim awscli wget bash-completion ffmpeg gawk libmediainfo"
+        exit 1
+    fi
+}
+
+# Function to install packages
+install_packages() {
+    if is_macos; then
+        if ! command -v brew >/dev/null 2>&1; then
+            echo "Homebrew is not installed. Please install it first."
+            exit 1
+        fi
+        brew install ffmpeg gawk libmediainfo >/dev/null 2>&1 || true
+    else
+        apt install -yqq curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev  >/dev/null 2>&1 || true
+        sudo apt update && sudo apt install -y ffmpeg bc gawk libmediainfo-dev >/dev/null 2>&1
+    fi
+
+    check_dependency ffmpeg
+    check_dependency ffprobe
+    check_dependency bc
+    check_dependency gawk
+}
+
+# Main script
+main() {
+    install_packages
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -m pip install pyvideothumbnailer  >/dev/null 2>&1
+    else
+        echo "Python3 is not installed. Please install it to use pyvideothumbnailer."
+        exit 1
+    fi
+
+    if [ $# -eq 0 ]; then
+        echo "Please provide the video file path as an argument."
+        exit 1
+    fi
+
+    video_file="$1"
+    if [ ! -f "$video_file" ]; then
+        echo "Video file not found: $video_file"
+        exit 1
+    fi
+
+
+    # Get the absolute path of the video file
+    absolute_path=$(python3 -c "import os; print(os.path.abspath('$video_file'))")
+
+    # Get the parent directory
+    parent_dir=$(dirname "$absolute_path")
+
+    # Get the relative path
+    relative_path=$(basename "$absolute_path")
+
+    echo -e "******************************************\n"
+    echo "absolute_path: $absolute_path"
+    echo "parent_dir: $parent_dir"
+    echo "relative_path: $relative_path"
+    echo -e "******************************************\n"
+
+    echo "Processing video file: $relative_path"
+
+    # Change to the parent directory
+    cd "$parent_dir" || exit 1
+
+    # Run pyvideothumbnailer with the relative path
+    if ! pyvideothumbnailer "$relative_path"; then
+        echo "Error: pyvideothumbnailer failed to process the video."
+        exit 1
+    fi
+
+    echo "Thumbnail created successfully."
+}
+
+main "$@"
