@@ -1694,18 +1694,25 @@ generate_video_thumbnail() {
 #     prepare_orig
 # }
 prepare_for_classifer(){
-    if command -v fdfind >/dev/null 2>&1; then
-        fdfind -a --max-depth=1 --ignore-case -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+    if command -v pyvideothumbnailer >/dev/null 2>&1; then
+        echo "pyvideothumbnailer is installed"
+        if command -v fdfind >/dev/null 2>&1; then
+            fdfind -a --max-depth=1 --ignore-case -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+        else
+            fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+        fi
+
+        prepare_orig
+
+        # fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+
+        # # fd -e mp4 -e avi -e mov -e mkv -i -x ffmpeg -y -i {} -filter_complex "[0:v] select='between(t,0,3)',setpts=PTS-STARTPTS,fps=10,scale=320:-1,split [a][b];[a] palettegen [p];[b][p] paletteuse" {.}.gif
+        # prepare_orig
     else
-        fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+        echo "pyvideothumbnailer is not installed"
+        return 1
     fi
 
-    prepare_orig
-
-    # fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
-
-    # # fd -e mp4 -e avi -e mov -e mkv -i -x ffmpeg -y -i {} -filter_complex "[0:v] select='between(t,0,3)',setpts=PTS-STARTPTS,fps=10,scale=320:-1,split [a][b];[a] palettegen [p];[b][p] paletteuse" {.}.gif
-    # prepare_orig
 }
 
 get_current_python_interpreter(){
