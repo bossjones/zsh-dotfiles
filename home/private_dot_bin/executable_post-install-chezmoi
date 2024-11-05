@@ -221,11 +221,16 @@ fi
 
 if [ "$CURRENT_OS" = 'linux' ]; then
   cd ~/.local/src
-  git clone --filter=blob:none --sparse https://github.com/ryanoasis/nerd-fonts || true
-  cd nerd-fonts
-  git sparse-checkout add patched-fonts/FiraCode || true
-  ./install.sh FiraCode
-  cd -
+  # git clone --filter=blob:none --sparse https://github.com/ryanoasis/nerd-fonts || true
+  # git clone --filter=blob:none https://github.com/ryanoasis/nerd-fonts || true
+  # cd nerd-fonts
+  # git sparse-checkout add patched-fonts/FiraCode || true
+  # ./install.sh FiraCode
+
+  mkdir -p ~/.local/share/fonts || true
+  cd ~/.local/share/fonts
+  curl -fLO https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/FiraCode/Regular/FiraCodeNerdFont-Regular.ttf
+  cd ~/.local/src
 
   sudo git clone https://github.com/bossjones/debug-tools /usr/local/src/debug-tools || true
   sudo chown $(whoami):$(whoami) -R /usr/local/src/debug-tools
