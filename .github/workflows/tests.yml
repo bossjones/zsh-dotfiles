@@ -21,7 +21,7 @@ jobs:
   #     - run: contrib/style.sh
 
   tests:
-    runs-on: macos-12
+    runs-on: macos-14
     strategy:
       matrix:
         python-version: ['3.12']
