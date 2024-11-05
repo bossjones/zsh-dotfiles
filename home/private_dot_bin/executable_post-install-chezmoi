@@ -252,6 +252,8 @@ windows:
 EOF
 fi
 
+pip install pyvideothumbnailer || true
+
 echo "run the following when confirmed installed"
 echo ""
 echo 'export LUNARVIM_LOG_LEVEL="debug"'

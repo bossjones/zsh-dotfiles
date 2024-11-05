@@ -1708,6 +1708,10 @@ prepare_for_classifer(){
     # prepare_orig
 }
 
+get_current_python_interpreter(){
+    python -c "import sys;print(sys.executable)"
+}
+
 alias reddit_dl='yt-best-fork'
 
 download_magnet(){
