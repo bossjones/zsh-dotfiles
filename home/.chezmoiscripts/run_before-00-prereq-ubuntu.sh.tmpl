@@ -1,6 +1,8 @@
 {{- if (eq .chezmoi.os "linux") -}}
 {{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 #!/bin/sh
+mkdir -p $HOME/.git-template || true
+
 is_docker() {
     [ -f /.dockerenv ] ||
     grep -q docker /proc/1/cgroup ||
