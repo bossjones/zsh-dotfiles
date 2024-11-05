@@ -5,6 +5,15 @@
 # SOURCE: https://www.binpress.com/generate-video-previews-ffmpeg/
 # SOURCE: https://gist.github.com/martinsik/5237977560ea7d60ad11#file-video_preview-sh
 
+
+# is_docker() {
+#     [ -f /.dockerenv ] ||
+#     grep -q docker /proc/1/cgroup ||
+#     [ -n "$container" ] ||
+#     [[ "$(hostname)" == *"docker"* ]]
+# }
+
+
 # export ZSH_DOTFILES_PREP_CI=1
 # export ZSH_DOTFILES_PREP_DEBUG=1
 # export ZSH_DOTFILES_PREP_GITHUB_USER=bossjones
@@ -17,6 +26,13 @@
 
 # # Set PATH
 # export PATH="/root/bin:/root/.bin:/root/.local/bin:$PATH"
+# # sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+
+# if is_docker; then
+#     sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+# else
+#     sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+# fi
 # curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
 
 
@@ -37,6 +53,7 @@ check_dependency() {
 check_dependency ffmpeg
 check_dependency ffprobe
 check_dependency bc
+check_dependency retry
 
 if [ -z "$1" ]; then
     echo "usage: ./movie_preview.sh VIDEO [HEIGHT=120] [COLS=100] [ROWS=1] [OUTPUT]"

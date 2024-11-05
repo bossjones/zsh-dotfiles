@@ -2,6 +2,12 @@
 
 set -e
 
+is_docker() {
+    [ -f /.dockerenv ] ||
+    grep -q docker /proc/1/cgroup ||
+    [ -n "$container" ] ||
+    [[ "$(hostname)" == *"docker"* ]]
+}
 
 # SOURCE: https://rtx.pub/install.sh
 #region environment setup
@@ -51,7 +57,7 @@ check_dependency() {
         echo "You can typically install it using your package manager:"
         echo "For Ubuntu/Debian: sudo apt-get install $1"
         echo "For macOS with Homebrew: brew install $1"
-        echo "For Ubuntu/Debian try: apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev"
+        echo "For Ubuntu/Debian try: apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev less && sudo sh -c \"curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry\""
         echo "For MacOS try: brew install curl git gnupg zsh fzf perl gettext direnv vim awscli wget bash-completion ffmpeg gawk libmediainfo"
         exit 1
     fi
@@ -64,21 +70,23 @@ install_packages() {
             echo "Homebrew is not installed. Please install it first."
             exit 1
         fi
-        brew install ffmpeg gawk libmediainfo >/dev/null 2>&1 || true
+        # brew install ffmpeg gawk libmediainfo >/dev/null 2>&1 || true
     else
-        apt install -yqq curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev  >/dev/null 2>&1 || true
-        sudo apt update && sudo apt install -y ffmpeg bc gawk libmediainfo-dev >/dev/null 2>&1
+        # if is_docker; then
+        #     apt update  >/dev/null 2>&1 || true
+        #     apt install -yqq curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev  >/dev/null 2>&1 || true
+        # else
+        #     sudo apt update  >/dev/null 2>&1 || true
+        #     sudo apt install -y ffmpeg bc gawk libmediainfo-dev  >/dev/null 2>&1 || true
+        # fi
+
     fi
 
     check_dependency ffmpeg
     check_dependency ffprobe
     check_dependency bc
     check_dependency gawk
-}
-
-# Main script
-main() {
-    install_packages
+    check_dependency retry
 
     if command -v python3 >/dev/null 2>&1; then
         python3 -m pip install pyvideothumbnailer  >/dev/null 2>&1
@@ -86,6 +94,11 @@ main() {
         echo "Python3 is not installed. Please install it to use pyvideothumbnailer."
         exit 1
     fi
+}
+
+# Main script
+main() {
+    # install_packages
 
     if [ $# -eq 0 ]; then
         echo "Please provide the video file path as an argument."
@@ -97,7 +110,6 @@ main() {
         echo "Video file not found: $video_file"
         exit 1
     fi
-
 
     # Get the absolute path of the video file
     absolute_path=$(python3 -c "import os; print(os.path.abspath('$video_file'))")
