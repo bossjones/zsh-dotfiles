@@ -1553,6 +1553,161 @@ prepare_everything_small(){
     prepare_orig
 }
 
+generate_video_thumbnail() {
+    # set -e
+
+    is_docker() {
+        [ -f /.dockerenv ] ||
+        grep -q docker /proc/1/cgroup ||
+        [ -n "$container" ] ||
+        [[ "$(hostname)" == *"docker"* ]]
+    }
+
+    get_os() {
+        os="$(uname -s)"
+        if [ "$os" = Darwin ]; then
+            echo "macos"
+        elif [ "$os" = Linux ]; then
+            echo "linux"
+        else
+            echo "unsupported OS: $os"
+            return 1
+        fi
+    }
+
+    get_arch() {
+        arch="$(uname -m)"
+        if [ "$arch" = x86_64 ]; then
+            echo "x64"
+        elif [ "$arch" = aarch64 ] || [ "$arch" = arm64 ]; then
+            echo "arm64"
+        else
+            echo "unsupported architecture: $arch"
+            return 1
+        fi
+    }
+
+    is_macos() {
+        [ "$(get_os)" = "macos" ]
+    }
+
+
+    # Check for required binaries
+    check_dependency() {
+        if ! command -v $1 &> /dev/null; then
+            echo "Error: $1 is not installed. Please install it and try again."
+            echo "You can typically install it using your package manager:"
+            echo "For Ubuntu/Debian: sudo apt-get install $1"
+            echo "For macOS with Homebrew: brew install $1"
+            echo "For Ubuntu/Debian try: apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev fd-find"
+            echo "For MacOS try: brew install curl git gnupg zsh fzf perl gettext direnv vim awscli wget bash-completion ffmpeg gawk libmediainfo"
+            return 1
+        fi
+    }
+
+    # Function to install packages
+    install_packages() {
+        if is_macos; then
+            if ! command -v brew >/dev/null 2>&1; then
+                echo "Homebrew is not installed. Please install it first."
+                return 1
+            fi
+        fi
+
+        check_dependency ffmpeg
+        check_dependency ffprobe
+        check_dependency bc
+        check_dependency gawk
+        check_dependency pyvideothumbnailer
+
+        # if command -v python3 >/dev/null 2>&1; then
+        #     python3 -m pip install pyvideothumbnailer >/dev/null 2>&1
+        # else
+        #     echo "Python3 is not installed. Please install it to use pyvideothumbnailer."
+        #     return 1
+        # fi
+    }
+
+    # install_packages || return 1
+
+    if [ $# -eq 0 ]; then
+        echo "Please provide the video file path as an argument." >&2
+        return 1
+    fi
+
+    video_file="$1"
+    if [ ! -f "$video_file" ]; then
+        echo "Video file not found: $video_file" >&2
+        return 1
+    fi
+
+    # # Check for required dependencies
+    # for dep in ffmpeg ffprobe bc gawk python3; do
+    #     check_dependency $dep || return 1
+    # done
+
+    # # Install pyvideothumbnailer if not already installed
+    # if ! python3 -m pip show pyvideothumbnailer >/dev/null 2>&1; then
+    #     echo "Installing pyvideothumbnailer..."
+    #     python3 -m pip install pyvideothumbnailer >/dev/null 2>&1 || {
+    #         echo "Failed to install pyvideothumbnailer" >&2
+    #         return 1
+    #     }
+    # fi
+
+    # Get the absolute path of the video file
+    absolute_path=$(python3 -c "import os; print(os.path.abspath('$video_file'))")
+
+    # Get the parent directory
+    parent_dir=$(dirname "$absolute_path")
+
+    # Get the relative path
+    relative_path=$(basename "$absolute_path")
+
+    echo -e "******************************************\n"
+    echo "absolute_path: $absolute_path"
+    echo "parent_dir: $parent_dir"
+    echo "relative_path: $relative_path"
+    echo -e "******************************************\n"
+
+    echo "Processing video file: $relative_path"
+
+    # Change to the parent directory
+    cd "$parent_dir" || return 1
+
+    # Run pyvideothumbnailer with the relative path
+    if ! pyvideothumbnailer "$relative_path"; then
+        echo "Error: pyvideothumbnailer failed to process the video."
+        return 1
+    fi
+
+    echo "Thumbnail created successfully."
+}
+
+# # Prepare videos for classification by:
+# # 1. Finding all video files (mp4, avi, mov, mkv)
+# # 2. Converting first 3 seconds to a 320px wide GIF at 10fps
+# # 3. Using palettegen/paletteuse for better GIF color quality
+# # 4. Moving original files to orig/ directory
+# prepare_for_classifer(){
+#     fd -e mp4 -e avi -e mov -e mkv -i -x ffmpeg -y -i {} -filter_complex "[0:v] select='between(t,0,3)',setpts=PTS-STARTPTS,fps=10,scale=320:-1,split [a][b];[a] palettegen [p];[b][p] paletteuse" {.}.gif
+#     prepare_orig
+# }
+prepare_for_classifer(){
+    if command -v fdfind >/dev/null 2>&1; then
+        fdfind -a --max-depth=1 --ignore-case -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+    else
+        fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+    fi
+
+    prepare_orig
+
+    # fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+
+    # # fd -e mp4 -e avi -e mov -e mkv -i -x ffmpeg -y -i {} -filter_complex "[0:v] select='between(t,0,3)',setpts=PTS-STARTPTS,fps=10,scale=320:-1,split [a][b];[a] palettegen [p];[b][p] paletteuse" {.}.gif
+    # prepare_orig
+}
+
 alias reddit_dl='yt-best-fork'
 
 download_magnet(){
