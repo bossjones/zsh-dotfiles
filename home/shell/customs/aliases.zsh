@@ -1675,8 +1675,9 @@ generate_video_thumbnail() {
     # Change to the parent directory
     cd "$parent_dir" || return 1
 
+    echo "running: pyvideothumbnailer --suffix __preview --override-existing \"$relative_path\""
     # Run pyvideothumbnailer with the relative path
-    if ! pyvideothumbnailer "$relative_path"; then
+    if ! pyvideothumbnailer --suffix __preview --override-existing "$relative_path"; then
         echo "Error: pyvideothumbnailer failed to process the video."
         return 1
     fi
@@ -1694,12 +1695,14 @@ generate_video_thumbnail() {
 #     prepare_orig
 # }
 prepare_for_classifer(){
+    ulimit -n 65536
+
     if command -v pyvideothumbnailer >/dev/null 2>&1; then
         echo "pyvideothumbnailer is installed"
         if command -v fdfind >/dev/null 2>&1; then
-            fdfind -a --max-depth=1 --ignore-case -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+            fdfind -a --max-depth=1 --ignore-case -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
         else
-            fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+            fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
         fi
 
         prepare_orig
@@ -1718,6 +1721,7 @@ prepare_for_classifer(){
 get_current_python_interpreter(){
     python -c "import sys;print(sys.executable)"
 }
+
 
 alias reddit_dl='yt-best-fork'
 
