@@ -62,6 +62,7 @@ jobs:
             brew install wget || true
             brew install curl || true
             brew install kadwanev/brew/retry || true
+            brew install go || true
 
             echo "~/bin" >> $GITHUB_PATH
             echo "~/.bin" >> $GITHUB_PATH
@@ -87,6 +88,7 @@ jobs:
             brew tap schniz/tap || true
             brew install wget || true
             brew install curl || true
+            brew install go || true
 
             echo "~/bin" >> $GITHUB_PATH
             echo "~/.bin" >> $GITHUB_PATH
