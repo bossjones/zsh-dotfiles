@@ -1,5 +1,48 @@
 {{- if (eq .chezmoi.os "linux") -}}
 {{- if (eq .chezmoi.osRelease.name "Ubuntu") -}}
 #!/bin/sh
+
+export DEBIAN_FRONTEND=noninteractive
+export LANG=C.UTF-8
+
+mkdir -p $HOME/.git-template || true
+
+is_docker() {
+    [ -f /.dockerenv ] ||
+    grep -q docker /proc/1/cgroup ||
+    [ -n "$container" ] ||
+    [[ "$(hostname)" == *"docker"* ]]
+}
+
+if is_docker; then
+    apt update
+    apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
+    sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+else
+    sudo apt update
+    sudo apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
+    sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+fi
+{{ end -}}
+{{- if (eq .chezmoi.osRelease.name "Debian") -}}
+#!/bin/sh
+export DEBIAN_FRONTEND=noninteractive
+export LANG=C.UTF-8
+
+is_docker() {
+    [ -f /.dockerenv ] ||
+    grep -q docker /proc/1/cgroup ||
+    [ -n "$container" ] ||
+    [[ "$(hostname)" == *"docker"* ]]
+}
+if is_docker; then
+    apt update
+    apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
+    sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+else
+    sudo apt update
+    sudo apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
+    sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+fi
 {{ end -}}
 {{ end -}}

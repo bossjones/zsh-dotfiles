@@ -37,7 +37,42 @@ get_system() {
 if [ ! -f ~/.cargo/env ]; then
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
   source "$HOME"/.cargo/env
+  if [ "$CURRENT_OS" != "macos" ]; then
+    # shellcheck disable=SC2002 # Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead
+    os_name=$(cat /etc/os-release | grep -oP '^NAME="\K[^"]+')
+    # Check if the operating system is Ubuntu
+    if [ "${os_name}" = "Ubuntu" ]; then
+      echo "The operating system is Ubuntu. Install rust package deps"
+      sudo apt install build-essential libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev -y
+    fi
+  fi
+
   cargo install ripgrep fd-find
+  cargo install lms
+  cargo install procs
+  cargo install bandwhich
+  cargo install sd
+  cargo install lms
+  cargo install tre-command
+  cargo install procs
+  cargo install gping
+  cargo install dua-cli
+  cargo install --git https://github.com/bvaisvil/zenith.git
+  cargo install bottom
+  cargo install hexyl
+  cargo install silicon
+  cargo install --locked --features clipboard broot
+  cargo install skim
+  cargo install viu
+  cargo install diskonaut
+  cargo install git-delta
+  cargo install du-dust
+  cargo install mdcat
+  cargo install yj
+  # cargo install meli # email client
+  # A new way to see and navigate directory trees : https://dystroy.org/broot
+  cargo install --locked --features clipboard broot
+  export PATH="${HOME}/.cargo/bin:$PATH"
   fd /root
 fi
 
@@ -186,19 +221,24 @@ fi
 
 if [ "$CURRENT_OS" = 'linux' ]; then
   cd ~/.local/src
-  git clone --filter=blob:none --sparse https://github.com/ryanoasis/nerd-fonts || true
-  cd nerd-fonts
-  git sparse-checkout add patched-fonts/FiraCode || true
-  ./install.sh FiraCode
-  cd -
+  # git clone --filter=blob:none --sparse https://github.com/ryanoasis/nerd-fonts || true
+  # git clone --filter=blob:none https://github.com/ryanoasis/nerd-fonts || true
+  # cd nerd-fonts
+  # git sparse-checkout add patched-fonts/FiraCode || true
+  # ./install.sh FiraCode
 
-  sudo git clone https://github.com/bossjones/debug-tools /usr/local/src/debug-tools
-  sudo chown ubuntu:ubuntu -R /usr/local/src/debug-tools
+  mkdir -p ~/.local/share/fonts || true
+  cd ~/.local/share/fonts
+  curl -fLO https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/FiraCode/Regular/FiraCodeNerdFont-Regular.ttf
+  cd ~/.local/src
+
+  sudo git clone https://github.com/bossjones/debug-tools /usr/local/src/debug-tools || true
+  sudo chown $(whoami):$(whoami) -R /usr/local/src/debug-tools
   cd /usr/local/src/debug-tools
   ./update-bossjones-debug-tools
   install-tmux.sh
   cd -
-  mkdir ~/.tmuxinator || true
+  mkdir ~/.tmuxinator || true 2>/dev/null
 
   cat <<"EOF" >~/.tmuxinator/zsh.yml
 # ~/.tmuxinator/zsh.yml
@@ -216,6 +256,8 @@ windows:
           - neofetch
 EOF
 fi
+
+pip install pyvideothumbnailer || true
 
 echo "run the following when confirmed installed"
 echo ""

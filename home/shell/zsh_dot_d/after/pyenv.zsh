@@ -25,6 +25,9 @@ enable_openblas_flags() {
   export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/openblas/lib/pkgconfig"
 }
 
+# NOTE: MIGHT REQUIRE XQUARTZ FOR 3.12+ and TINKER.
+# brew install --cask xquartz
+# SOURCE: https://github.com/pyenv/pyenv/issues/2805
 enable_compile_flags() {
   # SOURCE: https://github.com/jiansoung/issues-list/issues/13
   # Fixes: zipimport.ZipImportError: can't decompress data; zlib not available
@@ -36,6 +39,7 @@ enable_compile_flags() {
   # SOURCE: https://github.com/jiansoung/issues-list/issues/13
   # Fixes: zipimport.ZipImportError: can't decompress data; zlib not available
   export CFLAGS="${CFLAGS} -I$(brew --prefix tcl-tk)/include"
+  export LDFLAGS="${LDFLAGS} -L${LOCAL_HOMEBREW_PREFIX}/opt/llvm/c++ -Wl,-rpath,${LOCAL_HOMEBREW_PREFIX}/opt/llvm/lib/c++"
   export LDFLAGS="${LDFLAGS} -L${LOCAL_HOMEBREW_PREFIX}/opt/tcl-tk/lib"
   export CPPFLAGS="${CPPFLAGS} -I${LOCAL_HOMEBREW_PREFIX}/opt/tcl-tk/include"
   export LDFLAGS="${LDFLAGS} -L${LOCAL_HOMEBREW_PREFIX}/opt/zlib/lib"
@@ -48,50 +52,65 @@ enable_compile_flags() {
   export CPPFLAGS="${CPPFLAGS} -I${LOCAL_HOMEBREW_PREFIX}/opt/bzip2/include"
   export LDFLAGS="${LDFLAGS} -L${LOCAL_HOMEBREW_PREFIX}/opt/ncurses/lib"
   export CPPFLAGS="${CPPFLAGS} -I${LOCAL_HOMEBREW_PREFIX}/opt/ncurses/include"
-  export LDFLAGS="${LDFLAGS} -L${LOCAL_HOMEBREW_PREFIX}/opt/openssl@1.1/lib"
-  export CPPFLAGS="${CPPFLAGS} -I${LOCAL_HOMEBREW_PREFIX}/opt/openssl@1.1/include"
+  # export LDFLAGS="${LDFLAGS} -L${LOCAL_HOMEBREW_PREFIX}/opt/openssl@1.1/lib"
+  # export CPPFLAGS="${CPPFLAGS} -I${LOCAL_HOMEBREW_PREFIX}/opt/openssl@1.1/include"
+  # needed for newer python versions
+  export LDFLAGS="${LDFLAGS} -L${LOCAL_HOMEBREW_PREFIX}/opt/openssl@3/lib"
+  export CPPFLAGS="${CPPFLAGS} -I${LOCAL_HOMEBREW_PREFIX}/opt/openssl@3/include"
+
+  export LDFLAGS="${LDFLAGS} -L${LOCAL_HOMEBREW_PREFIX}/opt/readline/lib"
+  export CPPFLAGS="${CPPFLAGS} -I${LOCAL_HOMEBREW_PREFIX}/opt/readline/include"
+
   export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/zlib/lib/pkgconfig"
   export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/sqlite/lib/pkgconfig"
   export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/tcl-tk/lib/pkgconfig"
   export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/libffi/lib/pkgconfig"
   export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/ncurses/lib/pkgconfig"
-  export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/openssl@1.1/lib/pkgconfig"
-  export PYTHON_CONFIGURE_OPTS="--with-tcltk-includes='-I$(brew --prefix tcl-tk)/include' --with-tcltk-libs='-L$(brew --prefix tcl-tk)/lib -ltcl8.6 -ltk8.6'"
-  export PROFILE_TASK='-m test.regrtest --pgo \
-        test_array \
-        test_base64 \
-        test_binascii \
-        test_binhex \
-        test_binop \
-        test_bytes \
-        test_c_locale_coercion \
-        test_class \
-        test_cmath \
-        test_codecs \
-        test_compile \
-        test_complex \
-        test_csv \
-        test_decimal \
-        test_dict \
-        test_float \
-        test_fstring \
-        test_hashlib \
-        test_io \
-        test_iter \
-        test_json \
-        test_long \
-        test_math \
-        test_memoryview \
-        test_pickle \
-        test_re \
-        test_set \
-        test_slice \
-        test_struct \
-        test_threading \
-        test_time \
-        test_traceback \
-        test_unicode \
-  '
+  # export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/openssl@1.1/lib/pkgconfig"
+  # needed for newer python versions
+  export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/openssl@3/lib/pkgconfig"
+  export PKG_CONFIG_PATH="${PKG_CONFIG_PATH} ${LOCAL_HOMEBREW_PREFIX}/opt/readline/lib/pkgconfig"
+  # export PYTHON_CONFIGURE_OPTS="--with-tcltk-includes='-I$(brew --prefix tcl-tk)/include' --with-tcltk-libs='-L$(brew --prefix tcl-tk)/lib -ltcl8.6 -ltk8.6'"
+  # export PROFILE_TASK='-m test.regrtest --pgo \
+  #       test_array \
+  #       test_base64 \
+  #       test_binascii \
+  #       test_binhex \
+  #       test_binop \
+  #       test_bytes \
+  #       test_c_locale_coercion \
+  #       test_class \
+  #       test_cmath \
+  #       test_codecs \
+  #       test_compile \
+  #       test_complex \
+  #       test_csv \
+  #       test_decimal \
+  #       test_dict \
+  #       test_float \
+  #       test_fstring \
+  #       test_hashlib \
+  #       test_io \
+  #       test_iter \
+  #       test_json \
+  #       test_long \
+  #       test_math \
+  #       test_memoryview \
+  #       test_pickle \
+  #       test_re \
+  #       test_set \
+  #       test_slice \
+  #       test_struct \
+  #       test_threading \
+  #       test_time \
+  #       test_traceback \
+  #       test_unicode \
+  # '
+
+  # env PYTHON_CONFIGURE_OPTS="--enable-framework --enable-optimizations" pyenv install 3.12.0
+  # env PYTHON_CONFIGURE_OPTS="--enable-shared --enable-optimizations" pyenv install 3.12.4
+  # env PYTHON_CONFIGURE_OPTS="--enable-loadable-sqlite-extensions --enable-optimizations --with-lto=full" pyenv install 3.12.4
+
 
   if [[ -s "$(brew --prefix libsndfile)" ]]; then
     export CFLAGS="${CFLAGS} -I$(brew --prefix libsndfile)/include"

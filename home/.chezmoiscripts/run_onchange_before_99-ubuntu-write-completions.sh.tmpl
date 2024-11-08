@@ -78,6 +78,24 @@ if [ -n "$(command which helm 2>/dev/null)" ]; then
     helm plugin install https://github.com/databus23/helm-diff
 fi
 
+if [ -n "$(command which rye 2>/dev/null)" ]; then
+    rye self completion -s zsh > ~/.zsh/completions/_rye
+    rye self completion -s zsh > ~/.zsh/completion/_rye
+
+fi
+
+# RYE_BIN="$(which rye)"
+# # # completion
+# # if [ -x "$RYE_BIN" ]; then
+# #     eval "$(rye self completion -s zsh)"
+# # fi
+
+
+if [ -n "$(command which k3d 2>/dev/null)" ]; then
+    k3d completion zsh > ~/.zsh/completions/_k3d
+    k3d completion zsh > ~/.zsh/completion/_k3d
+fi
+
 
 
 {{ end -}}

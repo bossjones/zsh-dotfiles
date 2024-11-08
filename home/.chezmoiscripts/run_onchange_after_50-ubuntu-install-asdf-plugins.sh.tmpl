@@ -24,12 +24,13 @@ echo "Install asdf plugins"
 # install custom plugin repos
 asdf plugin-add kubectl https://github.com/asdf-community/asdf-kubectl.git || true
 asdf plugin-add helm https://github.com/Antiarchitect/asdf-helm.git || true
-asdf plugin-add k9s https://github.com/looztra/asdf-k9s || true
+asdf plugin-add k9s https://github.com/virtualstaticvoid/asdf-k9s || true
 asdf plugin-add kubectx https://github.com/virtualstaticvoid/asdf-kubectx.git || true
 asdf plugin-add mkcert https://github.com/salasrod/asdf-mkcert.git || true
 asdf plugin add opa https://github.com/tochukwuvictor/asdf-opa.git || true
 asdf plugin-add helm-docs https://github.com/sudermanjr/asdf-helm-docs.git || true
 asdf plugin-add kubetail https://github.com/janpieper/asdf-kubetail.git || true
+asdf plugin add rye https://github.com/Azuki-bar/asdf-rye.git || true
 
 
 {{ $plugins := dict
@@ -49,6 +50,7 @@ asdf plugin-add kubetail https://github.com/janpieper/asdf-kubetail.git || true
   "kubectx" (.myAsdfKubectxVersion)
   "opa" (.myAsdfOpaVersion)
   "kubectl" (.myAsdfKubectlVersion)
+  "rye" (.myAsdfRyeVersion)
 }}
 
 # Add plugins & install versions

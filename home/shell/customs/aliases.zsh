@@ -403,7 +403,7 @@ ascrape() {
     cd ~/dev/bossjones/sandbox/aioscraper
     echo "${fname}" | tee -a scrape.log
     set -x
-    python aioscraper/cli.py scrape -- ${fname}
+    python aioscraper/cli.py scrape -- "${fname}"
     set +x
 }
 
@@ -488,6 +488,7 @@ fixprompt() {
 alias trw="tmux rename-window"
 
 alias dotfiles_provision='chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git'
+alias dotfiles_provision_branch='chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git --branch feature-rye'
 # pi@boss-station ~/.zsh.d/after
 # ❯ cat custom_plugins.zsh
 # plugins+=(git-extra-commands zsh-256color zsh-peco-history pyenv rbenv fd fzf zsh-syntax-highlighting tmux conda-zsh-completion)
@@ -584,11 +585,11 @@ youtube-dl-aliases () {
 
 yt-dl-thumb () {
 	echo " [running] youtube-dl -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}"
-	youtube-dl -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}
+	youtube-dl -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "${1}"
 }
 yt-dl-thumb-fork () {
 	echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}"
-	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}
+	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "${1}"
 }
 
 alias dl-thumb='yt-dl-thumb'
@@ -596,17 +597,17 @@ alias dl-thumb-fork='yt-dl-thumb-fork'
 
 yt-dl-best-test () {
 	echo " [running] youtube-dl -v -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio\" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}"
-	youtube-dl -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}
+	youtube-dl -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "${1}"
 }
 
 yt-best-fork () {
 	echo " [running] yt-dlp -v -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio\" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json ${1}"
-	yt-dlp -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json ${1}
+	yt-dlp -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json "${1}"
 }
 
 dl-split () {
 	while IFS="" read -r p || [ -n "$p" ]; do
-		yt-best $p
+		yt-best "$p"
 	done < download.txt
 }
 
@@ -614,19 +615,19 @@ dl-safe () {
 	pyenv activate yt-dlp3 || true
 	local url=${1}
 
-	dl-thumb ${url}
+	dl-thumb "${url}"
 
 	_RETVAL=$?
 
 	if [[ "${_RETVAL}" != "0" ]]; then
 			echo "Trying yt-best instead"
-			yt-best ${url}
+			yt-best "${url}"
 
 			_RETVAL=$?
 
 			if [[ "${_RETVAL}" != "0" ]]; then
 					echo "Trying youtube-dl instead"
-					youtube-dl ${url}
+					youtube-dl "${url}"
 			fi
 	fi
 
@@ -638,19 +639,19 @@ dl-safe-fork () {
 	local url=${1}
 
 	# dl-thumb
-	dl-thumb-fork ${url}
+	dl-thumb-fork "${url}"
 
 	_RETVAL=$?
 
 	if [[ "${_RETVAL}" != "0" ]]; then
 			echo "Trying yt-best instead"
-			yt-best-fork ${url}
+			yt-best-fork "${url}"
 
 			_RETVAL=$?
 
 			if [[ "${_RETVAL}" != "0" ]]; then
 					echo "Trying youtube-dl instead"
-					yt-dlp --convert-thumbnails jpg ${url}
+					yt-dlp --convert-thumbnails jpg "${url}"
 			fi
 	fi
 
@@ -661,7 +662,7 @@ alias dlsf='dl-safe-fork'
 alias dsf='dl-safe-fork'
 
 sleep_dsf() {
-	dsf ${1}
+	dsf "${1}"
 	progress-bar $(python -c "import random;print(random.randint(5,120))")
 }
 
@@ -694,31 +695,31 @@ json_rm(){
 yt-crunchyroll () {
 	pyenv activate cerebro_bot3 || true
 	echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt  --extractor-args \"youtube:player-client=android_embedded,web;include_live_dash\" --extractor-args \"funimation:version=uncut\" -F ${1}"
-	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --extractor-args "youtube:player-client=android_embedded,web;include_live_dash" --extractor-args "funimation:version=uncut" -F ${1}
+	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --extractor-args "youtube:player-client=android_embedded,web;include_live_dash" --extractor-args "funimation:version=uncut" -F "${1}"
 }
 
 dl-tweet() {
 	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg ${1}\n"
-	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg ${1}
+	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg" ${1}"
 }
 
 dl-ig() {
 	pyenv activate yt-dlp3 || true
 	echo -e " [running]  gallery-dl --cookies-from-browser Firefox --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata  ${1}\n"
-	gallery-dl --cookies-from-browser Firefox --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata  ${1}
+	gallery-dl --cookies-from-browser Firefox --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata  "${1}"
 }
 
 dl-thread() {
 	pyenv activate yt-dlp3 || true
 	echo -e " [running] gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf ${1}\n"
-	gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf ${1}
+	gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf "${1}"
 }
 
 dl-subs() {
 	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg  --write-subs --sub-langs 'en-orig'  --sub-format srt --write-auto-subs --sub-format srt ${1}\n"
-	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-langs 'en-orig' --sub-format srt --write-auto-subs --sub-format srt ${1}
+	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-langs 'en-orig' --sub-format srt --write-auto-subs --sub-format srt "${1}"
 	# yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-subs --sub-langs 'en' ${1}
 	echo -e "\n"
 	echo -e "\n"
@@ -727,16 +728,16 @@ dl-subs() {
 dl-metadata(){
 	pyenv activate yt-dlp3 || true
 	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg  --write-subs --sub-lang en-orig -j ${1} | bat\n"
-	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-lang en-orig -j ${1} | bat
+	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-lang en-orig -j "${1}" | bat
 }
 
 ff-subs() {
     fname="${1}"
-    predetermined_fname="$(yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-lang en-orig -j ${fname} | jq '.filename')"
-    echo $predetermined_fname
+    predetermined_fname="$(yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --write-info-json --convert-thumbnails jpg --write-subs --sub-lang en-orig -j "${fname}" | jq '.filename')"
+    echo "$predetermined_fname"
     dl-subs "${fname}"
     set -x
-    downloaded_mp4="$(echo $predetermined_fname | sed 's,^",,g'| sed 's,"$,,g')"
+    downloaded_mp4="$(echo "$predetermined_fname" | sed 's,^",,g'| sed 's,"$,,g')"
 
 
     outputfile_srt="$(python -c "import pathlib;print(pathlib.Path('$downloaded_mp4').stem)").srt"
@@ -756,7 +757,7 @@ dl-gallery(){
 	pyenv activate yt-dlp3 || true
 	uri="${1}"
 	echo -e " [running] gallery-dl --no-mtime --netrc -o downloader.http.headers.User-Agent=Wget/1.21.1 -v --write-info-json --write-metadata ${uri}"
-	gallery-dl --no-mtime --netrc -o downloader.http.headers.User-Agent=Wget/1.21.1 -v --write-info-json --write-metadata ${uri}
+	gallery-dl --no-mtime --netrc -o downloader.http.headers.User-Agent=Wget/1.21.1 -v --write-info-json --write-metadata "${uri}"
 }
 
 
@@ -774,7 +775,7 @@ prepare_from_large_square_color() {
 dl-only () {
     pyenv activate ffmpeg-tools399 || true
     echo " [running] yt-dlp -v -f 'bv*+ba' -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-dlp-cookies.txt ${1}"
-    yt-dlp -v -f 'bv*+ba' -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-dlp-cookies.txt ${1}
+    yt-dlp -v -f 'bv*+ba' -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-dlp-cookies.txt "${1}"
 }
 
 unzip_nuke() {
@@ -986,7 +987,7 @@ k8s-e2e(){
 
     sonobuoy run --wait --level=debug --config=./sonobuoy-config.json
     results=$(sonobuoy retrieve)
-    sonobuoy results $results
+    sonobuoy results "$results"
     sonobuoy delete --wait
 
 }
@@ -1088,12 +1089,12 @@ kubetail_stage_bar_network() {
 }
 
 check_cluster_dns() {
-    kubectx ${1}
+    kubectx "${1}"
     [[ "${?}" = 1 ]] && return 1
     _NET_TOOLS_CONTAINER_ID=$(kubectl -n menagerie get pods | grep net-tools | cut -d" " -f1)
-    _CONTAINER_ID=$(kubectl -n menagerie get pods ${_NET_TOOLS_CONTAINER_ID} -o json | jq '.status.containerStatuses[0].containerID' | sed 's,\",,g'| sed 's,cri\-o\:\/\/,,g')
+    _CONTAINER_ID=$(kubectl -n menagerie get pods "${_NET_TOOLS_CONTAINER_ID}" -o json | jq '.status.containerStatuses[0].containerID' | sed 's,\",,g'| sed 's,cri\-o\:\/\/,,g')
     echo "${_NET_TOOLS_CONTAINER_ID}"
-    kubectl -n menagerie exec -it ${_NET_TOOLS_CONTAINER_ID} -- dig @${2} alex.adobe.net
+    kubectl -n menagerie exec -it "${_NET_TOOLS_CONTAINER_ID}" -- dig @"${2}" alex.adobe.net
 }
 
 # test -d "${KREW_ROOT:-$HOME/.krew}/bin" && {
@@ -1109,13 +1110,13 @@ sed-kubeconfig() {
 # eg. kubectlgetall ns-team-behance--bossjones-ethos-flex-test-deploy--be-0d858c80
 function kubectlgetall {
   for i in $(kubectl api-resources --verbs=list --namespaced -o name | grep -v "events.events.k8s.io" | grep -v "events" | sort | uniq); do
-    echo "Resource:" $i
+    echo "Resource:" "$i"
 
     if [ -z "$1" ]
     then
-        kubectl get --ignore-not-found ${i} 2>&1 | grep -i -v "Warn" | grep -i -v "Deprecat" | grep -i -v 'https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins'
+        kubectl get --ignore-not-found "${i}" 2>&1 | grep -i -v "Warn" | grep -i -v "Deprecat" | grep -i -v 'https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins'
     else
-        kubectl -n ${1} get --ignore-not-found ${i} 2>&1 | grep -i -v "Warn" | grep -i -v "Deprecat"  | grep -i -v 'https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins'
+        kubectl -n ${1} get --ignore-not-found "${i}" 2>&1 | grep -i -v "Warn" | grep -i -v "Deprecat"  | grep -i -v 'https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins'
     fi
   done
 }
@@ -1129,7 +1130,7 @@ show_kubeprompt(){
 
 kx(){
     show_kubeprompt
-    kubectx ${1}
+    kubectx "${1}"
     export PURE_PROMPT_SYMBOL="$(kube_ps1) ❯"
 }
 
@@ -1210,8 +1211,8 @@ get_primary_color(){
     -hide_banner -loglevel warning \
     -i "${full_path_input_file}" -ss 00:00:01 -vframes 1 "${full_path_output_file}" > /dev/null 2>&1
 
-    primary_color="0x$(magick identify -format "%[hex:p{1,1}]" ${full_path_output_file})"
-    echo $primary_color
+    primary_color="0x$(magick identify -format "%[hex:p{1,1}]" "${full_path_output_file}")"
+    echo "$primary_color"
     rm -f "${full_path_output_file}"
 }
 
@@ -1280,10 +1281,9 @@ prepare_for_ig_small_primary_color(){
 mov_to_mp4(){
     full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
     full_path_output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)").mp4"
+    get_timestamp=$(gstat -c %y "${full_path_input_file}")
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
-    get_timestamp=$(gstat -c %y "${full_path_input_file}")
-
     time ffmpeg -y \
     -hide_banner -loglevel warning \
     -i "${full_path_input_file}" \
@@ -1309,12 +1309,12 @@ klam_env() {
 }
 
 get_all_images(){
-    image_list=$(fd -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*')
+    image_list=$(fd -a --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*')
     echo "$image_list"
 }
 
 get_all_videos(){
-    video_list=$(fd -p -e mp4 --exclude '*larger*' --exclude '*smaller*')
+    video_list=$(fd -a --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*')
     echo "$video_list"
 }
 
@@ -1329,7 +1329,7 @@ image_prepare_primary_color(){
     echo -e "full_path_output_file: ${full_path_output_file}\n"
     echo -e "primary_color: ${primary_color}\n"
 
-    convert -size 1080x1350 xc:#${primary_color} background.png
+    convert -size 1080x1350 xc:#"${primary_color}" background.png
 
     magick "${full_path_input_file}" -resize 1080x1350 -background "#${primary_color}" -compose Copy -gravity center -extent 1080x1350 -quality 92 "${full_path_output_file}"
     rm -f background.png
@@ -1373,14 +1373,14 @@ dl-hls() {
     # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
     pyenv activate yt-dlp3 || true
     # yt-dlp -S 'res:500' --downloader ffmpeg --downloader-args "ffmpeg:-t 180" -o testingytdlp-180.mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
-    yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
+    yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt "${1}"
 }
 
 dl-hls-b() {
     # SOURCE: https://forum.videohelp.com/threads/403670-How-do-I-use-yt-dlp-to-retrieve-a-streaming-video
     pyenv activate yt-dlp3 || true
     # yt-dlp -S 'res:500' --downloader ffmpeg --downloader-args "ffmpeg:-t 180" -o testingytdlp-180.mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
-    yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies-from-browser chrome:/Users/malcolm/Library/Application\ Support/Google/Chrome/Profile\ 11 ${1}
+    yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies-from-browser chrome:/Users/malcolm/Library/Application\ Support/Google/Chrome/Profile\ 11 "${1}"
 }
 
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
@@ -1400,7 +1400,7 @@ alias prepare_all_small="prepare_dir_small"
 dl-twitter() {
     pyenv activate yt-dlp3 || true
     echo " [running]: gallery-dl --no-mtime -v --write-info-json --write-metadata ${1}"
-    gallery-dl --no-mtime -v --write-info-json --write-metadata ${1}
+    gallery-dl --no-mtime -v --write-info-json --write-metadata "${1}"
 }
 
 alias dlt="dl-twitter"
@@ -1430,8 +1430,8 @@ download_file() {
 
 dl-sub () {
 	echo " [running] yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}"
-	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --skip-download --write-auto-sub --sub-lang en ${1}
-	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg ${1}
+	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --skip-download --write-auto-sub --sub-lang en "${1}"
+	yt-dlp -v --embed-subs --cookies=~/Downloads/yt-cookies.txt --write-auto-sub --sub-lang en -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --convert-thumbnails jpg "${1}"
 }
 
 # convert image cover for video
@@ -1442,7 +1442,7 @@ ap () {
     # echo -e "img: ${img}\n"
     # echo -e " [run]: AtomicParsley $vid --artwork $img\n"
     # AtomicParsley $vid --artwork $img
-    AtomicParsley $1 --artwork $2
+    AtomicParsley "$1" --artwork "$2"
 }
 
 re_encode_videos(){
@@ -1452,7 +1452,6 @@ re_encode_videos(){
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "full_path_output_file: ${full_path_output_file}\n"
     echo -e "primary_color: ${primary_color}\n"
-    get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
     ffmpeg \
     -y \
@@ -1471,7 +1470,7 @@ mp4_to_images(){
     prefix_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}\")")"
     echo -e "full_path_input_file: ${full_path_input_file}\n"
     echo -e "prefix_output_file: ${prefix_output_file}\n"
-    ffmpeg -i "${full_path_input_file}" ${prefix_output_file}%04d.png
+    ffmpeg -i "${full_path_input_file}" "${prefix_output_file}"%04d.png
 }
 
 prepare_mp4_to_images(){
@@ -1511,6 +1510,7 @@ show_dir_all(){
 
 alias show_all="show_dir_all"
 
+
 gif_to_mp4(){
     full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
     prefix_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}\")")"
@@ -1529,10 +1529,6 @@ prepare_mov_to_mp4(){
     fd -a --max-depth=1 --ignore -p -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mov_to_mp4 "$1"' zsh
     rm -fv *.mov
     rm -fv *.MOV
-}
-
-git_search_history(){
-    git log --all -S "$1"
 }
 
 prepare_everything(){
@@ -1556,6 +1552,176 @@ prepare_everything_small(){
     prepare_all_small
     prepare_orig
 }
+
+generate_video_thumbnail() {
+    # set -e
+
+    is_docker() {
+        [ -f /.dockerenv ] ||
+        grep -q docker /proc/1/cgroup ||
+        [ -n "$container" ] ||
+        [[ "$(hostname)" == *"docker"* ]]
+    }
+
+    get_os() {
+        os="$(uname -s)"
+        if [ "$os" = Darwin ]; then
+            echo "macos"
+        elif [ "$os" = Linux ]; then
+            echo "linux"
+        else
+            echo "unsupported OS: $os"
+            return 1
+        fi
+    }
+
+    get_arch() {
+        arch="$(uname -m)"
+        if [ "$arch" = x86_64 ]; then
+            echo "x64"
+        elif [ "$arch" = aarch64 ] || [ "$arch" = arm64 ]; then
+            echo "arm64"
+        else
+            echo "unsupported architecture: $arch"
+            return 1
+        fi
+    }
+
+    is_macos() {
+        [ "$(get_os)" = "macos" ]
+    }
+
+
+    # Check for required binaries
+    check_dependency() {
+        if ! command -v $1 &> /dev/null; then
+            echo "Error: $1 is not installed. Please install it and try again."
+            echo "You can typically install it using your package manager:"
+            echo "For Ubuntu/Debian: sudo apt-get install $1"
+            echo "For macOS with Homebrew: brew install $1"
+            echo "For Ubuntu/Debian try: apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev fd-find"
+            echo "For MacOS try: brew install curl git gnupg zsh fzf perl gettext direnv vim awscli wget bash-completion ffmpeg gawk libmediainfo"
+            return 1
+        fi
+    }
+
+    # Function to install packages
+    install_packages() {
+        if is_macos; then
+            if ! command -v brew >/dev/null 2>&1; then
+                echo "Homebrew is not installed. Please install it first."
+                return 1
+            fi
+        fi
+
+        check_dependency ffmpeg
+        check_dependency ffprobe
+        check_dependency bc
+        check_dependency gawk
+        check_dependency pyvideothumbnailer
+
+        # if command -v python3 >/dev/null 2>&1; then
+        #     python3 -m pip install pyvideothumbnailer >/dev/null 2>&1
+        # else
+        #     echo "Python3 is not installed. Please install it to use pyvideothumbnailer."
+        #     return 1
+        # fi
+    }
+
+    # install_packages || return 1
+
+    if [ $# -eq 0 ]; then
+        echo "Please provide the video file path as an argument." >&2
+        return 1
+    fi
+
+    video_file="$1"
+    if [ ! -f "$video_file" ]; then
+        echo "Video file not found: $video_file" >&2
+        return 1
+    fi
+
+    # # Check for required dependencies
+    # for dep in ffmpeg ffprobe bc gawk python3; do
+    #     check_dependency $dep || return 1
+    # done
+
+    # # Install pyvideothumbnailer if not already installed
+    # if ! python3 -m pip show pyvideothumbnailer >/dev/null 2>&1; then
+    #     echo "Installing pyvideothumbnailer..."
+    #     python3 -m pip install pyvideothumbnailer >/dev/null 2>&1 || {
+    #         echo "Failed to install pyvideothumbnailer" >&2
+    #         return 1
+    #     }
+    # fi
+
+    # Get the absolute path of the video file
+    absolute_path=$(python3 -c "import os; print(os.path.abspath('$video_file'))")
+
+    # Get the parent directory
+    parent_dir=$(dirname "$absolute_path")
+
+    # Get the relative path
+    relative_path=$(basename "$absolute_path")
+
+    echo -e "******************************************\n"
+    echo "absolute_path: $absolute_path"
+    echo "parent_dir: $parent_dir"
+    echo "relative_path: $relative_path"
+    echo -e "******************************************\n"
+
+    echo "Processing video file: $relative_path"
+
+    # Change to the parent directory
+    cd "$parent_dir" || return 1
+
+    echo "running: pyvideothumbnailer --suffix __preview --override-existing \"$relative_path\""
+    # Run pyvideothumbnailer with the relative path
+    if ! pyvideothumbnailer --suffix __preview --override-existing "$relative_path"; then
+        echo "Error: pyvideothumbnailer failed to process the video."
+        return 1
+    fi
+
+    echo "Thumbnail created successfully."
+}
+
+# # Prepare videos for classification by:
+# # 1. Finding all video files (mp4, avi, mov, mkv)
+# # 2. Converting first 3 seconds to a 320px wide GIF at 10fps
+# # 3. Using palettegen/paletteuse for better GIF color quality
+# # 4. Moving original files to orig/ directory
+# prepare_for_classifer(){
+#     fd -e mp4 -e avi -e mov -e mkv -i -x ffmpeg -y -i {} -filter_complex "[0:v] select='between(t,0,3)',setpts=PTS-STARTPTS,fps=10,scale=320:-1,split [a][b];[a] palettegen [p];[b][p] paletteuse" {.}.gif
+#     prepare_orig
+# }
+prepare_for_classifer(){
+    ulimit -n 65536
+
+    if command -v pyvideothumbnailer >/dev/null 2>&1; then
+        echo "pyvideothumbnailer is installed"
+        if command -v fdfind >/dev/null 2>&1; then
+            fdfind -a --max-depth=1 --ignore-case -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+        else
+            fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+        fi
+
+        prepare_orig
+
+        # fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10 -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+
+        # # fd -e mp4 -e avi -e mov -e mkv -i -x ffmpeg -y -i {} -filter_complex "[0:v] select='between(t,0,3)',setpts=PTS-STARTPTS,fps=10,scale=320:-1,split [a][b];[a] palettegen [p];[b][p] paletteuse" {.}.gif
+        # prepare_orig
+    else
+        echo "pyvideothumbnailer is not installed"
+        return 1
+    fi
+
+}
+
+get_current_python_interpreter(){
+    python -c "import sys;print(sys.executable)"
+}
+
 
 alias reddit_dl='yt-best-fork'
 
@@ -1731,6 +1897,8 @@ git_clone_d(){
 
 alias gcd='git_clone_d'
 
+alias kge="kubectl get events --sort-by='.lastTimestamp'"
+
 fetch_subs () {
     # SOURCE: https://github.com/wtechgo/vidhop-linux/blob/master/bin/dlv
     pyenv activate yt-dlp3 || true
@@ -1770,6 +1938,9 @@ curl_download() {
 }
 
 
+bump_ulimit(){
+    ulimit -n 70000
+}
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).
