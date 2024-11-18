@@ -1723,6 +1723,38 @@ get_current_python_interpreter(){
 }
 
 
+extract_first_frame() {
+    input_file="$1"
+    output_file="${input_file%.mp4}.jpg"
+    ffmpeg -y -i "$input_file" -vframes 1 -q:v 2 "$output_file" -loglevel error
+}
+
+# Main script
+prepare_first_frame() {
+    # Check if ffmpeg is installed
+    if ! command -v ffmpeg &> /dev/null; then
+        echo "Error: ffmpeg is not installed. Please install ffmpeg to use this script."
+        exit 1
+    fi
+
+    # Loop through all MP4 files in the current directory
+    for file in *.mp4; do
+        # Check if there are any MP4 files
+        if [ -e "$file" ]; then
+            echo "Processing $file..."
+            extract_first_frame "$file"
+            echo "Saved first frame as ${file%.mp4}.jpg"
+        else
+            echo "No MP4 files found in the current directory."
+            exit 0
+        fi
+    done
+
+    echo "All MP4 files processed successfully."
+}
+
+
+
 alias reddit_dl='yt-best-fork'
 
 download_magnet(){

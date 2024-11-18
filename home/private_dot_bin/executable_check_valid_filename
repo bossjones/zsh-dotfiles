@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+import re
+import os
+import unicodedata
+import sys
+
+import string
+
+# Define ACCENT_CHARS (this is a simplified version, you may need a more comprehensive mapping)
+ACCENT_CHARS = {
+    'á': 'a', 'à': 'a', 'ä': 'a',
+    'é': 'e', 'è': 'e', 'ë': 'e',
+    'í': 'i', 'ì': 'i', 'ï': 'i',
+    'ó': 'o', 'ò': 'o', 'ö': 'o',
+    'ú': 'u', 'ù': 'u', 'ü': 'u',
+    'ñ': 'n',
+    # Add more mappings as needed
+}
+
+# Define NO_DEFAULT as a unique object
+NO_DEFAULT = object()
+
+def sanitize_filename(s, restricted=False, is_id=NO_DEFAULT):
+    """Sanitizes a string so it can be safely used as a filename."""
+    def replace_insane(char):
+        if restricted and char in ACCENT_CHARS:
+            return ACCENT_CHARS[char]
+        if char == '?' or ord(char) < 32 or ord(char) == 127:
+            return ''
+        elif char == '"':
+            return '' if restricted else '\''
+        elif char == ':':
+            return '_-' if restricted else ' -'
+        elif char in '\\/|*<>':
+            return '_'
+        if restricted and (char in '!&\'()[]{}$;`^,#' or char.isspace()):
+            return '_'
+        if restricted and ord(char) > 127:
+            return '_'
+        return char
+
+    # Handle timestamps
+    s = re.sub(r'[0-9]+(?::[0-9]+)+', lambda m: m.group(0).replace(':', '_'), s)
+    result = ''.join(map(replace_insane, s))
+    if restricted and result.startswith('.'):
+        result = result.replace('.', '_', 1)
+    if not result:
+        result = '_'
+    return result
+
+def filename_sanitizer(key, value, restricted=False):
+    return sanitize_filename(str(value), restricted=restricted, is_id=(
+        bool(re.search(r'(^|[_.])id(\.|$)', key))
+        if 'filename-sanitization' in ['compat_opts']
+        else False))
+
+def check_filenames(directory):
+    invalid_filenames = []
+    for filename in os.listdir(directory):
+        sanitized = filename_sanitizer('', filename, restricted=True)
+        if sanitized != filename:
+            invalid_filenames.append((filename, sanitized))
+    return invalid_filenames
+
+# Example usage
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python script_name.py <directory_path>")
+        sys.exit(1)
+
+    directory = sys.argv[1]
+
+    if not os.path.isdir(directory):
+        print(f"Error: '{directory}' is not a valid directory.")
+        sys.exit(1)
+
+    invalid_files = check_filenames(directory)
+
+    if invalid_files:
+        print("Potentially invalid filenames:")
+        for original, sanitized in invalid_files:
+            print(f"Original: {original}")
+            print(f"Sanitized: {sanitized}")
+            print("---")
+    else:
+        print("No potentially invalid filenames found.")
