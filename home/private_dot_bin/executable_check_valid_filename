@@ -269,7 +269,7 @@ def trash_file(file_path: str, dry_run: bool = False) -> None:
     if dry_run:
         print("---")
         print(f"Would trash: {file_path}")
-        print(f" [dry-run] subprocess.run(['trash-put', file_path])=subprocess.run(['trash-put', {file_path}])")
+        print(f" [dry-run] subprocess.run(['trash', '-v', {file_path}])=subprocess.run(['trash', '-v', {file_path}])")
         print("---")
         return
 
