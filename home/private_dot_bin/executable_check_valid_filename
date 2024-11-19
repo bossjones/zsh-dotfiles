@@ -248,11 +248,16 @@ def copy_and_sanitize_files(directory: str, invalid_files: List[Tuple[str, str]]
         sanitized_path = os.path.join(directory, sanitized)
 
         if dry_run:
+            print("---")
             print(f"Would copy: {original} -> {sanitized}")
+            print(f" [dry-run] shutil.copy2(original_path, sanitized_path)=shutil.copy2({original_path, sanitized_path})")
+            print("---")
         else:
             # Copy the file
+            print("---")
             shutil.copy2(original_path, sanitized_path)
             print(f"Copied: {original} -> {sanitized}")
+            print("---")
 
 def trash_file(file_path: str, dry_run: bool = False) -> None:
     """Trash a file using trash-cli.
@@ -262,11 +267,16 @@ def trash_file(file_path: str, dry_run: bool = False) -> None:
         dry_run: If True, only print what would be done without making changes.
     """
     if dry_run:
+        print("---")
         print(f"Would trash: {file_path}")
+        print(f" [dry-run] subprocess.run(['trash-put', file_path])=subprocess.run(['trash-put', {file_path}])")
+        print("---")
         return
 
     try:
-        subprocess.run(["trash-put", file_path], check=True)
+        #   -F          Ask Finder to move the files to the trash, instead of using the system API. This is slower, but it utilizes Finder's UI (e.g. sounds) and ensures that the "put back" feature works.
+
+        subprocess.run(["trash", '-v', file_path], check=True)
         print(f"Trashed: {file_path}")
     except subprocess.CalledProcessError:
         print(f"Failed to trash: {file_path}")
@@ -307,7 +317,8 @@ if __name__ == "__main__":
             print("\nCopying files to sanitized versions...")
             copy_and_sanitize_files(directory, invalid_files, dry_run=dry_run)
             print("Copy operation completed.")
-        elif trash_mode:
+
+        if trash_mode:
             print("\nTrashing invalid files...")
             for original, _ in invalid_files:
                 trash_file(os.path.join(directory, original), dry_run=dry_run)
