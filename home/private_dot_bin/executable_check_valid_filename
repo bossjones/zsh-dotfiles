@@ -15,6 +15,10 @@ import string
 import pathlib
 import shutil
 import subprocess
+import sqlite3
+import datetime
+import os
+
 
 # Define ACCENT_CHARS (this is a simplified version, you may need a more comprehensive mapping)
 ACCENT_CHARS: dict[str, str] = {
@@ -32,6 +36,35 @@ NO_DEFAULT = object()
 
 
 
+def init_db() -> sqlite3.Connection:
+    """Initialize SQLite database for filename sanitization.
+
+    Creates a database file in ~/.local/state/dotfiles directory.
+    Creates the directory if it doesn't exist.
+
+    Returns:
+        sqlite3.Connection: Connection to the initialized database.
+    """
+    # Create the directory path
+    db_dir = pathlib.Path.home() / '.local' / 'state' / 'dotfiles'
+    db_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create database file path
+    db_path = db_dir / 'filename_sanitizer.db'
+
+    conn = sqlite3.connect(str(db_path))
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS sanitized_files (
+        id INTEGER PRIMARY KEY,
+        original_filename TEXT,
+        sanitized_filename TEXT,
+        parent_directory TEXT,
+        timestamp DATETIME
+    )
+    ''')
+    conn.commit()
+    return conn
 
 
 # ------------------------------------------------------------
@@ -218,7 +251,7 @@ def filename_sanitizer(key: str, value: Any, restricted: bool = False) -> str:
         if 'filename-sanitization' in ['compat_opts']
         else False))
 
-def check_filenames(directory: str) -> List[Tuple[str, str]]:
+def check_filenames(directory: str) -> List[Tuple[str, str, str]]:
     """Check for invalid filenames in a directory.
 
     Args:
@@ -232,8 +265,17 @@ def check_filenames(directory: str) -> List[Tuple[str, str]]:
     for filename in os.listdir(directory):
         sanitized = filename_sanitizer('', filename, restricted=True)
         if sanitized != filename:
-            invalid_filenames.append((filename, sanitized))
+            invalid_filenames.append((filename, sanitized, directory))
     return invalid_filenames
+
+def insert_sanitized_file(conn, original, sanitized, directory):
+    cursor = conn.cursor()
+    timestamp = datetime.datetime.now()
+    cursor.execute('''
+    INSERT INTO sanitized_files (original_filename, sanitized_filename, parent_directory, timestamp)
+    VALUES (?, ?, ?, ?)
+    ''', (original, sanitized, directory, timestamp))
+    conn.commit()
 
 def copy_and_sanitize_files(directory: str, invalid_files: List[Tuple[str, str]], dry_run: bool = False) -> None:
     """Copy invalid files to their sanitized versions, preserving mtime.
@@ -284,7 +326,6 @@ def trash_file(file_path: str, dry_run: bool = False) -> None:
         print("trash-cli is not installed. Please install it to use the --trash option.")
 
 # Example usage
-
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python script_name.py <directory_path> [--write] [--trash] [--dry-run]")
@@ -297,6 +338,7 @@ if __name__ == "__main__":
 
     directory = fix_path(directory)
     print(f"Checking directory: {directory}")
+
     if dry_run:
         print("DRY RUN: No changes will be made")
 
@@ -304,14 +346,18 @@ if __name__ == "__main__":
         print(f"Error: '{directory}' is not a valid directory.")
         sys.exit(1)
 
+    conn = init_db()
     invalid_files = check_filenames(directory)
 
     if invalid_files:
         print("Potentially invalid filenames:")
-        for original, sanitized in invalid_files:
+        for original, sanitized, dir_path in invalid_files:
             print(f"Original: {original}")
             print(f"Sanitized: {sanitized}")
+            print(f"Directory: {dir_path}")
             print("---")
+            if not dry_run:
+                insert_sanitized_file(conn, original, sanitized, dir_path)
 
         if write_mode:
             print("\nCopying files to sanitized versions...")
@@ -320,7 +366,7 @@ if __name__ == "__main__":
 
         if trash_mode:
             print("\nTrashing invalid files...")
-            for original, _ in invalid_files:
+            for original, _, _ in invalid_files:
                 trash_file(os.path.join(directory, original), dry_run=dry_run)
             print("Trash operation completed.")
         else:
@@ -329,3 +375,5 @@ if __name__ == "__main__":
             print("To simulate operations without making changes, add the --dry-run flag.")
     else:
         print("No potentially invalid filenames found.")
+
+    conn.close()

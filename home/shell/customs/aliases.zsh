@@ -1532,6 +1532,7 @@ prepare_mov_to_mp4(){
 }
 
 prepare_everything(){
+    ulimit -n 65536
     prepare_gif
     unzip_rm
     json_rm
@@ -1543,6 +1544,8 @@ prepare_everything(){
 }
 
 prepare_everything_small(){
+    ulimit -n 65536
+
     prepare_gif
     unzip_rm
     json_rm
@@ -1973,6 +1976,144 @@ curl_download() {
 bump_ulimit(){
     ulimit -n 70000
 }
+
+function gh_clone_structured() {
+    gh repo clone "$1" "$(echo $1 | gsed 's/\// /g' | xargs -n 2 echo | gsed 's/ /\//')"
+}
+
+ps_kill() {
+  local pid
+  pid=$(ps aux |
+    ggrep -i "$1" |
+    ggrep -v ggrep |
+    fzf --height 40% \
+        --reverse \
+        --header='Select process to kill' \
+        --preview 'echo {}' \
+        --preview-window up:3:wrap \
+        --layout=reverse-list \
+        --inline-info \
+        --border \
+        | gawk '{print $2}')
+  if [ -n "$pid" ]; then
+    echo "Killing process $pid"
+    kill -9 "$pid"
+  else
+    echo "No process selected"
+  fi
+}
+
+function download_docs() {
+    # Function to download HTML documentation using wget
+    # Usage: download_docs URL [OUTPUT_DIR]
+    # Example: download_docs https://docs.marimo.io/genindex.html custom_docs
+
+    # Check if URL parameter is provided
+    if [[ -z "$1" ]]; then
+        echo "Error: URL parameter is required"
+        echo "Usage: download_docs URL [OUTPUT_DIR]"
+        return 1
+    fi
+
+    local url="$1"
+    local output_dir="${2:-rtdocs}"  # Use second parameter if provided, otherwise default to 'rtdocs'
+    local original_dir="$PWD"
+
+    # Check if ~/Documents/ai_docs exists
+    if [[ ! -d "$HOME/Documents/ai_docs" ]]; then
+        echo "Error: Directory ~/Documents/ai_docs does not exist"
+        return 1
+    fi
+
+    # Change to the target directory
+    cd "$HOME/Documents/ai_docs" || return 1
+
+    # Run wget command
+    wget -r -A.html -P "$output_dir" "$url"
+    local wget_status=$?
+
+    # Return to original directory
+    cd "$original_dir" || return 1
+
+    # Check if wget was successful
+    if [[ $wget_status -eq 0 ]]; then
+        echo "Documentation downloaded successfully to ~/Documents/ai_docs/$output_dir"
+        return 0
+    else
+        echo "Failed to download documentation"
+        return 1
+    fi
+}
+
+
+
+determine_commands() {
+    if [ "$(uname)" = "Darwin" ]; then
+        # macOS
+        if command -v gsed >/dev/null 2>&1; then
+            SED="gsed"
+        else
+            SED="sed"
+        fi
+        if command -v ggrep >/dev/null 2>&1; then
+            GREP="ggrep"
+        else
+            GREP="grep"
+        fi
+    else
+        # Linux
+        SED="sed"
+        GREP="grep"
+    fi
+}
+
+generate_exclude_patterns() {
+    gitignore_file="$1"
+    exclude_patterns=""
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        [ -z "$line" ] || [ "${line#\#}" != "$line" ] && continue
+        [ "${line#!}" != "$line" ] && continue
+
+        line=$(printf '%s\n' "$line" | $SED -e 's/[]\[\*\?]/\\&/g')
+        exclude_patterns="$exclude_patterns --exclude '$line'"
+
+        # Generate additional patterns for directories
+        case "$line" in
+            */)
+                exclude_patterns="$exclude_patterns --exclude '$line**'"
+                ;;
+            *)
+                if [ -d "$line" ]; then
+                    exclude_patterns="$exclude_patterns --exclude '$line/**'"
+                fi
+                ;;
+        esac
+    done < "$gitignore_file"
+
+    # Add specific patterns for .ruff_cache
+    exclude_patterns="$exclude_patterns --exclude '.ruff_cache/**'"
+
+    printf '%s' "$exclude_patterns"
+}
+
+
+select_and_process_files() {
+    determine_commands
+    printf "Enter the output file path: "
+    read -r output_file
+
+    gitignore_file=".gitignore"
+    exclude_patterns=$(generate_exclude_patterns "$gitignore_file")
+
+    eval "fd --type f --hidden --no-ignore-vcs $exclude_patterns" | \
+    fzf -m | \
+    xargs -I {} files-to-prompt {} --cxml -o "$output_file"
+}
+
+
+
+
 # export _LOGGING_RESET='\e[0m'
 
 # # Simplify colors and print errors to stderr (2).
