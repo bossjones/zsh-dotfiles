@@ -2112,6 +2112,120 @@ select_and_process_files() {
 }
 
 
+download_docs_backoff() {
+    # Function to download HTML documentation using wget with exponential backoff
+    # Usage: download_docs URL [OUTPUT_DIR]
+    # Example: download_docs https://docs.marimo.io/genindex.html custom_docs
+
+    if [ -z "$1" ]; then
+        echo "Error: URL parameter is required"
+        echo "Usage: download_docs URL [OUTPUT_DIR]"
+        return 1
+    fi
+
+    url="$1"
+    output_dir="${2:-rtdocs}"
+    original_dir="$PWD"
+    max_attempts=5
+    base_wait=5
+
+    if [ ! -d "$HOME/Documents/ai_docs" ]; then
+        echo "Error: Directory ~/Documents/ai_docs does not exist"
+        return 1
+    fi
+
+    cd "$HOME/Documents/ai_docs" || return 1
+
+    attempt=0
+    while [ $attempt -lt $max_attempts ]; do
+        attempt=$((attempt + 1))
+        echo "Attempt $attempt of $max_attempts"
+
+        wget -c -r -A.html -P "$output_dir" --wait=1 --random-wait "$url"
+        wget_status=$?
+
+        if [ $wget_status -eq 0 ]; then
+            echo "Documentation downloaded successfully to ~/Documents/ai_docs/$output_dir"
+            cd "$original_dir" || return 1
+            return 0
+        elif [ $wget_status -eq 8 ]; then
+            echo "Server error encountered. Retrying..."
+            wait_time=$((base_wait * 2 ** (attempt - 1)))
+            echo "Waiting for $wait_time seconds before next attempt"
+            sleep $wait_time
+        else
+            echo "Failed to download documentation. Error code: $wget_status"
+            cd "$original_dir" || return 1
+            return 1
+        fi
+    done
+
+    echo "Max attempts reached. Failed to download documentation."
+    cd "$original_dir" || return 1
+    return 1
+}
+
+# move mp4 files to gallery-dl/mp4s
+process_and_move_files() {
+    local extension="${1:-mp4}"
+    local target_dir="${2:-/Users/malcolm/Downloads/gallery-dl/mp4s}"
+
+    local OIFS="$IFS"
+    IFS=$'\n'
+
+    # Clear existing files
+    rm run_cp.sh run_rm.sh || true
+    touch run_cp.sh run_rm.sh || true
+    chmod +x run_cp.sh run_rm.sh || true
+    echo '#!/usr/bin/env zsh' | tee -a run_cp.sh run_rm.sh
+    echo 'OIFS="$IFS"' | tee -a run_cp.sh run_rm.sh
+    echo "IFS=\$'\\\n'" | tee -a run_cp.sh run_rm.sh
+    echo "ulimit -n 65536" | tee -a run_cp.sh run_rm.sh
+    echo "ulimit -a" | tee -a run_cp.sh run_rm.sh
+
+
+    local count=0
+    local total=$(find . -maxdepth 1 -type f \( -name "*.$extension" -o -name "*.$extension*" \) | wc -l)
+
+    for i in *."$extension" *."$extension"*; do
+        if [[ -f "$i" ]]; then
+            ((count++))
+            if [ $count -eq $total ]; then
+                echo "cp -av -- '${i}' '$target_dir'" | tee -a run_cp.sh
+                echo "trash -- '${i}'" | tee -a run_rm.sh
+            else
+                echo "cp -av -- '${i}' '$target_dir' && \\" | tee -a run_cp.sh
+                echo "trash -- '${i}' && \\" | tee -a run_rm.sh
+            fi
+        fi
+    done
+
+    echo "echo 'done'" | tee -a run_cp.sh run_rm.sh
+    echo 'IFS="$OIFS"' | tee -a run_cp.sh run_rm.sh
+
+    echo -e "\n========== Contents of run_cp.sh ==========\n"
+    cat run_cp.sh
+    echo -e "\n========== Contents of run_rm.sh ==========\n"
+    cat run_rm.sh
+    echo -e "\nCommands have been written to run_cp.sh and run_rm.sh"
+
+    # Prompt user to run the copy script
+    printf "Do you want to run the copy script now? (y/n): "
+    read -r user_input
+    user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
+    if [[ "$user_input" =~ ^(yes|y)$ ]]; then
+        echo "Running ./run_cp.sh"
+        ./run_cp.sh
+    else
+        echo "Not running the script."
+        echo "To run the copy script later, use: ./run_cp.sh"
+        echo "To run the remove script later, use: ./run_rm.sh"
+    fi
+
+    IFS="$OIFS"
+}
+
+
 
 
 # export _LOGGING_RESET='\e[0m'
