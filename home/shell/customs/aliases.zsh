@@ -2165,7 +2165,11 @@ download_docs_backoff() {
     return 1
 }
 
-# move mp4 files to gallery-dl/mp4s
+# escape single quotes for use in shell scripts
+escape_single_quotes() {
+    echo "$1" | gsed "s/'/'\\\\''/g"
+}
+
 process_and_move_files() {
     local extension="${1:-mp4}"
     local target_dir="${2:-/Users/malcolm/Downloads/gallery-dl/mp4s}"
@@ -2177,12 +2181,27 @@ process_and_move_files() {
     rm run_cp.sh run_rm.sh || true
     touch run_cp.sh run_rm.sh || true
     chmod +x run_cp.sh run_rm.sh || true
-    echo '#!/usr/bin/env zsh' | tee -a run_cp.sh run_rm.sh
-    echo 'OIFS="$IFS"' | tee -a run_cp.sh run_rm.sh
-    echo "IFS=\$'\\\n'" | tee -a run_cp.sh run_rm.sh
-    echo "ulimit -n 65536" | tee -a run_cp.sh run_rm.sh
-    echo "ulimit -a" | tee -a run_cp.sh run_rm.sh
 
+    # Write the header and redirection setup to both scripts
+    cat << 'EOF' | tee run_cp.sh run_rm.sh > /dev/null
+#!/usr/bin/env zsh
+set -e
+
+# Redirect stdout to /dev/null, keep stderr
+exec 1>/dev/null
+
+# Trap to restore stdout on exit
+trap 'exec 1>&3' EXIT
+
+# Save original stdout
+exec 3>&1
+
+OIFS="$IFS"
+IFS=$'\n'
+
+ulimit -n 65536
+ulimit -a
+EOF
 
     local count=0
     local total=$(find . -maxdepth 1 -type f \( -name "*.$extension" -o -name "*.$extension*" \) | wc -l)
@@ -2190,18 +2209,22 @@ process_and_move_files() {
     for i in *."$extension" *."$extension"*; do
         if [[ -f "$i" ]]; then
             ((count++))
+            local escaped_filename=$(escape_single_quotes "$i")
             if [ $count -eq $total ]; then
-                echo "cp -av -- '${i}' '$target_dir'" | tee -a run_cp.sh
-                echo "trash -- '${i}'" | tee -a run_rm.sh
+                echo "cp -av -- '${escaped_filename}' '$target_dir'" >> run_cp.sh
+                echo "trash -- '${escaped_filename}'" >> run_rm.sh
             else
-                echo "cp -av -- '${i}' '$target_dir' && \\" | tee -a run_cp.sh
-                echo "trash -- '${i}' && \\" | tee -a run_rm.sh
+                echo "cp -av -- '${escaped_filename}' '$target_dir' && \\" >> run_cp.sh
+                echo "trash -- '${escaped_filename}' && \\" >> run_rm.sh
             fi
         fi
     done
 
-    echo "echo 'done'" | tee -a run_cp.sh run_rm.sh
-    echo 'IFS="$OIFS"' | tee -a run_cp.sh run_rm.sh
+    # Write the footer to both scripts
+    cat << 'EOF' | tee -a run_cp.sh run_rm.sh > /dev/null
+echo 'done' >&2
+IFS="$OIFS"
+EOF
 
     echo -e "\n========== Contents of run_cp.sh ==========\n"
     cat run_cp.sh
@@ -2226,6 +2249,333 @@ process_and_move_files() {
 }
 
 
+# # 1. With automatic destination mapping
+# lms_sync -s "/Users/malcolm/Downloads/gallery-dl/artstation"
+
+# # 2. With explicit destination (overrides automatic mapping)
+# lms_sync -s "/Users/malcolm/Downloads/gallery-dl/artstation" -d "/custom/backup/path"
+
+# # 3. With automatic mapping and no confirmation
+# lms_sync -s "/Users/malcolm/Downloads/gallery-dl/artstation" -y
+
+lms_sync() {
+    OIFS="$IFS"
+    IFS=$'\n'
+
+    # Command compatibility setup
+    setup_commands() {
+        # Initialize commands as empty
+        GREP=""
+        AWK=""
+        SED=""
+        STAT=""
+        DF=""
+        DU=""
+
+        # Detect OS
+        local os_type
+        os_type="$(uname -s)"
+
+        if [ "$os_type" = "Darwin" ]; then
+            # On macOS, prefer GNU versions if available
+            if command -v ggrep >/dev/null 2>&1; then
+                GREP="ggrep"
+            else
+                echo "Warning: ggrep not found, using BSD grep. Some features might not work correctly." >&2
+                GREP="grep"
+            fi
+
+            if command -v gawk >/dev/null 2>&1; then
+                AWK="gawk"
+            else
+                echo "Warning: gawk not found, using BSD awk. Some features might not work correctly." >&2
+                AWK="awk"
+            fi
+
+            if command -v gsed >/dev/null 2>&1; then
+                SED="gsed"
+            else
+                echo "Warning: gsed not found, using BSD sed. Some features might not work correctly." >&2
+                SED="sed"
+            fi
+
+            if command -v gstat >/dev/null 2>&1; then
+                STAT="gstat"
+            else
+                echo "Warning: gstat not found, using BSD stat. Some features might not work correctly." >&2
+                STAT="stat"
+            fi
+
+            if command -v gdf >/dev/null 2>&1; then
+                DF="gdf"
+            else
+                echo "Warning: gdf not found, using BSD df. Some features might not work correctly." >&2
+                DF="df"
+            fi
+
+            if command -v gdu >/dev/null 2>&1; then
+                DU="gdu"
+            else
+                echo "Warning: gdu not found, using BSD du. Some features might not work correctly." >&2
+                DU="du"
+            fi
+        else
+            # On Linux, use standard GNU versions
+            GREP="grep"
+            AWK="awk"
+            SED="sed"
+            STAT="stat"
+            DF="df"
+            DU="du"
+        fi
+
+        # Export for use in subshells
+        export GREP AWK SED STAT DF DU
+    }
+
+    # Setup commands at function start
+    setup_commands
+
+    local source=""
+    local dest=""
+    local skip_confirm=0
+    # Default backup prefix - can be changed as needed
+    local BACKUP_PREFIX="/Volumes/elements4tb2022/backups/silicontop"
+    local SOURCE_PREFIX="/Users/malcolm"
+
+    # Create detailed help message
+    local help_msg="lms_sync - Wrapper for lms sync with path mapping
+
+Usage: lms_sync [OPTIONS]
+
+Options:
+    -s, --source <path>     Source directory path (required)
+    -d, --dest <path>       Destination directory path (optional)
+                           If not provided, automatically mapped from source:
+                           $SOURCE_PREFIX/path/to/dir → $BACKUP_PREFIX/path/to/dir
+    -y, --yes              Skip confirmation prompt
+    -h, --help             Display this help message
+
+Examples:
+    # With automatic destination mapping:
+    lms_sync -s \"$SOURCE_PREFIX/Downloads/gallery-dl/artstation\"
+
+    # With explicit destination:
+    lms_sync -s \"$SOURCE_PREFIX/Downloads/gallery-dl/artstation\" -d \"/custom/backup/path\"
+
+    # Skip confirmation:
+    lms_sync -s \"$SOURCE_PREFIX/Downloads/gallery-dl/artstation\" -y
+
+Notes:
+    - Source path must exist and be readable
+    - Destination parent directory must exist and be writable
+    - Uses --nodelete and --secure flags with lms sync
+    - Script automatically detects and uses GNU utilities on macOS if available (ggrep, gawk, etc.)"
+
+    local usage="Usage: lms_sync [-s|--source <source>] [-d|--dest <destination>] [-y|--yes] [-h|--help]"
+
+    # Display help if no arguments provided
+    if [ $# -eq 0 ]; then
+        echo "$help_msg" >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    # Check if lms command exists
+    if ! command -v lms >/dev/null 2>&1; then
+        echo "Error: 'lms' command not found. Please ensure it's installed and in your PATH" >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    # Parse arguments
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                echo "$help_msg" >&2
+                IFS="$OIFS"
+                return 0
+                ;;
+            -s|--source)
+                if [ -n "$2" ]; then
+                    source="$2"
+                    shift 2
+                else
+                    echo "Error: Source argument is missing" >&2
+                    echo "$usage" >&2
+                    IFS="$OIFS"
+                    return 1
+                fi
+                ;;
+            -d|--dest)
+                if [ -n "$2" ]; then
+                    dest="$2"
+                    shift 2
+                else
+                    echo "Error: Destination argument is missing" >&2
+                    echo "$usage" >&2
+                    IFS="$OIFS"
+                    return 1
+                fi
+                ;;
+            -y|--yes)
+                skip_confirm=1
+                shift
+                ;;
+            *)
+                echo "Error: Unknown argument: $1" >&2
+                echo "Try 'lms_sync --help' for more information." >&2
+                IFS="$OIFS"
+                return 1
+                ;;
+        esac
+    done
+
+    # Check if source is provided
+    if [ -z "$source" ]; then
+        echo "Error: Source is required" >&2
+        echo "Try 'lms_sync --help' for more information." >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    # If destination is not provided, derive it from source
+    if [ -z "$dest" ]; then
+        # Check if source starts with SOURCE_PREFIX
+        if ! "$GREP" -q "^$SOURCE_PREFIX" <<< "$source"; then
+            echo "Error: Source path must start with $SOURCE_PREFIX when using automatic destination mapping" >&2
+            IFS="$OIFS"
+            return 1
+        fi
+
+        # Replace SOURCE_PREFIX with BACKUP_PREFIX to create destination path
+        dest="$($SED "s|^$SOURCE_PREFIX|$BACKUP_PREFIX|" <<< "$source")"
+        echo "Using derived destination path: $dest" >&2
+    fi
+
+    # Validate source exists and is accessible
+    if [ ! -e "$source" ]; then
+        echo "Error: Source '$source' does not exist" >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    if [ ! -r "$source" ]; then
+        echo "Error: Source '$source' is not readable" >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    # Check if source is a directory (since this is a sync operation)
+    if [ ! -d "$source" ]; then
+        echo "Error: Source '$source' is not a directory" >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    # Check if destination parent directory exists and is writable
+    dest_parent="$(dirname "$dest")"
+    if [ ! -d "$dest_parent" ]; then
+        echo "Error: Destination parent directory '$dest_parent' does not exist" >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    if [ ! -w "$dest_parent" ]; then
+        echo "Error: Destination parent directory '$dest_parent' is not writable" >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    # If destination exists, check if it's a directory and writable
+    if [ -e "$dest" ]; then
+        if [ ! -d "$dest" ]; then
+            echo "Error: Destination '$dest' exists but is not a directory" >&2
+            IFS="$OIFS"
+            return 1
+        fi
+        if [ ! -w "$dest" ]; then
+            echo "Error: Destination '$dest' exists but is not writable" >&2
+            IFS="$OIFS"
+            return 1
+        fi
+    fi
+
+    # Check disk space (if destination exists)
+    if [ -d "$dest" ]; then
+        source_size=$("$DU" -s "$source" 2>/dev/null | "$AWK" '{print $1}')
+        dest_free=$("$DF" -P "$dest" 2>/dev/null | "$AWK" 'NR==2 {print $4}')
+
+        if [ -n "$source_size" ] && [ -n "$dest_free" ]; then
+            if [ "$source_size" -gt "$dest_free" ]; then
+                echo "Warning: Destination may not have enough free space" >&2
+                echo "Source size: $(($source_size / 1024)) MB" >&2
+                echo "Destination free space: $(($dest_free / 1024)) MB" >&2
+                if [ "$skip_confirm" -eq 1 ]; then
+                    echo "Continuing anyway due to --yes flag..." >&2
+                else
+                    echo "Do you want to continue anyway? (y/N) " >&2
+                    read -r space_answer
+                    case "$space_answer" in
+                        [Yy]*)
+                            echo "Continuing..." >&2
+                            ;;
+                        *)
+                            echo "Operation cancelled" >&2
+                            IFS="$OIFS"
+                            return 1
+                            ;;
+                    esac
+                fi
+            fi
+        else
+            echo "Warning: Unable to check available disk space" >&2
+        fi
+    fi
+
+    # Construct the command
+    local cmd="lms sync --nodelete --secure \"$source\" \"$dest\""
+
+    # Handle confirmation
+    if [ "$skip_confirm" -eq 1 ]; then
+        echo "Executing command: $cmd" >&2
+    else
+        echo "About to execute command:" >&2
+        echo "$cmd" >&2
+        echo "Do you want to continue? (y/N) " >&2
+        read -r answer
+        case "$answer" in
+            [Yy]*)
+                echo "Executing command..." >&2
+                ;;
+            *)
+                echo "Operation cancelled" >&2
+                IFS="$OIFS"
+                return 1
+                ;;
+        esac
+    fi
+
+    # Create trap to restore IFS in case of interrupt
+    trap 'echo "Operation interrupted" >&2; IFS="$OIFS"; return 1' INT TERM
+
+    # Execute the command
+    eval "$cmd"
+    local status=$?
+
+    # Remove trap
+    trap - INT TERM
+
+    if [ $status -eq 0 ]; then
+        echo "Sync completed successfully" >&2
+    else
+        echo "Sync failed with exit code $status" >&2
+    fi
+
+    echo "Done" >&2
+    IFS="$OIFS"
+    return $status
+}
 
 
 # export _LOGGING_RESET='\e[0m'
