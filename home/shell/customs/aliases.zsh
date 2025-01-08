@@ -2258,12 +2258,80 @@ EOF
 # # 3. With automatic mapping and no confirmation
 # lms_sync -s "/Users/malcolm/Downloads/gallery-dl/artstation" -y
 
+
+# Color setup for the terminal
+setup_colors() {
+    # Only setup colors if connected to a terminal
+    if [ -t 1 ]; then
+        # Reset
+        RESET='\033[0m'
+
+        # Regular Colors
+        GREEN='\033[0;32m'
+        YELLOW='\033[0;33m'
+        RED='\033[0;31m'
+        BLUE='\033[0;34m'
+        CYAN='\033[0;36m'
+
+        # Bold Colors
+        BOLD_GREEN='\033[1;32m'
+        BOLD_YELLOW='\033[1;33m'
+        BOLD_RED='\033[1;31m'
+        BOLD_BLUE='\033[1;34m'
+        BOLD_CYAN='\033[1;36m'
+    else
+        # No colors if not in a terminal
+        RESET=''
+        GREEN=''
+        YELLOW=''
+        RED=''
+        BLUE=''
+        CYAN=''
+        BOLD_GREEN=''
+        BOLD_YELLOW=''
+        BOLD_RED=''
+        BOLD_BLUE=''
+        BOLD_CYAN=''
+    fi
+}
+
+# Logging functions
+log_info() {
+    echo -e "${GREEN}[INFO]${RESET} $*" >&2
+}
+
+log_success() {
+    echo -e "${BOLD_GREEN}[SUCCESS]${RESET} $*" >&2
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARNING]${RESET} $*" >&2
+}
+
+log_error() {
+    echo -e "${BOLD_RED}[ERROR]${RESET} $*" >&2
+}
+
+log_prompt() {
+    echo -e "${BOLD_BLUE}[PROMPT]${RESET} $*" >&2
+}
+
+log_cmd() {
+    echo -e "${CYAN}[CMD]${RESET} $*" >&2
+}
+
 lms_sync() {
+    ulimit -n 65536
     OIFS="$IFS"
     IFS=$'\n'
 
-    # Command compatibility setup
+    # Setup colors
+    setup_colors
+
     setup_commands() {
+        # Initialize command check status
+        local cmd_check_failed=0
+
         # Initialize commands as empty
         GREP=""
         AWK=""
@@ -2280,44 +2348,62 @@ lms_sync() {
             # On macOS, prefer GNU versions if available
             if command -v ggrep >/dev/null 2>&1; then
                 GREP="ggrep"
-            else
-                echo "Warning: ggrep not found, using BSD grep. Some features might not work correctly." >&2
+            elif command -v grep >/dev/null 2>&1; then
+                log_warn "ggrep not found, using BSD grep. Some features might not work correctly."
+                log_warn "Hint: Install GNU grep with 'brew install grep'"
                 GREP="grep"
+                cmd_check_failed=1
+            else
+                log_error "Neither ggrep nor grep found"
+                return 1
             fi
 
             if command -v gawk >/dev/null 2>&1; then
                 AWK="gawk"
-            else
-                echo "Warning: gawk not found, using BSD awk. Some features might not work correctly." >&2
+            elif command -v awk >/dev/null 2>&1; then
+                log_warn "gawk not found, using BSD awk. Some features might not work correctly."
+                log_warn "Hint: Install GNU awk with 'brew install gawk'"
                 AWK="awk"
+                cmd_check_failed=1
+            else
+                log_error "Neither gawk nor awk found"
+                return 1
             fi
 
             if command -v gsed >/dev/null 2>&1; then
                 SED="gsed"
-            else
-                echo "Warning: gsed not found, using BSD sed. Some features might not work correctly." >&2
+            elif command -v sed >/dev/null 2>&1; then
+                log_warn "gsed not found, using BSD sed. Some features might not work correctly."
+                log_warn "Hint: Install GNU sed with 'brew install gnu-sed'"
                 SED="sed"
-            fi
-
-            if command -v gstat >/dev/null 2>&1; then
-                STAT="gstat"
+                cmd_check_failed=1
             else
-                echo "Warning: gstat not found, using BSD stat. Some features might not work correctly." >&2
-                STAT="stat"
+                log_error "Neither gsed nor sed found"
+                return 1
             fi
 
             if command -v gdf >/dev/null 2>&1; then
                 DF="gdf"
-            else
-                echo "Warning: gdf not found, using BSD df. Some features might not work correctly." >&2
+            elif command -v df >/dev/null 2>&1; then
+                log_warn "gdf not found, using BSD df. Some features might not work correctly."
+                log_warn "Hint: Install GNU df with 'brew install coreutils'"
                 DF="df"
+                cmd_check_failed=1
+            else
+                log_error "Neither gdf nor df found"
+                return 1
             fi
 
             if command -v gdu >/dev/null 2>&1; then
                 DU="gdu"
-            else
-                echo "Warning: gdu not found, using BSD du. Some features might not work correctly." >&2
+            elif command -v du >/dev/null 2>&1; then
+                log_warn "gdu not found, using BSD du. Some features might not work correctly."
+                log_warn "Hint: Install GNU du with 'brew install coreutils'"
                 DU="du"
+                cmd_check_failed=1
+            else
+                log_error "Neither gdu nor du found"
+                return 1
             fi
         else
             # On Linux, use standard GNU versions
@@ -2329,12 +2415,17 @@ lms_sync() {
             DU="du"
         fi
 
+        # Add summary if any commands were missing
+        if [ "$cmd_check_failed" -eq 1 ]; then
+            echo "" >&2
+            log_warn "Some GNU utilities were not found. For best results, install them with:"
+            echo -e "${CYAN}brew install coreutils grep gnu-sed gawk${RESET}" >&2
+            echo "" >&2
+        fi
+
         # Export for use in subshells
         export GREP AWK SED STAT DF DU
     }
-
-    # Setup commands at function start
-    setup_commands
 
     local source=""
     local dest=""
@@ -2343,20 +2434,20 @@ lms_sync() {
     local BACKUP_PREFIX="/Volumes/elements4tb2022/backups/silicontop"
     local SOURCE_PREFIX="/Users/malcolm"
 
-    # Create detailed help message
-    local help_msg="lms_sync - Wrapper for lms sync with path mapping
+    # Create detailed help message with colors
+    local help_msg="${BOLD_BLUE}lms_sync${RESET} - Wrapper for lms sync with path mapping
 
-Usage: lms_sync [OPTIONS]
+${BOLD_CYAN}Usage:${RESET} lms_sync [OPTIONS]
 
-Options:
-    -s, --source <path>     Source directory path (required)
-    -d, --dest <path>       Destination directory path (optional)
+${BOLD_CYAN}Options:${RESET}
+    ${GREEN}-s, --source${RESET} <path>     Source directory path (required)
+    ${GREEN}-d, --dest${RESET} <path>       Destination directory path (optional)
                            If not provided, automatically mapped from source:
                            $SOURCE_PREFIX/path/to/dir → $BACKUP_PREFIX/path/to/dir
-    -y, --yes              Skip confirmation prompt
-    -h, --help             Display this help message
+    ${GREEN}-y, --yes${RESET}              Skip confirmation prompt
+    ${GREEN}-h, --help${RESET}             Display this help message
 
-Examples:
+${BOLD_CYAN}Examples:${RESET}
     # With automatic destination mapping:
     lms_sync -s \"$SOURCE_PREFIX/Downloads/gallery-dl/artstation\"
 
@@ -2366,33 +2457,39 @@ Examples:
     # Skip confirmation:
     lms_sync -s \"$SOURCE_PREFIX/Downloads/gallery-dl/artstation\" -y
 
-Notes:
+${BOLD_CYAN}Notes:${RESET}
     - Source path must exist and be readable
     - Destination parent directory must exist and be writable
     - Uses --nodelete and --secure flags with lms sync
-    - Script automatically detects and uses GNU utilities on macOS if available (ggrep, gawk, etc.)"
+    - Automatically detects and uses GNU utilities on macOS if available"
 
     local usage="Usage: lms_sync [-s|--source <source>] [-d|--dest <destination>] [-y|--yes] [-h|--help]"
 
     # Display help if no arguments provided
     if [ $# -eq 0 ]; then
-        echo "$help_msg" >&2
+        echo -e "$help_msg" >&2
         IFS="$OIFS"
         return 1
     fi
 
     # Check if lms command exists
     if ! command -v lms >/dev/null 2>&1; then
-        echo "Error: 'lms' command not found. Please ensure it's installed and in your PATH" >&2
+        log_error "'lms' command not found. Please ensure it's installed and in your PATH"
         IFS="$OIFS"
         return 1
     fi
+
+    # Setup commands
+    setup_commands || {
+        IFS="$OIFS"
+        return 1
+    }
 
     # Parse arguments
     while [ $# -gt 0 ]; do
         case "$1" in
             -h|--help)
-                echo "$help_msg" >&2
+                echo -e "$help_msg" >&2
                 IFS="$OIFS"
                 return 0
                 ;;
@@ -2401,8 +2498,8 @@ Notes:
                     source="$2"
                     shift 2
                 else
-                    echo "Error: Source argument is missing" >&2
-                    echo "$usage" >&2
+                    log_error "Source argument is missing"
+                    echo -e "$usage" >&2
                     IFS="$OIFS"
                     return 1
                 fi
@@ -2412,8 +2509,8 @@ Notes:
                     dest="$2"
                     shift 2
                 else
-                    echo "Error: Destination argument is missing" >&2
-                    echo "$usage" >&2
+                    log_error "Destination argument is missing"
+                    echo -e "$usage" >&2
                     IFS="$OIFS"
                     return 1
                 fi
@@ -2423,8 +2520,8 @@ Notes:
                 shift
                 ;;
             *)
-                echo "Error: Unknown argument: $1" >&2
-                echo "Try 'lms_sync --help' for more information." >&2
+                log_error "Unknown argument: $1"
+                echo -e "Try 'lms_sync --help' for more information." >&2
                 IFS="$OIFS"
                 return 1
                 ;;
@@ -2433,8 +2530,8 @@ Notes:
 
     # Check if source is provided
     if [ -z "$source" ]; then
-        echo "Error: Source is required" >&2
-        echo "Try 'lms_sync --help' for more information." >&2
+        log_error "Source is required"
+        echo -e "Try 'lms_sync --help' for more information." >&2
         IFS="$OIFS"
         return 1
     fi
@@ -2443,85 +2540,82 @@ Notes:
     if [ -z "$dest" ]; then
         # Check if source starts with SOURCE_PREFIX
         if ! "$GREP" -q "^$SOURCE_PREFIX" <<< "$source"; then
-            echo "Error: Source path must start with $SOURCE_PREFIX when using automatic destination mapping" >&2
+            log_error "Source path must start with $SOURCE_PREFIX when using automatic destination mapping"
             IFS="$OIFS"
             return 1
         fi
 
         # Replace SOURCE_PREFIX with BACKUP_PREFIX to create destination path
         dest="$($SED "s|^$SOURCE_PREFIX|$BACKUP_PREFIX|" <<< "$source")"
-        echo "Using derived destination path: $dest" >&2
+        log_info "Using derived destination path: $dest"
     fi
 
-    # Validate source exists and is accessible
+    # Validation checks
     if [ ! -e "$source" ]; then
-        echo "Error: Source '$source' does not exist" >&2
+        log_error "Source '$source' does not exist"
         IFS="$OIFS"
         return 1
     fi
 
     if [ ! -r "$source" ]; then
-        echo "Error: Source '$source' is not readable" >&2
+        log_error "Source '$source' is not readable"
         IFS="$OIFS"
         return 1
     fi
 
-    # Check if source is a directory (since this is a sync operation)
     if [ ! -d "$source" ]; then
-        echo "Error: Source '$source' is not a directory" >&2
+        log_error "Source '$source' is not a directory"
         IFS="$OIFS"
         return 1
     fi
 
-    # Check if destination parent directory exists and is writable
     dest_parent="$(dirname "$dest")"
     if [ ! -d "$dest_parent" ]; then
-        echo "Error: Destination parent directory '$dest_parent' does not exist" >&2
+        log_error "Destination parent directory '$dest_parent' does not exist"
         IFS="$OIFS"
         return 1
     fi
 
     if [ ! -w "$dest_parent" ]; then
-        echo "Error: Destination parent directory '$dest_parent' is not writable" >&2
+        log_error "Destination parent directory '$dest_parent' is not writable"
         IFS="$OIFS"
         return 1
     fi
 
-    # If destination exists, check if it's a directory and writable
     if [ -e "$dest" ]; then
         if [ ! -d "$dest" ]; then
-            echo "Error: Destination '$dest' exists but is not a directory" >&2
+            log_error "Destination '$dest' exists but is not a directory"
             IFS="$OIFS"
             return 1
         fi
         if [ ! -w "$dest" ]; then
-            echo "Error: Destination '$dest' exists but is not writable" >&2
+            log_error "Destination '$dest' exists but is not writable"
             IFS="$OIFS"
             return 1
         fi
     fi
 
-    # Check disk space (if destination exists)
+    # Check disk space
     if [ -d "$dest" ]; then
         source_size=$("$DU" -s "$source" 2>/dev/null | "$AWK" '{print $1}')
         dest_free=$("$DF" -P "$dest" 2>/dev/null | "$AWK" 'NR==2 {print $4}')
 
         if [ -n "$source_size" ] && [ -n "$dest_free" ]; then
             if [ "$source_size" -gt "$dest_free" ]; then
-                echo "Warning: Destination may not have enough free space" >&2
-                echo "Source size: $(($source_size / 1024)) MB" >&2
-                echo "Destination free space: $(($dest_free / 1024)) MB" >&2
+                log_warn "Destination may not have enough free space"
+                log_warn "Source size: $(($source_size / 1024)) MB"
+                log_warn "Destination free space: $(($dest_free / 1024)) MB"
                 if [ "$skip_confirm" -eq 1 ]; then
-                    echo "Continuing anyway due to --yes flag..." >&2
+                    log_warn "Continuing anyway due to --yes flag..."
                 else
-                    echo "Do you want to continue anyway? (y/N) " >&2
+                    log_prompt "Do you want to continue anyway? (y/N) "
                     read -r space_answer
                     case "$space_answer" in
                         [Yy]*)
-                            echo "Continuing..." >&2
+                            log_info "Continuing..."
                             ;;
                         *)
-                            echo "Operation cancelled" >&2
+                            log_info "Operation cancelled"
                             IFS="$OIFS"
                             return 1
                             ;;
@@ -2529,7 +2623,7 @@ Notes:
                 fi
             fi
         else
-            echo "Warning: Unable to check available disk space" >&2
+            log_warn "Unable to check available disk space"
         fi
     fi
 
@@ -2538,18 +2632,18 @@ Notes:
 
     # Handle confirmation
     if [ "$skip_confirm" -eq 1 ]; then
-        echo "Executing command: $cmd" >&2
+        log_cmd "Executing command: $cmd"
     else
-        echo "About to execute command:" >&2
-        echo "$cmd" >&2
-        echo "Do you want to continue? (y/N) " >&2
+        log_prompt "About to execute command:"
+        log_cmd "$cmd"
+        log_prompt "Do you want to continue? (y/N) "
         read -r answer
         case "$answer" in
             [Yy]*)
-                echo "Executing command..." >&2
+                log_info "Executing command..."
                 ;;
             *)
-                echo "Operation cancelled" >&2
+                log_info "Operation cancelled"
                 IFS="$OIFS"
                 return 1
                 ;;
@@ -2557,24 +2651,24 @@ Notes:
     fi
 
     # Create trap to restore IFS in case of interrupt
-    trap 'echo "Operation interrupted" >&2; IFS="$OIFS"; return 1' INT TERM
+    trap 'log_error "Operation interrupted"; IFS="$OIFS"; return 1' INT TERM
 
     # Execute the command
     eval "$cmd"
-    local status=$?
+    local cmd_status=$?
 
     # Remove trap
     trap - INT TERM
 
-    if [ $status -eq 0 ]; then
-        echo "Sync completed successfully" >&2
+    if [ $cmd_status -eq 0 ]; then
+        log_success "Sync completed successfully"
     else
-        echo "Sync failed with exit code $status" >&2
+        log_error "Sync failed with exit code $cmd_status"
     fi
 
-    echo "Done" >&2
+    log_info "Done"
     IFS="$OIFS"
-    return $status
+    return $cmd_status
 }
 
 
