@@ -2258,7 +2258,6 @@ EOF
 # # 3. With automatic mapping and no confirmation
 # lms_sync -s "/Users/malcolm/Downloads/gallery-dl/artstation" -y
 
-
 # Color setup for the terminal
 setup_colors() {
     # Only setup colors if connected to a terminal
