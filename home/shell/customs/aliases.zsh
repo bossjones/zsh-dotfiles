@@ -1,254 +1,6 @@
 # ---------------------------------------------------------
 # chezmoi managed - aliases.zsh
-# #==============================================================#
-# # SOURCE: https://github.com/Vonng/Configuration/blob/master/shit/lib/color.sh
-# #==============================================================#
-# # Author: Vonng(fengruohang@outlook.com)                       #
-# # Desc  : Standard Bash Color Library                          #
-# # Dep   : None                                                 #
-# #==============================================================#
-
-# #--------------------------------------------------------------#
-# # global read-only constant
-# # cymk & rgbw color constant
-# #--------------------------------------------------------------#
-# declare -g -r __NC='\033[0m' # No Color
-# declare -g -r __BLACK='\033[0;30m'
-# declare -g -r __RED='\033[0;31m'
-# declare -g -r __GREEN='\033[0;32m'
-# declare -g -r __YELLOW='\033[0;33m'
-# declare -g -r __BLUE='\033[0;34m'
-# declare -g -r __MAGENTA='\033[0;35m'
-# declare -g -r __CYAN='\033[0;36m'
-# declare -g -r __WHITE='\033[0;37m'
-
-
-# #--------------------------------------------------------------#
-# # public function
-# # return color sequence by human-readable name
-# # $1 :  corlor name
-# # ret:  escape sequence
-# #--------------------------------------------------------------#
-# function color(){
-#     local color=$(echo $1 | tr '[:upper:]' '[:lower:]')
-#     case ${color} in
-#         0|k|black  ) echo -n $__BLACK   ;;
-#         1|r|red    ) echo -n $__RED     ;;
-#         2|g|green  ) echo -n $__GREEN   ;;
-#         3|y|yellow ) echo -n $__YELLOW  ;;
-#         4|b|blue   ) echo -n $__BLUE    ;;
-#         5|m|magenta) echo -n $__MAGENTA ;;
-#         6|c|cyan   ) echo -n $__CYAN    ;;
-#         7|w|white  ) echo -n $__WHITE   ;;
-#         8|n|none   ) echo -n $__NC      ;;
-#         *          ) echo -n ""        ;;
-#     esac
-# }
-
-
-# #--------------------------------------------------------------#
-# # public function
-# # return colored message
-# # $1 :  color name
-# # $2 :  message
-# # ret:  colored message in escape sequence
-# # Usage:    echo -e "$(color_msg red Hello) $(color b)World!"
-# #--------------------------------------------------------------#
-# # color_msg <color> <msg>
-# function color_msg(){
-#     local color=$(echo $1 | tr '[:upper:]' '[:lower:]')
-#     local msg=$2
-#     case ${color} in
-#         0|k|black  ) color=$__BLACK   ;;
-#         1|r|red    ) color=$__RED     ;;
-#         2|g|green  ) color=$__GREEN   ;;
-#         3|y|yellow ) color=$__YELLOW  ;;
-#         4|b|blue   ) color=$__BLUE    ;;
-#         5|m|magenta) color=$__MAGENTA ;;
-#         6|c|cyan   ) color=$__CYAN    ;;
-#         7|w|white  ) color=$__WHITE   ;;
-#         8|n|none   ) color=$__NC      ;;
-#         *          ) color=""        ;;
-#     esac
-
-#     if [[ ${color} != "" ]]; then
-#         echo -n "${color}${msg}${__NC}"
-#         return 0
-#     else
-#         echo -n ${msg}
-#         return 0
-#     fi
-# }
-# alias cm=color_msg
-
-# #--------------------------------------------------------------#
-# # public function
-# # print colored message to console
-# # $1 :  color name
-# # $2 :  message
-# #--------------------------------------------------------------#
-# function color_print(){
-#     local color=$(echo $1 | tr '[:upper:]' '[:lower:]')
-#     local msg=$2
-#     case ${color} in
-#         0|k|black  ) color=$__BLACK   ;;
-#         1|r|red    ) color=$__RED     ;;
-#         2|g|green  ) color=$__GREEN   ;;
-#         3|y|yellow ) color=$__YELLOW  ;;
-#         4|b|blue   ) color=$__BLUE    ;;
-#         5|m|magenta) color=$__MAGENTA ;;
-#         6|c|cyan   ) color=$__CYAN    ;;
-#         7|w|white  ) color=$__WHITE   ;;
-#         8|n|none   ) color=$__NC      ;;
-#         *          ) color=""        ;;
-#     esac
-
-#     if [[ ${color} != "" ]]; then
-#         echo -e "${color}${msg}${__NC}"
-#         return 0
-#     else
-#         echo -e ${msg}
-#         return 0
-#     fi
-# }
-
-# #==============================================================#
-
-# #--------------------------------------------------------------#
-# # global variable (int) & public function
-# # set log level
-# # $1 :  log level (debug:10,info:20,warn:30,error:40,fatal:50)
-# # default level is INFO:20
-# #--------------------------------------------------------------#
-# declare -g -i LOG_LEVEL=20
-
-# function log_level(){
-#     local level=$(echo $1 | tr '[:upper:]' '[:lower:]')
-#     case $level in
-#     1|10|d|debug        ) LOG_LEVEL=10 ;;
-#     2|20|i|info         ) LOG_LEVEL=20 ;;
-#     3|30|w|warn|warning ) LOG_LEVEL=30 ;;
-#     4|40|e|error        ) LOG_LEVEL=40 ;;
-#     5|50|f|fatal        ) LOG_LEVEL=50 ;;
-#     * ) return 1 ;;
-#     esac
-#     return 0
-# }
-
-
-# #--------------------------------------------------------------#
-# # global variable & public function
-# # set log destination
-# # $1 :  log path ("" represent stderr)
-# # default destination is stderr with color output enabled
-# #--------------------------------------------------------------#
-# declare -g LOG_PATH=""
-
-# function log_path(){
-#     LOG_PATH=${1:=''}
-# }
-
-
-# #--------------------------------------------------------------#
-# # global variable
-# # set log timestamp format
-# # $1 :  fmt str (same as date, "" will disable timestamp)
-# # timestamp disabled by default
-# #--------------------------------------------------------------#
-# declare -g LOG_TIME_FMT=""
-
-# function log_time_fmt(){
-#     local fmt=${1:=''}
-#     [[ -z ${fmt} ]] && __LOG_TIME_FMT="" return 0
-#     preset_fmt=$(echo $fmt | tr '[:upper:]' '[:lower:]')
-#     case ${preset_fmt} in
-#     datetime|full|dt ) LOG_TIME_FMT="+%Y-%m-%d %H:%M:%S" ;;
-#     date|d           ) LOG_TIME_FMT="+%Y-%m-%d" ;;
-#     time|t           ) LOG_TIME_FMT="+%H:%M:%S" ;;
-#     ts|timestamp     ) LOG_TIME_FMT="+%s"       ;;
-#     n|none           ) LOG_TIME_FMT=""          ;;
-#     *                ) LOG_TIME_FMT=${fmt}      ;;
-#     esac
-#     return 0
-# }
-
-
-# #--------------------------------------------------------------#
-# # private function
-# # $1 :  log level
-# # $2 :  message
-# #--------------------------------------------------------------#
-# function __log(){
-#     local -i level=$1
-#     shift
-#     # level less then level setting
-#     (( ${LOG_LEVEL} > level )) && return 0
-
-#     # determine head and color by level
-#     local head="[LOG]  "
-#     local color='\033[0;37m' # white
-#     if   (( $level >= 50 )); then head="[FATAL]";color='\033[0;31m' # Red
-#     elif (( $level >= 40 )); then head="[ERROR]";color='\033[0;31m' # Red
-#     elif (( $level >= 30 )); then head="[WARN] ";color='\033[0;33m' # Yellow
-#     elif (( $level >= 20 )); then head="[INFO] ";color='\033[0;32m' # Green
-#     elif (( $level >= 10 )); then head="[DEBUG]";color='\033[0;34m' # Blue
-#     fi
-
-#     # add timestamp if fmt is specified
-#     local timestamp=""
-#     if [[ "${LOG_TIME_FMT}" == "" ]]; then timestamp=""
-#     else timestamp="[$(date "${LOG_TIME_FMT}")] "
-#     fi
-
-#     if [[ "${LOG_PATH}" == "" ]]
-#     then
-#         # write to stderr with color
-#         printf "${color}${head}\033[0m\033[0;37m${timestamp}\033[0m$*\n"  1>&2
-#     else
-#         # write to regular file
-#         echo "${head} ${timestamp}$*" >> ${LOG_PATH}
-#     fi
-# }
-
-
-
-# #--------------------------------------------------------------#
-# # public functions
-# # log with level specified in function name
-# # $1 :  message
-# #--------------------------------------------------------------#
-
-# # blue
-# function log_debug() {
-#     __log 10 $@
-# }
-
-# # green
-# function log_info() {
-#     __log 20 $@
-# }
-
-# # orange
-# function log_warn() {
-#     __log 30 $@
-# }
-
-# function log_warning() {
-#     __log 30 $@
-# }
-
-# # red, write to stderr
-# function log_error(){
-#     __log 40 $@
-# }
-
-# # red, write to stderr and exit script
-# function log_fatal(){
-#     __log 50 $@
-#     exit 1
-# }
-
-# #==============================================================#
+# ---------------------------------------------------------
 
 
 cp_mp4() {
@@ -1623,12 +1375,6 @@ generate_video_thumbnail() {
         check_dependency gawk
         check_dependency pyvideothumbnailer
 
-        # if command -v python3 >/dev/null 2>&1; then
-        #     python3 -m pip install pyvideothumbnailer >/dev/null 2>&1
-        # else
-        #     echo "Python3 is not installed. Please install it to use pyvideothumbnailer."
-        #     return 1
-        # fi
     }
 
     # install_packages || return 1
@@ -1643,20 +1389,6 @@ generate_video_thumbnail() {
         echo "Video file not found: $video_file" >&2
         return 1
     fi
-
-    # # Check for required dependencies
-    # for dep in ffmpeg ffprobe bc gawk python3; do
-    #     check_dependency $dep || return 1
-    # done
-
-    # # Install pyvideothumbnailer if not already installed
-    # if ! python3 -m pip show pyvideothumbnailer >/dev/null 2>&1; then
-    #     echo "Installing pyvideothumbnailer..."
-    #     python3 -m pip install pyvideothumbnailer >/dev/null 2>&1 || {
-    #         echo "Failed to install pyvideothumbnailer" >&2
-    #         return 1
-    #     }
-    # fi
 
     # Get the absolute path of the video file
     absolute_path=$(python3 -c "import os; print(os.path.abspath('$video_file'))")
@@ -1854,7 +1586,6 @@ Unmanaged=yes
 EOF
 }
 
-
 # examples:
 #     ./execsnoop                      # trace all exec() syscalls
 #     ./execsnoop -x                   # include failed exec()s
@@ -1976,6 +1707,65 @@ curl_download() {
 bump_ulimit(){
     ulimit -n 70000
 }
+
+
+resize_twitter_list_banner() {
+
+    local OIFS="$IFS"
+    IFS=$'\n'
+
+    if [ $# -ne 2 ]; then
+        echo "Usage: resize_twitter_list_banner <input_file> <output_file>"
+        return 1
+    fi
+
+    local input_file="$1"
+    local output_file="$2"
+
+    if [ ! -f "$input_file" ]; then
+        echo "Error: Input file '$input_file' does not exist."
+        return 1
+    fi
+
+    magick "$input_file" \
+        -resize 1500x500 \
+        -background white \
+        -gravity center \
+        -extent 1500x500 \
+        "$output_file"
+
+    echo "Resized image saved as $output_file"
+    IFS="$OIFS"
+}
+
+convert_flv_to_mp4() {
+    fname="${1}"
+    outputfile="$(python -c "import pathlib;print(pathlib.Path('$fname').stem)").mp4"
+    echo $fname
+    echo $outputfile
+    echo "[running] ffmpeg -y -i \"${fname}\" -c:v libx264 -crf 19 -strict experimental \"${outputfile}\""
+    ffmpeg -y -i "${fname}" -c:v libx264 -crf 19 -strict experimental "${outputfile}"
+}
+
+convert_wmv_to_mp4() {
+    fname="${1}"
+    outputfile="$(python -c "import pathlib;print(pathlib.Path('$fname').stem)").mp4"
+    echo $fname
+    echo $outputfile
+    echo "[running] ffmpeg -y -i \"${fname}\" -c:v libx264 -crf 23 -profile:v high -r 30 -c:a aac -q:a 100 -ar 48000 \"${outputfile}\""
+    ffmpeg -y -i "${fname}" -c:v libx264 -crf 23 -profile:v high -r 30 -c:a aac -q:a 100 -ar 48000 "${outputfile}"
+
+}
+
+convert_avi_to_mp4() {
+    fname="${1}"
+    outputfile="$(python -c "import pathlib;print(pathlib.Path('$fname').stem)").mp4"
+    echo $fname
+    echo $outputfile
+    echo "[running] ffmpeg -y -hide_banner -loglevel warning -i \"${fname}\" -vcodec libx264 -vprofile high -crf 28 \"${outputfile}\""
+    ffmpeg -y -hide_banner -loglevel warning -i "${fname}" -vcodec libx264 -vprofile high -crf 28 "${outputfile}"
+}
+
 
 function gh_clone_structured() {
     gh repo clone "$1" "$(echo $1 | gsed 's/\// /g' | xargs -n 2 echo | gsed 's/ /\//')"
@@ -2669,44 +2459,6 @@ ${BOLD_CYAN}Notes:${RESET}
     IFS="$OIFS"
     return $cmd_status
 }
-
-
-# export _LOGGING_RESET='\e[0m'
-
-# # Simplify colors and print errors to stderr (2).
-# echo_error() { echo -e "\e[1;91m${*}${_LOGGING_RESET}" >&2; } # Use Light Red for errors.
-# echo_info() { echo -e "\e[1;33m${*}${_LOGGING_RESET}" >&1; } # Use Yellow for informational messages.
-# echo_success() { echo -e "\e[1;32m${*}${_LOGGING_RESET}" >&1; } # Use Green for success messages.
-# echo_intra() { echo -e "\e[1;34m${*}${_LOGGING_RESET}" >&1; } # Use Blue for intrafunction messages.
-# echo_out() { echo -e "\e[0;37m${*}${_LOGGING_RESET}" >&1; } # Use Gray for program output.
-
-# function download {
-#     pyenv activate yt-dlp3 || true
-#     log_level debug
-#     log_time_fmt datetime
-# 	# local url=${1}
-# 	# local url=${1}
-
-# 	# dl-thumb
-# 	# dl-thumb-fork ${url}
-# 	# echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg $@"
-# 	log_info $(yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "$@")
-# 	# "$@"
-
-# 	_RETVAL=$?
-
-# 	# if [[ "${_RETVAL}" != "0" ]]; then
-# 	# 		echo "Trying yt-best instead"
-# 	# 		yt-best-fork ${url}
-
-# 	# 		_RETVAL=$?
-
-# 	# 		if [[ "${_RETVAL}" != "0" ]]; then
-# 	# 				echo "Trying youtube-dl instead"
-# 	# 				yt-dlp --convert-thumbnails jpg ${url}
-# 	# 		fi
-# 	# fi
-# }
 
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
