@@ -357,6 +357,11 @@ yt-best-fork () {
 	yt-dlp -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json "${1}"
 }
 
+yt-red () {
+	echo " [running] yt-dlp -v -f hd -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json ${1}"
+	yt-dlp -v -f hd -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json "${1}"
+}
+
 dl-split () {
 	while IFS="" read -r p || [ -n "$p" ]; do
 		yt-best "$p"
@@ -1491,6 +1496,14 @@ prepare_first_frame() {
 
 
 alias reddit_dl='yt-best-fork'
+alias red_dl='yt-red'
+
+reddit_dl_improved(){
+    echo " [running] gallery-dl --config ~/.gallery-dl.conf --no-mtime -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/wavy-cookies-instagram.txt ${1}"
+    gallery-dl --config ~/.gallery-dl.conf --no-mtime -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/wavy-cookies-instagram.txt ${1}
+}
+
+alias rdi='reddit_dl_improved'
 
 download_magnet(){
     # aria2c -d ~/Downloads --seed-time=0 "magnet:?xt=urn:btih:248D0A1CD08284299DE78D5C1ED359BB46717D8C"
