@@ -2473,10 +2473,6 @@ ${BOLD_CYAN}Notes:${RESET}
     return $cmd_status
 }
 
-# ---------------------------------------------------------
-# chezmoi managed - end.zsh
-# ---------------------------------------------------------
-
 dl_thumb_only() {
     pyenv activate yt-dlp3 || true
     echo " [running] yt-dlp -n --ignore-errors --restrict-filenames --skip-download --write-thumbnail --convert-thumbnails png --cookies=~/Downloads/yt-cookies.txt ${1}"
@@ -2484,3 +2480,7 @@ dl_thumb_only() {
 }
 
 alias dto='dl_thumb_only'
+
+# ---------------------------------------------------------
+# chezmoi managed - end.zsh
+# ---------------------------------------------------------
