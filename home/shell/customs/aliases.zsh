@@ -467,6 +467,13 @@ dl-ig() {
 	gallery-dl --cookies-from-browser Firefox --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata  "${1}"
 }
 
+# download using Firefox cookies
+dsfi() {
+	pyenv activate yt-dlp3 || true
+	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies-from-browser Firefox --write-info-json --convert-thumbnails jpg ${1}\n"
+	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies-from-browser Firefox --write-info-json --convert-thumbnails jpg "${1}"
+}
+
 dl-thread() {
 	pyenv activate yt-dlp3 || true
 	echo -e " [running] gallery-dl --no-mtime --user-agent Wget/1.21.1 --netrc --cookies ~/.config/gallery-dl/cookies-twitter.txt -v -c ~/dev/universityofprofessorex/cerebro-bot/thread.conf ${1}\n"
@@ -2480,6 +2487,29 @@ dl_thumb_only() {
 }
 
 alias dto='dl_thumb_only'
+
+
+
+copy_to_large_and_small_folders(){
+    local fname="${1}"
+    echo "$fname"
+    mkdir -p large/ small/
+    gfind "${fname}" -type f \( \
+        -iname "*.jpg"  -o \
+        -iname "*.jpeg" -o \
+        -iname "*.png"  -o \
+        -iname "*.gif"  -o \
+        -iname "*.bmp"  -o \
+        -iname "*.tiff" -o \
+        -iname "*.webp" -o \
+        -iname "*.mp4"  -o \
+        -iname "*.mov"  -o \
+        -iname "*.avi"  -o \
+        -iname "*.mkv"  -o \
+        -iname "*.flv"  -o \
+        -iname "*.wmv" \) \
+        -exec sh -c 'cp -- "$0" large/ && cp -- "$0" small/' {} \;
+}
 
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
