@@ -2511,6 +2511,85 @@ copy_to_large_and_small_folders(){
         -exec sh -c 'cp -- "$0" large/ && cp -- "$0" small/' {} \;
 }
 
+prepare_for_ig_story() {
+    local input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    local output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_ig_story.mp4"
+    local get_timestamp=$(gstat -c %y "${input_file}")
+    local bg_color
+
+    echo -e "Input file: ${input_file}"
+    echo -e "Output file: ${output_file}"
+
+    # Sample color from top-left pixel (0,0) of the first frame
+    bg_color=$(ffmpeg -i "${input_file}" -vf "crop=1:1:0:0,boxblur=luma_radius=0:chroma_radius=0:alpha_radius=0" -frames:v 1 -f rawvideo -pix_fmt rgb24 pipe:1 | xxd -p -c 3 | sed 's/$/ff/' | sed 's/^/0x/')
+
+    # If color sampling fails, use black
+    if [ -z "$bg_color" ]; then
+        bg_color="0x000000"
+    fi
+
+    echo "Using background color: $bg_color"
+
+    time ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${input_file}" \
+    -c:v h264_videotoolbox \
+    -bufsize 5200K \
+    -b:v 5200K \
+    -maxrate 5200K \
+    -level 42 \
+    -bf 2 \
+    -g 63 \
+    -refs 4 \
+    -threads 16 \
+    -preset:v fast \
+    -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=${bg_color}" \
+    -c:a aac \
+    -ar 44100 \
+    -ac 2 \
+    "${output_file}"
+
+    gtouch -d "$get_timestamp" "${output_file}"
+}
+
+image_prepare_for_ig_reel() {
+    local full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    local full_path_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}_ig_reel{p.suffix}\")")"
+    local primary_color=$(magick "${full_path_input_file}" -format "%[hex:p{0,0}]" info:)
+    local get_timestamp=$(gstat -c %y "${full_path_input_file}")
+
+    echo -e "Input file: ${full_path_input_file}"
+    echo -e "Output file: ${full_path_output_file}"
+    echo -e "Primary color: ${primary_color}"
+
+    # Instagram Reel dimensions: 1080x1920
+    magick "${full_path_input_file}" \
+        -resize 1080x1920^ \
+        -gravity center \
+        -extent 1080x1920 \
+        -background "#${primary_color}" \
+        -compose Copy \
+        -quality 95 \
+        "${full_path_output_file}"
+
+    gtouch -d "$get_timestamp" "${full_path_output_file}"
+}
+
+prepare_images_story() {
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*_ig_reel*' --exclude '*_ig_story*' -x zsh -ic 'image_prepare_for_ig_reel "$1"' zsh
+}
+
+prepare_videos_story() {
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*_ig_story*' -x zsh -ic 'prepare_for_ig_story "$1"' zsh
+}
+
+prepare_all_story() {
+    prepare_images_story
+    prepare_videos_story
+}
+
+alias prepare_all="prepare_all_story"
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
