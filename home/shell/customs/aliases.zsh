@@ -1073,12 +1073,12 @@ klam_env() {
 }
 
 get_all_images(){
-    image_list=$(fd -a --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*')
+    image_list=$(fd -a --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*')
     echo "$image_list"
 }
 
 get_all_videos(){
-    video_list=$(fd -a --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*')
+    video_list=$(fd -a --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*')
     echo "$video_list"
 }
 
@@ -1101,11 +1101,11 @@ image_prepare_primary_color(){
 }
 
 prepare_images_pc(){
-    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
 }
 
 prepare_videos_pc(){
-    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
 }
 
 prepare_dir_all(){
@@ -1119,11 +1119,11 @@ alias prepare_all="prepare_dir_all"
 
 # Normalized version
 prepare_images_n(){
-    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
 }
 
 prepare_videos_n(){
-    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'prepare_for_ig_large "$1"' zsh
 }
 
 prepare_dir_all_n(){
@@ -1151,7 +1151,7 @@ export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 
 prepare_videos_small(){
-    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_small "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'prepare_for_ig_small "$1"' zsh
 }
 
 prepare_dir_small(){
@@ -1254,17 +1254,17 @@ mv_orig_media(){
 }
 
 prepare_orig(){
-    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg -e mp4 -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mv_orig_media "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg -e mp4 -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'mv_orig_media "$1"' zsh
 }
 
 show_images_pc(){
     # fd --absolute-path --ignore --full-path -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' --exec zsh -ic 'echo "$1"' zsh
-    fd --absolute-path --ignore --full-path -e jpg -e png -e jpeg --exclude '*large*' --exclude '*small*'
+    fd --absolute-path --ignore --full-path -e jpg -e png -e jpeg --exclude '*large*' --exclude '*small*' --exclude '*ig_reel*' --exclude '*ig_story*'
 }
 
 show_videos_pc(){
     # fd --absolute-path --ignore --full-path -e mp4 --exclude '*larger*' --exclude '*smaller*' --exec zsh -ic 'echo "$1"' zsh
-    fd --absolute-path --ignore --full-path -e mp4 --exclude '*large*' --exclude '*small*'
+    fd --absolute-path --ignore --full-path -e mp4 --exclude '*large*' --exclude '*small*' --exclude '*ig_reel*' --exclude '*ig_story*'
 }
 
 show_dir_all(){
@@ -1285,12 +1285,12 @@ gif_to_mp4(){
 
 
 prepare_gif(){
-    fd -a --max-depth=1 --ignore -p -e gif --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'gif_to_mp4 "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e gif --threads=10 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'gif_to_mp4 "$1"' zsh
     rm -fv *.gif
 }
 
 prepare_mov_to_mp4(){
-    fd -a --max-depth=1 --ignore -p -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mov_to_mp4 "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'mov_to_mp4 "$1"' zsh
     rm -fv *.mov
     rm -fv *.MOV
 }
@@ -1449,7 +1449,7 @@ prepare_for_classifer(){
         if command -v fdfind >/dev/null 2>&1; then
             fdfind -a --max-depth=1 --ignore-case -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
         else
-            fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+            fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
         fi
 
         prepare_orig
@@ -2554,7 +2554,7 @@ prepare_for_ig_story() {
 
 image_prepare_for_ig_reel() {
     local full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
-    local full_path_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}_ig_reel{p.suffix}\")")"
+    local full_path_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}_ig_story{p.suffix}\")")"
     local primary_color=$(magick "${full_path_input_file}" -format "%[hex:p{0,0}]" info:)
     local get_timestamp=$(gstat -c %y "${full_path_input_file}")
 
@@ -2575,12 +2575,13 @@ image_prepare_for_ig_reel() {
     gtouch -d "$get_timestamp" "${full_path_output_file}"
 }
 
+
 prepare_images_story() {
-    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*_ig_reel*' --exclude '*_ig_story*' -x zsh -ic 'image_prepare_for_ig_reel "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*_ig_reel*' --exclude '*_ig_story*' --exclude '*smaller*' --exclude '*larger*' -x zsh -ic 'image_prepare_for_ig_reel "$1"' zsh
 }
 
 prepare_videos_story() {
-    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*_ig_story*' -x zsh -ic 'prepare_for_ig_story "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*_ig_reel*' --exclude '*_ig_story*' --exclude '*smaller*' --exclude '*larger*' -x zsh -ic 'prepare_for_ig_story "$1"' zsh
 }
 
 prepare_all_story() {
@@ -2588,8 +2589,18 @@ prepare_all_story() {
     prepare_videos_story
 }
 
-alias prepare_all="prepare_all_story"
 
+prepare_everything_story(){
+    ulimit -n 65536
+    prepare_gif
+    unzip_rm
+    json_rm
+    webp_to_jpg
+    heic_to_jpg
+    prepare_mov_to_mp4
+    prepare_all_story
+    prepare_orig
+}
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
