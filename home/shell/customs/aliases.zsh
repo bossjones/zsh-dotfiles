@@ -2601,6 +2601,33 @@ prepare_everything_story(){
     prepare_all_story
     prepare_orig
 }
+
+add_text_to_ig_video() {
+    local input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    local text="$2"
+    local output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_with_text.mp4"
+    local font_file="/System/Library/Fonts/Supplemental/Arial.ttf"  # Adjust path as needed
+    local font_size=50
+    local font_color="white"
+    local background_color="black@0.5"
+    local text_position="(w-tw)/2:h/4"  # Centered horizontally, 1/4 from the top
+
+    # Get video dimensions
+    local video_info=$(ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=width,height -of csv=p=0 "$input_file")
+    local width=$(echo $video_info | cut -d',' -f1)
+    local height=$(echo $video_info | cut -d',' -f2)
+
+    # Calculate text box position and size
+    local box_height=$((font_size + 20))  # Add some padding
+    local box_y=$((height / 4 - box_height / 2))  # Center the box vertically in the top quarter
+
+    ffmpeg -i "$input_file" -vf "
+        drawbox=x=0:y=$box_y:w=iw:h=$box_height:color=$background_color:t=fill,
+        drawtext=fontfile=$font_file:fontsize=$font_size:fontcolor=$font_color:box=0:boxcolor=$background_color:boxborderw=5:x=$text_position:y=$box_y+($box_height-th)/2:text='$text'
+    " -c:a copy "$output_file"
+
+    echo "Video with text created: $output_file"
+}
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
