@@ -2603,31 +2603,64 @@ prepare_everything_story(){
 }
 
 add_text_to_ig_video() {
-    local input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    local input_file="$1"
     local text="$2"
-    local output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_with_text.mp4"
-    local font_file="/System/Library/Fonts/Supplemental/Arial.ttf"  # Adjust path as needed
+    local output_file="${input_file%.*}_with_text.mp4"
+    local font_file="/System/Library/Fonts/Supplemental/Arial.ttf"
     local font_size=50
-    local font_color="white"
-    local background_color="black@0.5"
-    local text_position="(w-tw)/2:h/4"  # Centered horizontally, 1/4 from the top
+    local padding=20  # Space between text and video content
 
     # Get video dimensions
     local video_info=$(ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=width,height -of csv=p=0 "$input_file")
     local width=$(echo $video_info | cut -d',' -f1)
     local height=$(echo $video_info | cut -d',' -f2)
 
-    # Calculate text box position and size
-    local box_height=$((font_size + 20))  # Add some padding
-    local box_y=$((height / 4 - box_height / 2))  # Center the box vertically in the top quarter
+    # Calculate text position above video content
+    local text_y=$((height * 1/4))  # Position text in top quarter
+    local box_height=$((font_size + padding))
 
-    ffmpeg -i "$input_file" -vf "
-        drawbox=x=0:y=$box_y:w=iw:h=$box_height:color=$background_color:t=fill,
-        drawtext=fontfile=$font_file:fontsize=$font_size:fontcolor=$font_color:box=0:boxcolor=$background_color:boxborderw=5:x=$text_position:y=$box_y+($box_height-th)/2:text='$text'
-    " -c:a copy "$output_file"
+    ffmpeg -i "$input_file" \
+        -vf "drawbox=x=0:y=$((text_y - padding/2)):w=iw:h=${box_height}:color=black@0.5:t=fill,
+             drawtext=fontfile='${font_file}':fontsize=${font_size}:fontcolor=white:box=0:boxcolor=black@0.5:
+                      x=(w-tw)/2:y=${text_y}+(th/${padding}):text='${text}'" \
+        -c:a copy \
+        "${output_file}"
 
     echo "Video with text created: $output_file"
 }
+
+
+# Function to extract Twitter handles from images in a directory recursively
+extract_twitter_handles() {
+  local dir="$1"
+  local output_file="extracted_handles.txt"
+
+  # Ensure the output file is empty before starting
+  > "$output_file"
+
+  # Ensure Tesseract is installed
+  if ! command -v tesseract >/dev/null 2>&1; then
+    echo "Error: Tesseract is not installed. Install it using Homebrew: brew install tesseract"
+    return 1
+  fi
+
+  # Find and process image files recursively
+  find "$dir" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.bmp' -o -iname '*.tiff' \) | while read -r image_path; do
+    # Perform OCR on the image and extract text
+    text=$(tesseract "$image_path" - -l eng 2>/dev/null)
+
+    # Use grep with regex to find Twitter handles (e.g., @username)
+    echo "$text" | grep -oE '@[a-zA-Z0-9_]+' | while read -r handle; do
+      # Prefix the handle with https://x.com/ and save it to the output file
+      url="https://x.com/${handle#@}"
+      echo "$image_path: $url" >> "$output_file"
+      echo "Extracted: $url from $image_path"
+    done
+  done
+
+  echo "Extraction complete. Results saved to '$output_file'."
+}
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
