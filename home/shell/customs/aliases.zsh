@@ -2661,6 +2661,16 @@ extract_twitter_handles() {
   echo "Extraction complete. Results saved to '$output_file'."
 }
 
+
+dl_helldivers() {
+    local uri="$1"
+    pyenv activate yt-dlp3 || true
+    echo " [running] yt-dlp -v -f 299+bestaudio -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "$uri""
+    yt-dlp -v -f 299+bestaudio -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "$uri"
+}
+
+alias dlh='dl_helldivers'
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------

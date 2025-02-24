@@ -168,6 +168,21 @@ def ensure_directory_exists(file_path: str) -> None:
             sys.exit(1)
 
 
+def print_examples() -> None:
+    """Print example usage of the shadow_meme script.
+
+    This function prints various examples of how to use the script with different path formats.
+    """
+    print("# Using home directory")
+    print("python shadow_meme.py ~/images/input.png ~/images/output/meme.png")
+    print("")
+    print("# Using relative paths")
+    print("python shadow_meme.py ./input.png ./output/meme.png")
+    print("")
+    print("# Using absolute paths")
+    print("python shadow_meme.py /home/user/images/input.png /home/user/images/output/meme.png")
+
+
 def main() -> None:
     """Process command line arguments and create shadow meme images.
 
@@ -183,11 +198,21 @@ def main() -> None:
     )
 
     parser.add_argument(
-        "input_image", help="Path to the input image (supports ~ for home directory)"
+        "--example",
+        action="store_true",
+        help="Show example usage of the script",
     )
 
     parser.add_argument(
-        "output_image", help="Path for the output image (supports ~ for home directory)"
+        "input_image",
+        nargs="?",
+        help="Path to the input image (supports ~ for home directory)",
+    )
+
+    parser.add_argument(
+        "output_image",
+        nargs="?",
+        help="Path for the output image (supports ~ for home directory)",
     )
 
     parser.add_argument(
@@ -224,6 +249,14 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    if args.example:
+        print_examples()
+        sys.exit(0)
+
+    # Check if required arguments are provided when not showing examples
+    if not args.input_image or not args.output_image:
+        parser.error("Both input_image and output_image are required unless using --example")
 
     # Expand paths
     input_path = expand_path(args.input_image)
