@@ -286,6 +286,191 @@ actions:
       {{- end }}
       ```
 
+      ## Shell Organization and Structure
+
+      Chezmoi excels at managing complex shell configurations with a modular approach. This section covers best practices for organizing shell configurations.
+
+      ### 1. Modular Shell Configuration
+
+      Organize shell configurations into a structured directory hierarchy for better maintainability:
+
+      ```
+      shell/
+      ├── asdf/                # Tool-specific configuration
+      │   ├── env.zsh          # Environment variables
+      │   └── path.zsh         # Path configuration
+      ├── brew/                # Homebrew configuration
+      │   └── completion.zsh   # Completions
+      ├── customs/             # Custom configurations
+      │   └── aliases.zsh      # Custom aliases
+      ├── env.zsh              # Global environment variables
+      ├── init.zsh             # Main initialization script
+      ├── path.zsh             # Global path configuration
+      └── zsh_dot_d/           # ZSH-specific configurations
+          ├── after/           # Loaded after core initialization
+          │   ├── git_cu.zsh   # Git customizations
+          │   └── tmux.zsh     # Tmux integration
+          └── before/          # Loaded before core initialization
+              ├── go.zsh       # Go configuration
+              └── rust.zsh     # Rust configuration
+      ```
+
+      Key benefits:
+      1. **Separation of Concerns**: Each file has a specific purpose
+      2. **Easier Maintenance**: Modify specific components without affecting others
+      3. **Better Organization**: Logical grouping of related configurations
+      4. **Selective Loading**: Load only what's needed for specific environments
+
+      ### 2. Before/After Loading Pattern
+
+      Implement a sophisticated loading mechanism to control initialization order:
+
+      ```bash
+      # In your main .zshrc.tmpl
+
+      # Load core environment
+      source "${HOME}/shell/env.zsh"
+
+      # Load "before" scripts
+      for file in ${HOME}/shell/zsh_dot_d/before/*.zsh; do
+        source "$file"
+      done
+
+      # Load main configuration
+      source "${HOME}/shell/init.zsh"
+
+      # Load "after" scripts
+      for file in ${HOME}/shell/zsh_dot_d/after/*.zsh; do
+        source "$file"
+      done
+      ```
+
+      This pattern allows:
+      1. **Dependency Management**: Ensure prerequisites are loaded first
+      2. **Override Capability**: Override default settings with custom configurations
+      3. **Plugin Integration**: Properly initialize plugins in the correct order
+      4. **Conflict Resolution**: Resolve conflicts between different components
+
+      ### 3. Tool-specific Configuration
+
+      Organize tool-specific configurations in dedicated directories:
+
+      ```
+      shell/
+      ├── asdf/                # ASDF version manager
+      ├── brew/                # Homebrew package manager
+      ├── direnv/              # Directory-specific environments
+      ├── fzf/                 # Fuzzy finder
+      ├── pyenv/               # Python version manager
+      └── rust/                # Rust programming language
+      ```
+
+      Each tool directory typically contains:
+      - `env.zsh`: Environment variables
+      - `path.zsh`: Path configurations
+      - `completion.zsh`: Shell completions
+      - `aliases.zsh`: Tool-specific aliases
+      - `custom.zsh`: Custom configurations
+
+      Example tool configuration:
+
+      ```bash
+      # shell/fzf/env.zsh
+      export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"
+      export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
+
+      # shell/fzf/completion.zsh
+      if [[ -f "${HOME}/.fzf.zsh" ]]; then
+        source "${HOME}/.fzf.zsh"
+      fi
+
+      # shell/fzf/keybinding.zsh
+      bindkey '^T' fzf-file-widget
+      bindkey '^R' fzf-history-widget
+      ```
+
+      ### 4. Environment-specific Configuration
+
+      Handle different environments with dedicated configuration directories:
+
+      ```
+      shell/
+      ├── centos/              # CentOS-specific settings
+      │   ├── env.zsh
+      │   └── path.zsh
+      ├── darwin/              # macOS-specific settings
+      │   ├── env.zsh
+      │   └── path.zsh
+      └── ubuntu/              # Ubuntu-specific settings
+          ├── env.zsh
+          └── path.zsh
+      ```
+
+      Load these configurations conditionally:
+
+      ```bash
+      # In your main .zshrc.tmpl
+
+      {{- if eq .chezmoi.os "darwin" }}
+      # Load macOS specific configuration
+      source "${HOME}/shell/darwin/env.zsh"
+      source "${HOME}/shell/darwin/path.zsh"
+      {{- else if eq .chezmoi.os "linux" }}
+      # Determine Linux distribution
+      {{- if lookPath "apt-get" }}
+      # Load Ubuntu specific configuration
+      source "${HOME}/shell/ubuntu/env.zsh"
+      source "${HOME}/shell/ubuntu/path.zsh"
+      {{- else if lookPath "yum" }}
+      # Load CentOS specific configuration
+      source "${HOME}/shell/centos/env.zsh"
+      source "${HOME}/shell/centos/path.zsh"
+      {{- end }}
+      {{- end }}
+      ```
+
+      ### 5. Shell Initialization Flow
+
+      Implement a consistent initialization flow across different shell components:
+
+      1. **Environment Variables** (`env.zsh`): Set up environment variables first
+      2. **Path Configuration** (`path.zsh`): Configure PATH and related variables
+      3. **Completions** (`completion.zsh`): Set up command completions
+      4. **Key Bindings** (`keybinding.zsh`): Configure keyboard shortcuts
+      5. **Aliases** (`aliases.zsh`): Define command aliases
+      6. **Custom Functions** (`functions.zsh`): Define custom functions
+      7. **Tool-specific Configurations**: Load tool-specific settings
+
+      Example initialization script:
+
+      ```bash
+      # shell/init.zsh
+
+      # Load global configurations
+      source "${HOME}/shell/env.zsh"
+      source "${HOME}/shell/path.zsh"
+      source "${HOME}/shell/keybinding.zsh"
+
+      # Load tool-specific configurations
+      for tool in asdf brew fzf git pyenv; do
+        if [[ -d "${HOME}/shell/${tool}" ]]; then
+          [[ -f "${HOME}/shell/${tool}/env.zsh" ]] && source "${HOME}/shell/${tool}/env.zsh"
+          [[ -f "${HOME}/shell/${tool}/path.zsh" ]] && source "${HOME}/shell/${tool}/path.zsh"
+          [[ -f "${HOME}/shell/${tool}/completion.zsh" ]] && source "${HOME}/shell/${tool}/completion.zsh"
+          [[ -f "${HOME}/shell/${tool}/aliases.zsh" ]] && source "${HOME}/shell/${tool}/aliases.zsh"
+        fi
+      done
+
+      # Load custom configurations last
+      source "${HOME}/shell/customs/aliases.zsh"
+      ```
+
+      This structured approach ensures:
+      1. **Predictable Behavior**: Consistent initialization across environments
+      2. **Modularity**: Easy to add or remove components
+      3. **Maintainability**: Clear organization makes maintenance easier
+      4. **Debugging**: Easier to identify and fix issues
+
       ## Common Operations
 
       ### 1. Adding New Files
