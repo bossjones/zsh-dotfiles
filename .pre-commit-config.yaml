@@ -1,0 +1,104 @@
+---
+exclude: ^codegen_lab/alembic/.*
+# To use:
+#
+#     pre-commit run -a
+#
+# Or:
+#
+#     pre-commit install  # (runs every time you commit in git)
+#
+# To update this file:
+#
+#     pre-commit autoupdate
+#
+# See https://github.com/pre-commit/pre-commit
+ci:
+  autofix_commit_msg: "style: pre-commit fixes"
+  autofix_prs: true
+  autoupdate_branch: ""
+  autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
+default_install_hook_types:
+  # is triggered before the commit is finalized to allow checks on the code being committed. Running hooks on unstaged changes can lead to both false-positives and false-negatives during committing. pre-commit only runs on the staged contents of files by temporarily stashing the unstaged changes while running hooks.
+  - pre-commit
+  # hooks will be passed a single filename -- this file contains the current contents of the commit message to be validated. The commit will be aborted if there is a nonzero exit code.
+  - commit-msg
+  # pre-push is triggered on git push.
+  - pre-push
+default_stages:
+  - pre-commit
+  - pre-push
+# TODO: Work with team to see when the right time is to enable this
+repos:
+  - repo: https://github.com/sirosen/texthooks
+    rev: 0.6.8
+    hooks:
+      - id: alphabetize-codeowners
+      - id: fix-smartquotes
+      - id: fix-ligatures
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [yaml, json]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Simply check whether files parse as valid python.
+      - id: check-ast
+      - id: check-json
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-no-log-warn
+      - id: text-unicode-replacement-char
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.31.2
+    hooks:
+      - id: check-github-workflows
+      - id: check-readthedocs
+
+  # GitHub Actions linting
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+        name: Lint GitHub Actions workflow files
+        description: Runs actionlint to lint GitHub Actions workflow files
+        language: golang
+        types: ["yaml", "yml"]
+        files: ^\.github/workflows/
+        entry: actionlint
+        minimum_pre_commit_version: 3.0.0
+
+  # Alternative actionlint options (commented out, choose one if needed)
+  # - repo: local
+  #   hooks:
+  #     - id: actionlint-docker
+  #       name: Lint GitHub Actions workflow files
+  #       description: Runs actionlint Docker image to lint GitHub Actions workflow files
+  #       language: docker_image
+  #       types: ["yaml"]
+  #       files: ^\.github/workflows/
+  #       entry: docker.io/rhysd/actionlint:1.7.7
+  #
+  #     - id: actionlint-system
+  #       name: Lint GitHub Actions workflow files
+  #       description: Runs system-installed actionlint to lint GitHub Actions workflow files
+  #       language: system
+  #       types: ["yaml"]
+  #       files: ^\.github/workflows/
+  #       entry: actionlint

@@ -1,0 +1,212 @@
+---
+syntax: bash
+tags: [ ai, codebase, repository, packaging, llm ]
+description: "Pack your codebase into AI-friendly formats for use with LLMs like Claude, ChatGPT, etc."
+---
+
+# repomix
+
+A powerful tool that packs your entire repository into a single, AI-friendly file.
+
+## Basic Usage
+
+# Run repomix in current directory
+repomix
+
+# Pack a specific directory
+repomix path/to/directory
+
+# Quick usage without installation (using npx)
+npx repomix
+
+# Install globally
+npm install -g repomix
+
+# Install using yarn
+yarn global add repomix
+
+# Install using Homebrew (macOS/Linux)
+brew install repomix
+
+## Output Options
+
+# Specify output file name
+repomix -o custom-output.txt
+repomix --output custom-output.txt
+
+# Specify output style (plain, xml, markdown)
+repomix --style plain
+repomix --style xml
+repomix --style markdown
+
+# Enable parsable output based on style schema
+repomix --parsable-style
+
+# Compress output with intelligent code extraction
+repomix --compress
+
+# Show line numbers in output
+repomix --output-show-line-numbers
+
+# Copy output to system clipboard
+repomix --copy
+
+# Disable file summary section
+repomix --no-file-summary
+
+# Disable directory structure section
+repomix --no-directory-structure
+
+# Remove comments from supported file types
+repomix --remove-comments
+
+# Remove empty lines from output
+repomix --remove-empty-lines
+
+# Add custom text to file header
+repomix --header-text "This is my project codebase"
+
+# Include custom instructions from file
+repomix --instruction-file-path instructions.md
+
+# Include empty directories
+repomix --include-empty-directories
+
+## Filter Options
+
+# Include specific files/directories using glob patterns
+repomix --include "src/**/*.ts,**/*.md"
+
+# Exclude specific files/directories
+repomix --ignore "**/*.log,tmp/"
+repomix -i "**/*.log,tmp/"
+
+# Disable .gitignore file usage
+repomix --no-gitignore
+
+# Disable default ignore patterns
+repomix --no-default-patterns
+
+## Remote Repository Options
+
+# Process a remote repository
+repomix --remote https://github.com/yamadashy/repomix
+
+# Using GitHub shorthand
+repomix --remote yamadashy/repomix
+
+# Specify branch, tag, or commit hash
+repomix --remote yamadashy/repomix --remote-branch main
+repomix --remote yamadashy/repomix --remote-branch 935b695
+
+# Using branch URL directly
+repomix --remote https://github.com/yamadashy/repomix/tree/main
+
+# Using commit URL directly
+repomix --remote https://github.com/yamadashy/repomix/commit/836abcd7335137228ad77feb28655d85712680f1
+
+## Configuration Options
+
+# Create config file
+repomix --init
+
+# Use global config
+repomix --global
+
+# Specify custom config file path
+repomix -c ./custom-config.json
+repomix --config ./custom-config.json
+
+## Security Options
+
+# Disable security check
+repomix --no-security-check
+
+## Token Count Options
+
+# Specify token count encoding
+repomix --token-count-encoding cl100k_base
+repomix --token-count-encoding o200k_base
+
+## Other Options
+
+# Show tool version
+repomix -v
+repomix --version
+
+# Set number of top files to display in summary
+repomix --top-files-len 10
+
+# Enable verbose logging
+repomix --verbose
+
+## Docker Usage
+
+# Run with Docker using current directory
+docker run -v .:/app -it --rm ghcr.io/yamadashy/repomix
+
+# Process a specific directory
+docker run -v .:/app -it --rm ghcr.io/yamadashy/repomix path/to/directory
+
+# Process a remote repository, output to 'output' directory
+docker run -v ./output:/app -it --rm ghcr.io/yamadashy/repomix --remote https://github.com/yamadashy/repomix
+
+## Prompt Examples
+
+# After generating the packed file, use these prompt examples with AI tools:
+
+# Code Review prompt
+"This file contains my entire codebase. Please review the overall structure and suggest improvements."
+
+# Documentation Generation prompt
+"Based on the codebase in this file, please generate a detailed README.md."
+
+# Test Case Generation prompt
+"Analyze the code and suggest a comprehensive set of unit tests for the main functions."
+
+# Code Quality Assessment prompt
+"Review the codebase for adherence to coding best practices and industry standards."
+
+# Library Overview prompt
+"This file contains the entire codebase of library. Please provide a comprehensive overview."
+
+## Configuration File Example (repomix.config.json)
+
+# Create a configuration file with:
+repomix --init
+
+# Sample configuration:
+# {
+#   "output": {
+#     "filePath": "repomix-output.xml",
+#     "style": "xml",
+#     "parsableStyle": true,
+#     "compress": false,
+#     "headerText": "Custom header information",
+#     "fileSummary": true,
+#     "directoryStructure": true,
+#     "removeComments": false,
+#     "removeEmptyLines": false,
+#     "showLineNumbers": false,
+#     "copyToClipboard": true,
+#     "topFilesLength": 5,
+#     "includeEmptyDirectories": false,
+#   },
+#   "include": [
+#     "**/*"
+#   ],
+#   "ignore": {
+#     "useGitignore": true,
+#     "useDefaultPatterns": true,
+#     "customPatterns": [
+#       "additional-folder",
+#       "**/*.log"
+#     ],
+#   },
+#   "security": {
+#     "enableSecurityCheck": true
+#   },
+#   "tokenCount": {
+#     "encoding": "o200k_base"
+#   },
+# }
