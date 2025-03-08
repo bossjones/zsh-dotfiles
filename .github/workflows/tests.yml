@@ -133,13 +133,13 @@ jobs:
           limit-access-to-actor: true
 
       - name: pytest
-        env:
-          # Unlike the above, we are actually distributing these
-          # wheels, so they need to be built for production use.
-          CPPFLAGS: "-O3 -flto -ffunction-sections"
-          CFLAGS:   "-O3 -flto -ffunction-sections"
-          # Build for both architectures
-          ARCHFLAGS: "-arch x86_64 -arch arm64"
+        # env:
+        #   # Unlike the above, we are actually distributing these
+        #   # wheels, so they need to be built for production use.
+        #   CPPFLAGS: "-O3 -flto -ffunction-sections"
+        #   CFLAGS:   "-O3 -flto -ffunction-sections"
+        #   # Build for both architectures
+        #   ARCHFLAGS: "-arch x86_64 -arch arm64"
         run: |
           # Removed 'exec zsh' to prevent script termination
           zsh -c '
