@@ -43,138 +43,186 @@ actions:
 
       ```
       .
-      ├── assets/                  # Assets for documentation, scripts, and templates
-      │   ├── chezmoi.io/          # Documentation website content
-      │   ├── cosign/              # Signing keys
-      │   ├── docker/              # Docker configurations
-      │   ├── scripts/             # Installation and utility scripts
-      │   ├── templates/           # Templates for various files
-      │   └── vagrant/             # Vagrant configurations for testing
-      ├── completions/             # Shell completion scripts
-      ├── internal/                # Internal commands and utilities
-      ├── pkg/                     # Core packages
-      │   ├── archivetest/         # Archive testing utilities
-      │   ├── chezmoi/             # Core chezmoi functionality
-      │   ├── chezmoibubbles/      # Terminal UI components
-      │   ├── chezmoilog/          # Logging utilities
-      │   ├── chezmoitest/         # Testing utilities
-      │   ├── cmd/                 # Command implementations
-      │   ├── git/                 # Git integration
-      │   └── shell/               # Shell integration
-      ├── main.go                  # Application entry point
-      └── main_test.go             # Main package tests
+      ├── home/                    # Source state directory
+      │   ├── dot_config/          # Configuration files (.config)
+      │   ├── dot_local/           # Local files (.local)
+      │   ├── private_dot_ssh/     # SSH configuration (private)
+      │   ├── executable_scripts/  # Executable scripts
+      │   └── run_once_setup.sh    # One-time setup script
+      ├── .chezmoi.toml.tmpl      # Template for chezmoi configuration
+      └── .chezmoiexternal.toml   # External file definitions
       ```
 
-      ## Key Features
+      ## Template Patterns and Best Practices
 
-      ### 1. Template System
+      ### 1. OS-Specific Configuration
 
-      Chezmoi uses Go's `text/template` to handle machine-specific differences in configuration files:
+      Use `.chezmoi.os` for OS-specific configurations:
 
       ```go
-      // Example template
-      {{- if eq .chezmoi.os "darwin" -}}
-      # macOS-specific configuration
-      {{- else if eq .chezmoi.os "linux" -}}
-      # Linux-specific configuration
-      {{- end -}}
+      {{- if eq .chezmoi.os "darwin" }}
+      # macOS Configuration
+      export HOMEBREW_PREFIX="/opt/homebrew"
+      export PATH="$HOMEBREW_PREFIX/bin:$PATH"
+      {{- else if eq .chezmoi.os "linux" }}
+      # Linux Configuration
+      export PATH="/usr/local/bin:$PATH"
+      {{- end }}
       ```
 
-      ### 2. Secret Management
+      ### 2. Shell-Specific Templates
 
-      Chezmoi integrates with various password managers and secret storage solutions:
+      Detect and configure based on shell type:
 
       ```go
-      // Example of retrieving a secret
-      {{ (bitwarden "item" "example.com").password }}
-      {{ (onepassword "item" "example.com").password }}
-      {{ (pass "example.com") }}
+      {{- if eq .chezmoi.shell "zsh" }}
+      # ZSH specific settings
+      source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
+      {{- else if eq .chezmoi.shell "bash" }}
+      # Bash specific settings
+      source ~/.bashrc.d/aliases.bash
+      {{- end }}
       ```
 
-      ### 3. File Operations
+      ### 3. Machine-Specific Configuration
 
-      Chezmoi supports various file operations through special prefixes:
-
-      - `dot_` - Files that should be prefixed with a dot in the destination
-      - `executable_` - Files that should be executable
-      - `private_` - Files that should be private (0600 permissions)
-      - `readonly_` - Files that should be read-only
-      - `symlink_` - Symbolic links
-      - `encrypted_` - Encrypted files
-      - `exact_` - Exact directories (no partial updates)
-      - `empty_` - Empty files
-      - `modify_` - Scripts that modify existing files
-      - `remove_` - Files to be removed
-      - `run_` - Scripts to be run
-      - `once_` - Scripts to be run only once
-      - `onchange_` - Scripts to be run when their content changes
-
-      ### 4. Command Structure
-
-      Chezmoi uses the Cobra library for command-line interface, with commands organized in the `pkg/cmd` package:
+      Use hostname or custom variables for machine-specific settings:
 
       ```go
-      // Example command structure
-      cmd := &cobra.Command{
-          Use:     "add [path...]",
-          Short:   "Add an existing file, directory, or symlink to the source state",
-          Long:    mustLongHelp("add"),
-          Example: example("add"),
-          RunE:    config.runAddCmd,
-      }
+      {{- if eq .chezmoi.hostname "work-laptop" }}
+      # Work environment settings
+      export http_proxy="http://proxy.company.com:8080"
+      {{- else }}
+      # Personal environment settings
+      unset http_proxy
+      {{- end }}
       ```
 
-      ## Best Practices
+      ### 4. External Dependencies
 
-      ### Working with Templates
+      Define external dependencies in `.chezmoiexternal.toml`:
 
-      1. Use conditional logic based on hostname, operating system, or other variables:
-         ```go
-         {{- if eq .chezmoi.hostname "work-laptop" -}}
-         # Work-specific configuration
-         {{- else -}}
-         # Personal configuration
-         {{- end -}}
-         ```
+      ```toml
+      [".oh-my-zsh"]
+        type = "archive"
+        url = "https://github.com/ohmyzsh/ohmyzsh/archive/master.tar.gz"
+        exact = true
+        stripComponents = 1
+        refreshPeriod = "168h"
 
-      2. Use template functions for dynamic content:
-         ```go
-         {{- $files := list "file1" "file2" "file3" -}}
-         {{- range $files -}}
-         {{ . }}
-         {{- end -}}
-         ```
+      [".vim/pack/plugins/start/vim-go"]
+        type = "git-repo"
+        url = "https://github.com/fatih/vim-go.git"
+        refreshPeriod = "168h"
+      ```
 
-      3. Include external files:
-         ```go
-         {{ include "path/to/file" }}
-         ```
+      ### 5. Environment Variables and Secrets
 
-      ### Managing Secrets
+      Handle sensitive data using environment variables or password managers:
 
-      1. Use integrated password managers:
-         ```go
-         {{ (keepassxc "example.com").password }}
-         ```
+      ```go
+      {{- if env "WORK_MACHINE" }}
+      # Work-specific configuration with secrets
+      export API_KEY="{{ (onepassword "Work API Key").password }}"
+      {{- else }}
+      # Personal configuration
+      export API_KEY="{{ (pass "personal/api-key") }}"
+      {{- end }}
+      ```
 
-      2. Use age encryption for sensitive files:
-         ```bash
-         chezmoi add --encrypt ~/.ssh/id_rsa
-         ```
+      ### 6. Directory Structure Templates
 
-      ### Version Control
+      Create consistent directory structures:
 
-      1. Initialize from a remote repository:
-         ```bash
-         chezmoi init https://github.com/username/dotfiles.git
-         ```
+      ```go
+      {{- $config := .chezmoi.homeDir }}/.config
+      {{- $data := .chezmoi.homeDir }}/.local/share
 
-      2. Commit and push changes:
-         ```bash
-         chezmoi git add .
-         chezmoi git commit -m "Update dotfiles"
-         chezmoi git push
-         ```
+      {{- $dirs := list
+        (joinPath $config "nvim")
+        (joinPath $config "tmux")
+        (joinPath $data "zsh")
+      -}}
+
+      {{- range $dirs }}
+      {{ . }} = "directory"
+      {{- end }}
+      ```
+
+      ### 7. Conditional File Management
+
+      Handle files based on conditions:
+
+      ```go
+      {{- if stat (joinPath .chezmoi.homeDir ".ssh/id_rsa") }}
+      # SSH key exists, configure SSH agent
+      eval "$(ssh-agent -s)"
+      ssh-add ~/.ssh/id_rsa
+      {{- end }}
+      ```
+
+      ### 8. Script Templates
+
+      Create dynamic script templates:
+
+      ```bash
+      #!/bin/bash
+
+      # Generated by chezmoi - DO NOT EDIT DIRECTLY
+
+      {{- if eq .chezmoi.os "darwin" }}
+      # Install macOS packages
+      brew bundle --file=~/.Brewfile
+      {{- else if eq .chezmoi.os "linux" }}
+      # Install Linux packages
+      {{- if lookPath "apt-get" }}
+      sudo apt-get update && sudo apt-get install -y $(cat ~/.packages)
+      {{- else if lookPath "yum" }}
+      sudo yum install -y $(cat ~/.packages)
+      {{- end }}
+      {{- end }}
+      ```
+
+      ## Common Operations
+
+      ### 1. Adding New Files
+
+      ```bash
+      # Add a file as a template
+      chezmoi add --template ~/.bashrc
+
+      # Add a private file
+      chezmoi add --encrypt ~/.ssh/id_rsa
+
+      # Add a directory
+      chezmoi add ~/.config/nvim
+      ```
+
+      ### 2. Applying Changes
+
+      ```bash
+      # Apply all changes
+      chezmoi apply
+
+      # Apply specific files
+      chezmoi apply ~/.bashrc
+
+      # Apply with debug information
+      chezmoi apply -v
+      ```
+
+      ### 3. Managing Source Files
+
+      ```bash
+      # Edit a managed file
+      chezmoi edit ~/.bashrc
+
+      # View changes before applying
+      chezmoi diff
+
+      # Update from source repository
+      chezmoi update
+      ```
 
 examples:
   - input: |
@@ -215,7 +263,7 @@ examples:
 
       {{- if eq .chezmoi.os "darwin" }}
       # macOS specific configuration
-      export PATH="/usr/local/bin:$PATH"
+      export PATH="/opt/homebrew/bin:$PATH"
       alias ls="ls -G"
       {{- else if eq .chezmoi.os "linux" }}
       # Linux specific configuration
