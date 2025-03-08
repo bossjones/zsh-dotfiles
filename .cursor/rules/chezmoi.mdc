@@ -1,6 +1,6 @@
 ---
 description: Best practices and reference for working with Chezmoi dotfile manager
-globs: "home/dot_*.tmpl, home/**/*.tmpl, home/dot_*, home/executable_*, home/private_*, home/run_*, .chezmoiroot, .chezmoiversion, .chezmoiignore, .chezmoiexternal.toml, .chezmoi.toml.tmpl, .chezmoi.yaml.tmpl"
+globs: "home/*.tmpl, home/dot_*, home/executable_dot_*, home/private_dot_*, home/private_dot_bin/executable_*, home/private_dot_config/**/*.tmpl, home/dot_sheldon/*.tmpl, home/shell/**/*.zsh, .chezmoiroot, .chezmoiversion, .chezmoiignore, .chezmoiexternal.toml, .chezmoi.toml.tmpl, .chezmoi.yaml.tmpl"
 alwaysApply: false
 ---
 # Chezmoi Dotfile Manager
