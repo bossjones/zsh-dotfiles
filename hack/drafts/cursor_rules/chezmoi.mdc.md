@@ -471,6 +471,211 @@ actions:
       3. **Maintainability**: Clear organization makes maintenance easier
       4. **Debugging**: Easier to identify and fix issues
 
+      ## Plugin Management
+
+      Managing shell plugins effectively is crucial for a well-organized dotfiles repository. This section covers integration with the Sheldon plugin manager and best practices for plugin configuration.
+
+      ### 1. Sheldon Integration
+
+      [Sheldon](https://github.com/rossmacarthur/sheldon) is a fast, configurable plugin manager for shells. It allows you to manage your shell plugins, themes, and scripts in a declarative way.
+
+      #### Basic Setup
+
+      Configure Sheldon with chezmoi using a template:
+
+      ```toml
+      # dot_sheldon/plugins.toml.tmpl
+      shell = "zsh"
+
+      [templates]
+      PATH = 'export PATH="{{ dir }}/bin:$PATH"'
+      SOURCE = 'source "{{ dir }}/{{ name }}.plugin.zsh"'
+      DEFER = '{{ hooks?.pre | nl }}{% for file in files %}source "{{ file }}"{% if not loop.last %} # {{ loop.index }}{% endif %}{{ "\n" }}{% endfor %}{{ hooks?.post | nl }}'
+
+      [plugins]
+
+      [plugins.zsh-defer]
+      github = "romkatv/zsh-defer"
+
+      [plugins.zsh-autosuggestions]
+      github = "zsh-users/zsh-autosuggestions"
+      use = ["{{ name }}.zsh"]
+      apply = ["source"]
+
+      [plugins.zsh-completions]
+      github = "zsh-users/zsh-completions"
+      apply = ["fpath"]
+
+      {{- if eq .chezmoi.os "darwin" }}
+      # macOS-specific plugins
+      [plugins.macos]
+      local = "~/.sheldon/plugins/macos"
+      apply = ["source"]
+      {{- end }}
+      ```
+
+      #### Loading Sheldon in Your Shell
+
+      Add this to your `.zshrc.tmpl`:
+
+      ```bash
+      # Initialize Sheldon plugin manager
+      if command -v sheldon &> /dev/null; then
+        eval "$(sheldon source)"
+      fi
+      ```
+
+      ### 2. Plugin Configuration
+
+      Structure your `plugins.toml.tmpl` file for maximum flexibility and organization:
+
+      #### Template Section
+
+      Define reusable templates for plugin loading:
+
+      ```toml
+      [templates]
+      # Source a plugin
+      SOURCE = 'source "{{ dir }}/{{ name }}.plugin.zsh"'
+
+      # Add to fpath for completions
+      FPATH = 'fpath=("{{ dir }}" $fpath)'
+
+      # Deferred loading for performance
+      DEFER = 'zsh-defer source "{{ dir }}/{{ name }}.plugin.zsh"'
+      ```
+
+      #### Plugin Sections
+
+      Organize plugins by category:
+
+      ```toml
+      # Core plugins (always loaded)
+      [plugins.zsh-defer]
+      github = "romkatv/zsh-defer"
+
+      # Completion plugins
+      [plugins.zsh-completions]
+      github = "zsh-users/zsh-completions"
+      apply = ["fpath"]
+
+      # Syntax highlighting
+      [plugins.zsh-syntax-highlighting]
+      github = "zsh-users/zsh-syntax-highlighting"
+      apply = ["defer"]
+
+      # Theme plugins
+      [plugins.powerlevel10k]
+      github = "romkatv/powerlevel10k"
+      apply = ["source"]
+      ```
+
+      #### Conditional Plugins
+
+      Use chezmoi templating to conditionally load plugins:
+
+      ```toml
+      {{- if eq .chezmoi.os "darwin" }}
+      # macOS-specific plugins
+      [plugins.macos]
+      local = "~/.sheldon/plugins/macos"
+      apply = ["source"]
+      {{- end }}
+
+      {{- if eq .chezmoi.hostname "work-laptop" }}
+      # Work-specific plugins
+      [plugins.work-tools]
+      local = "~/.sheldon/plugins/work"
+      apply = ["source"]
+      {{- end }}
+      ```
+
+      ### 3. Plugin Loading Order
+
+      Control the order in which plugins are loaded to avoid conflicts and ensure dependencies are satisfied:
+
+      #### Using Dependencies
+
+      ```toml
+      [plugins.plugin-b]
+      github = "user/plugin-b"
+      apply = ["source"]
+      dependencies = ["plugin-a"]  # Load plugin-a before plugin-b
+      ```
+
+      #### Using Hooks
+
+      ```toml
+      [plugins.complex-plugin]
+      github = "user/complex-plugin"
+      apply = ["source"]
+      hooks.pre = 'export PLUGIN_CONFIG="custom-value"'
+      hooks.post = 'setup_plugin_function'
+      ```
+
+      #### Deferred Loading
+
+      Improve shell startup time by deferring non-critical plugins:
+
+      ```toml
+      [plugins.zsh-defer]
+      github = "romkatv/zsh-defer"
+      apply = ["source"]
+
+      [plugins.slow-plugin]
+      github = "user/slow-plugin"
+      apply = ["defer"]  # Will be loaded after shell is interactive
+      ```
+
+      ### 4. Plugin Dependencies
+
+      Manage dependencies between plugins effectively:
+
+      #### Explicit Dependencies
+
+      ```toml
+      [plugins.theme-plugin]
+      github = "user/theme-plugin"
+      apply = ["source"]
+      dependencies = ["color-plugin", "font-plugin"]
+      ```
+
+      #### Shared Configuration
+
+      Create shared configuration for related plugins:
+
+      ```toml
+      [plugins.config-loader]
+      local = "~/.sheldon/configs"
+      apply = ["source"]
+
+      [plugins.plugin-a]
+      github = "user/plugin-a"
+      apply = ["source"]
+      dependencies = ["config-loader"]
+
+      [plugins.plugin-b]
+      github = "user/plugin-b"
+      apply = ["source"]
+      dependencies = ["config-loader"]
+      ```
+
+      #### Conflict Resolution
+
+      Handle plugin conflicts with careful ordering and configuration:
+
+      ```toml
+      [plugins.plugin-a]
+      github = "user/plugin-a"
+      apply = ["source"]
+
+      [plugins.plugin-b]
+      github = "user/plugin-b"
+      apply = ["source"]
+      hooks.pre = 'OVERRIDE_CONFLICTING_FUNCTION=1'  # Set flag to avoid conflict
+      dependencies = ["plugin-a"]  # Ensure plugin-a loads first
+      ```
+
       ## Common Operations
 
       ### 1. Adding New Files
