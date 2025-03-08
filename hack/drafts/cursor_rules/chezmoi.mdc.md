@@ -676,6 +676,291 @@ actions:
       dependencies = ["plugin-a"]  # Ensure plugin-a loads first
       ```
 
+      ## Script Management
+
+      Managing executable scripts effectively is essential for a well-organized dotfiles repository. This section covers best practices for organizing and maintaining scripts with chezmoi.
+
+      ### 1. Executable Scripts Organization
+
+      Organize executable scripts in a structured way to make them easy to find, use, and maintain:
+
+      #### Directory Structure
+
+      ```
+      private_dot_bin/
+      ├── executable_git-pull-recursive     # Git utilities
+      ├── executable_git-status-recursive
+      ├── executable_multi-git-status
+      ├── executable_ffmpeg-all-batch       # FFmpeg utilities
+      ├── executable_ffmpeg-batch-process
+      ├── executable_ffmpeg-duration
+      ├── executable_ffmpeg-fill-blur
+      ├── executable_imagemagick-grid       # ImageMagick utilities
+      ├── executable_imagemagick-ig-resize
+      ├── executable_imagemagick-square
+      ├── executable_fzf-drafts             # FZF utilities
+      ├── executable_fzf-panes.tmux
+      ├── executable_fzfp
+      └── executable_post-install-chezmoi   # System utilities
+      ```
+
+      #### Organization Strategies
+
+      1. **Functional Grouping**: Group scripts by their function or the tools they work with
+      2. **Naming Conventions**: Use consistent prefixes to identify related scripts
+      3. **Documentation**: Include comments at the top of each script explaining its purpose
+      4. **Version Control**: Track all scripts in your chezmoi repository
+
+      Example implementation:
+
+      ```bash
+      # In your .zshrc.tmpl or .bashrc.tmpl
+
+      # Add private bin directory to PATH
+      export PATH="$HOME/.bin:$PATH"
+
+      # Load script-specific aliases
+      if [[ -f "$HOME/.bin/aliases.sh" ]]; then
+        source "$HOME/.bin/aliases.sh"
+      fi
+      ```
+
+      ### 2. Script Naming Conventions
+
+      Adopt consistent naming conventions for scripts to make them easier to find and understand:
+
+      #### Prefix-based Naming
+
+      Use tool-specific prefixes to group related scripts:
+
+      ```
+      ffmpeg-*        # FFmpeg video processing scripts
+      imagemagick-*   # ImageMagick image processing scripts
+      git-*           # Git-related utilities
+      fzf-*           # Fuzzy finder utilities
+      ```
+
+      #### Function-based Naming
+
+      Name scripts based on their function:
+
+      ```
+      *-batch         # Batch processing scripts
+      *-recursive     # Scripts that operate recursively
+      *-preview       # Preview generators
+      *-resize        # Resizing utilities
+      ```
+
+      #### Verb-Noun Pattern
+
+      Use verb-noun patterns for action-oriented scripts:
+
+      ```
+      create-silhouette.py
+      check-valid-filename
+      retry
+      exponential-backoff
+      ```
+
+      ### 3. Script Categories
+
+      Organize scripts into logical categories based on their purpose:
+
+      #### Media Processing Scripts
+
+      Scripts for processing images and videos:
+
+      ```bash
+      # private_dot_bin/executable_ffmpeg-batch-process
+      #!/bin/bash
+
+      # Process multiple video files with ffmpeg
+      # Usage: ffmpeg-batch-process [options] [directory]
+
+      set -e
+
+      OPTIONS="-vf scale=1280:-1 -c:v libx264 -preset slow -crf 22 -c:a aac -b:a 128k"
+      DIR="${1:-.}"
+
+      for file in "$DIR"/*.{mp4,mov,avi}; do
+        [[ -f "$file" ]] || continue
+        echo "Processing $file..."
+        output="${file%.*}_processed.mp4"
+        ffmpeg -i "$file" $OPTIONS "$output"
+      done
+      ```
+
+      #### Development Utilities
+
+      Scripts for development workflows:
+
+      ```bash
+      # private_dot_bin/executable_git-status-recursive
+      #!/bin/bash
+
+      # Check git status recursively in all subdirectories
+      # Usage: git-status-recursive [directory]
+
+      DIR="${1:-.}"
+
+      find "$DIR" -type d -name ".git" | while read gitdir; do
+        repo=$(dirname "$gitdir")
+        echo -e "\n\033[1;34m$repo\033[0m"
+        git -C "$repo" status -s
+      done
+      ```
+
+      #### System Utilities
+
+      Scripts for system maintenance and configuration:
+
+      ```bash
+      # private_dot_bin/executable_post-install-chezmoi
+      #!/bin/bash
+
+      # Run after chezmoi install to set up additional components
+      # Usage: post-install-chezmoi
+
+      set -e
+
+      echo "Setting up additional components..."
+
+      # Install shell plugins
+      if command -v sheldon &>/dev/null; then
+        sheldon lock
+        sheldon install
+      fi
+
+      # Set up SSH config permissions
+      if [[ -d "$HOME/.ssh" ]]; then
+        chmod 700 "$HOME/.ssh"
+        chmod 600 "$HOME/.ssh/config"
+      fi
+
+      echo "Post-install setup complete!"
+      ```
+
+      ### 4. Script Dependencies
+
+      Manage dependencies between scripts effectively:
+
+      #### Shared Libraries
+
+      Create shared libraries for common functions:
+
+      ```bash
+      # private_dot_bin/lib/utils.sh
+
+      # Common utility functions for scripts
+
+      # Log a message to stderr
+      log() {
+        echo "$@" >&2
+      }
+
+      # Check if a command exists
+      command_exists() {
+        command -v "$1" &>/dev/null
+      }
+
+      # Ensure required commands are available
+      require_commands() {
+        for cmd in "$@"; do
+          if ! command_exists "$cmd"; then
+            log "Error: Required command '$cmd' not found"
+            exit 1
+          fi
+        done
+      }
+      ```
+
+      Use the shared library in scripts:
+
+      ```bash
+      # private_dot_bin/executable_ffmpeg-batch-process
+      #!/bin/bash
+
+      # Source common utilities
+      source "$HOME/.bin/lib/utils.sh"
+
+      # Ensure required commands are available
+      require_commands ffmpeg
+
+      # Rest of the script...
+      ```
+
+      #### Dependency Documentation
+
+      Document dependencies at the top of each script:
+
+      ```bash
+      #!/bin/bash
+
+      # Script: ffmpeg-batch-process
+      # Description: Process multiple video files with ffmpeg
+      # Dependencies: ffmpeg, jq
+      # Author: Your Name
+      # Version: 1.0
+
+      # Verify dependencies
+      for cmd in ffmpeg jq; do
+        if ! command -v "$cmd" &>/dev/null; then
+          echo "Error: Required command '$cmd' not found" >&2
+          exit 1
+        fi
+      done
+
+      # Rest of the script...
+      ```
+
+      #### Script Wrappers
+
+      Create wrapper scripts that handle dependencies:
+
+      ```bash
+      # private_dot_bin/executable_video-tools
+      #!/bin/bash
+
+      # Wrapper for video processing tools
+      # Usage: video-tools [command] [options]
+
+      COMMANDS=(
+        "compress"
+        "resize"
+        "convert"
+        "info"
+      )
+
+      if [[ $# -eq 0 || "$1" == "-h" || "$1" == "--help" ]]; then
+        echo "Usage: video-tools [command] [options]"
+        echo "Available commands: ${COMMANDS[*]}"
+        exit 0
+      fi
+
+      COMMAND="$1"
+      shift
+
+      case "$COMMAND" in
+        compress)
+          exec ffmpeg-batch-process "$@"
+          ;;
+        resize)
+          exec ffmpeg-resize "$@"
+          ;;
+        convert)
+          exec ffmpeg-convert "$@"
+          ;;
+        info)
+          exec ffmpeg-duration "$@"
+          ;;
+        *)
+          echo "Unknown command: $COMMAND" >&2
+          echo "Available commands: ${COMMANDS[*]}" >&2
+          exit 1
+          ;;
+      esac
+      ```
+
       ## Common Operations
 
       ### 1. Adding New Files
