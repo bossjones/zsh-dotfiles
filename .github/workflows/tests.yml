@@ -66,7 +66,7 @@ jobs:
             brew install kadwanev/brew/retry || true
             brew install go || true
 
-            { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> $GITHUB_PATH
+            { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
             export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
 
             wget https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer
@@ -89,7 +89,7 @@ jobs:
             brew install go || true
             brew install trash || true
 
-            { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> $GITHUB_PATH
+            { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
             export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
 
             wget https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer
@@ -111,7 +111,7 @@ jobs:
           # set -x;ls -lta ~/.bin
           # set +x
 
-          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> $GITHUB_PATH
+          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
           export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
 
 
@@ -136,7 +136,7 @@ jobs:
         run: |
           # Removed 'exec zsh' to prevent script termination
           zsh -c '
-          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> $GITHUB_PATH
+          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
           export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
           pwd
           ls -lta
@@ -147,8 +147,8 @@ jobs:
           export ASDF_COMPLETIONS="$ASDF_DIR/completions"
           . "$HOME/.asdf/asdf.sh"
           # export PATH="$HOME/.asdf/shims:$HOME/.asdf/bin:$PATH"
-          echo "$HOME/.asdf/bin" >> $GITHUB_PATH
-          echo "$HOME/.asdf/shims" >> $GITHUB_PATH
+          echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+          echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
 
           make test
           '
