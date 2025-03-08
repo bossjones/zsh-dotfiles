@@ -1,0 +1,188 @@
+---
+syntax: bash
+tags: [ task-runner, automation, devops, workflow, go ]
+description: "Task is a task runner / build tool that aims to be simpler and easier to use than GNU Make"
+---
+
+# task
+
+A task runner / make alternative written in Go.
+
+## Basic Usage
+
+# Basic task execution syntax
+task [--flags] [tasks...] [-- CLI_ARGS...]
+
+# Run the default task
+task
+
+# Run a specific task
+task build
+
+# Run multiple tasks
+task clean build test
+
+# Run a task with CLI arguments (available as CLI_ARGS variable)
+task build -- --release --verbose
+
+## Common Commands
+
+# List available tasks with descriptions
+task -l
+task --list
+
+# List all tasks (with or without descriptions)
+task -a
+task --list-all
+
+# Show task version
+task --version
+
+# Show help
+task -h
+task --help
+
+# Initialize a new Taskfile.yml in current directory
+task -i
+task --init
+
+# Show summary about a task
+task --summary taskname
+
+## Task Execution Options
+
+# Force execution even when task is up-to-date
+task -f taskname
+task --force taskname
+
+# Execute tasks in parallel
+task -p clean build test
+task --parallel clean build test
+
+# Limit concurrent tasks
+task -C 4 taskname
+task --concurrency 4 taskname
+
+# Execute a task in watch mode (rerun on file changes)
+task -w taskname
+task --watch taskname
+
+# Set watch interval (default is 5s)
+task -w -I 2s taskname
+task --watch --interval 2s taskname
+
+# Dry run (print tasks without executing)
+task -n
+task --dry
+
+# Pass-through the exit code of task command
+task -x
+task --exit-code
+
+# Check if tasks are up-to-date (non-zero exit if not)
+task --status taskname
+
+## Directory & Taskfile Options
+
+# Run task from a different directory
+task -d /path/to/dir taskname
+task --dir /path/to/dir taskname
+
+# Specify a custom Taskfile path
+task -t path/to/Taskfile.yml taskname
+task --taskfile path/to/Taskfile.yml taskname
+
+# Run global Taskfile (from $HOME/Taskfile.yml)
+task -g taskname
+task --global taskname
+
+## Output Options
+
+# Disable colored output
+task --color=false
+task --no-color
+
+# Disable command echoing
+task -s
+task --silent
+
+# Enable verbose mode
+task -v
+task --verbose
+
+# Set output style
+task -o interleaved taskname
+task -o group taskname
+task -o prefixed taskname
+task --output interleaved taskname
+
+# Only show output for failed commands (with group output)
+task --output group --output-group-error-only taskname
+
+# Customize group output messages
+task --output-group-begin "Starting {{.TASK}}" --output-group-end "Finished {{.TASK}}" taskname
+
+# List tasks in different sort order
+task --list --sort alphanumeric
+task --list --sort none
+
+# Output task list in JSON format
+task --list --json
+task --list-all --json
+
+## Environment & Safety
+
+# Assume "yes" as answer to all prompts
+task -y taskname
+task --yes taskname
+
+## Common Exit Codes
+
+# Success
+# Exit code: 0
+
+# No Taskfile found
+# Exit code: 100
+
+# Invalid or unparseable Taskfile
+# Exit code: 102
+
+# Task not found
+# Exit code: 200
+
+# Command in task failed
+# Exit code: 201
+
+# Task called too many times (circular dependency)
+# Exit code: 204
+
+# Task cancelled by user
+# Exit code: 205
+
+## Taskfile.yml Example
+
+# A minimal Taskfile.yml example:
+# ```yaml
+# version: '3'
+#
+# tasks:
+#   default:
+#     desc: Default task
+#     cmds:
+#       - echo "Running default task"
+#
+#   build:
+#     desc: Build the application
+#     cmds:
+#       - go build -o app ./cmd/app
+#
+#   test:
+#     desc: Run tests
+#     cmds:
+#       - go test ./...
+#
+#   clean:
+#     desc: Clean build artifacts
+#     cmds:
+#       - rm -f app
+# ```

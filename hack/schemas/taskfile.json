@@ -1,0 +1,574 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Taskfile Schema",
+  "description": "Schema for Task's Taskfile.yml configuration file (https://taskfile.dev/)",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Version of the Taskfile. The current version is 3.",
+      "default": "3"
+    },
+    "output": {
+      "type": "string",
+      "description": "Output mode. Available options: interleaved, group and prefixed.",
+      "default": "interleaved",
+      "enum": ["interleaved", "group", "prefixed"]
+    },
+    "method": {
+      "type": "string",
+      "description": "Default method in this Taskfile. Can be overridden in a task by task basis. Available options: checksum, timestamp and none.",
+      "default": "checksum",
+      "enum": ["checksum", "timestamp", "none"]
+    },
+    "includes": {
+      "type": "object",
+      "description": "Additional Taskfiles to be included.",
+      "additionalProperties": {
+        "$ref": "#/definitions/Include"
+      }
+    },
+    "vars": {
+      "type": "object",
+      "description": "A set of global variables.",
+      "additionalProperties": {
+        "$ref": "#/definitions/Variable"
+      }
+    },
+    "env": {
+      "type": "object",
+      "description": "A set of global environment variables.",
+      "additionalProperties": {
+        "$ref": "#/definitions/Variable"
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "description": "A set of task definitions.",
+      "additionalProperties": {
+        "$ref": "#/definitions/Task"
+      }
+    },
+    "silent": {
+      "type": "boolean",
+      "description": "Default 'silent' options for this Taskfile. If false, can be overridden with true in a task by task basis.",
+      "default": false
+    },
+    "dotenv": {
+      "type": "array",
+      "description": "A list of .env file paths to be parsed.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "run": {
+      "type": "string",
+      "description": "Default 'run' option for this Taskfile. Available options: always, once and when_changed.",
+      "default": "always",
+      "enum": ["always", "once", "when_changed"]
+    },
+    "interval": {
+      "type": "string",
+      "description": "Sets a different watch interval when using --watch, the default being 5 seconds. This string should be a valid Go Duration.",
+      "default": "5s"
+    },
+    "set": {
+      "type": "array",
+      "description": "Specify options for the set builtin.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "shopt": {
+      "type": "array",
+      "description": "Specify option for the shopt builtin.",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["version"],
+  "definitions": {
+    "Task": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Short task syntax"
+        },
+        {
+          "type": "array",
+          "description": "Short task syntax with commands",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "task": {
+                    "type": "string"
+                  },
+                  "vars": {
+                    "type": "object"
+                  },
+                  "silent": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["task"]
+              }
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "cmds": {
+              "description": "A list of shell commands to be executed.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Command"
+              }
+            },
+            "deps": {
+              "description": "A list of dependencies of this task. Tasks defined here will run in parallel before this task.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Dependency"
+              }
+            },
+            "label": {
+              "type": "string",
+              "description": "Overrides the name of the task in the output when a task is run. Supports variables."
+            },
+            "desc": {
+              "type": "string",
+              "description": "A short description of the task. This is displayed when calling task --list."
+            },
+            "summary": {
+              "type": "string",
+              "description": "A longer description of the task. This is displayed when calling task --summary [task]."
+            },
+            "aliases": {
+              "type": "array",
+              "description": "A list of alternative names by which the task can be called.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sources": {
+              "type": "array",
+              "description": "A list of sources to check before running this task. Relevant for checksum and timestamp methods. Can be file paths or star globs.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "generates": {
+              "type": "array",
+              "description": "A list of files meant to be generated by this task. Relevant for timestamp method. Can be file paths or star globs.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "status": {
+              "type": "array",
+              "description": "A list of commands to check if this task should run. The task is skipped otherwise. This overrides method, sources and generates.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preconditions": {
+              "type": "array",
+              "description": "A list of commands to check if this task should run. If a condition is not met, the task will error.",
+              "items": {
+                "$ref": "#/definitions/Precondition"
+              }
+            },
+            "requires": {
+              "$ref": "#/definitions/Requires",
+              "description": "A list of required variables which should be set if this task is to run, if any variables listed are unset the task will error and not run."
+            },
+            "dir": {
+              "type": "string",
+              "description": "The directory in which this task should run. Defaults to the current working directory."
+            },
+            "vars": {
+              "type": "object",
+              "description": "A set of variables that can be used in the task.",
+              "additionalProperties": {
+                "$ref": "#/definitions/Variable"
+              }
+            },
+            "env": {
+              "type": "object",
+              "description": "A set of environment variables that will be made available to shell commands.",
+              "additionalProperties": {
+                "$ref": "#/definitions/Variable"
+              }
+            },
+            "dotenv": {
+              "type": "array",
+              "description": "A list of .env file paths to be parsed.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "run": {
+              "type": "string",
+              "description": "Specifies whether the task should run again or not if called more than once. Available options: always, once and when_changed.",
+              "enum": ["always", "once", "when_changed"]
+            },
+            "platforms": {
+              "type": "array",
+              "description": "Specifies which platforms the task should be run on. Valid GOOS and GOARCH values allowed. Task will be skipped otherwise.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "set": {
+              "type": "array",
+              "description": "Specify options for the set builtin.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "shopt": {
+              "type": "array",
+              "description": "Specify option for the shopt builtin.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "silent": {
+              "type": "boolean",
+              "description": "Hides task name and command from output. The command's output will still be redirected to STDOUT and STDERR. When combined with the --list flag, task descriptions will be hidden.",
+              "default": false
+            },
+            "interactive": {
+              "type": "boolean",
+              "description": "Tells task that the command is interactive.",
+              "default": false
+            },
+            "internal": {
+              "type": "boolean",
+              "description": "Stops a task from being callable on the command line. It will also be omitted from the output when used with --list.",
+              "default": false
+            },
+            "method": {
+              "type": "string",
+              "description": "Defines which method is used to check the task is up-to-date. timestamp will compare the timestamp of the sources and generates files. checksum will check the checksum. none skips any validation and always run the task.",
+              "enum": ["checksum", "timestamp", "none"]
+            },
+            "prefix": {
+              "type": "string",
+              "description": "Defines a string to prefix the output of tasks running in parallel. Only used when the output mode is prefixed."
+            },
+            "ignore_error": {
+              "type": "boolean",
+              "description": "Continue execution if errors happen while executing commands.",
+              "default": false
+            },
+            "watch": {
+              "type": "boolean",
+              "description": "Automatically run in watch mode when called directly from CLI.",
+              "default": false
+            },
+            "prompt": {
+              "type": "array",
+              "description": "One or more prompts that will be presented before a task is run. Declining will cancel running the current and any subsequent tasks.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "defer": {
+              "description": "Commands to run after the task finishes, even if it fails",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Command"
+              }
+            },
+            "for": {
+              "$ref": "#/definitions/For",
+              "description": "Loop over values to run a task multiple times with different variables"
+            }
+          }
+        }
+      ]
+    },
+    "Command": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "A shell command to execute"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "cmd": {
+              "type": "string",
+              "description": "The shell command to execute"
+            },
+            "silent": {
+              "type": "boolean",
+              "description": "Silence the command output"
+            },
+            "ignore_error": {
+              "type": "boolean",
+              "description": "Continue execution if the command fails"
+            },
+            "dir": {
+              "type": "string",
+              "description": "Directory where the command should run"
+            },
+            "platforms": {
+              "type": "array",
+              "description": "Platforms where this command should run",
+              "items": {
+                "type": "string"
+              }
+            },
+            "set": {
+              "type": "array",
+              "description": "Set options for this command",
+              "items": {
+                "type": "string"
+              }
+            },
+            "shopt": {
+              "type": "array",
+              "description": "Shopt options for this command",
+              "items": {
+                "type": "string"
+              }
+            },
+            "vars": {
+              "type": "object",
+              "description": "Variables for this command",
+              "additionalProperties": {
+                "$ref": "#/definitions/Variable"
+              }
+            },
+            "env": {
+              "type": "object",
+              "description": "Environment variables for this command",
+              "additionalProperties": {
+                "$ref": "#/definitions/Variable"
+              }
+            },
+            "task": {
+              "type": "string",
+              "description": "Task to call (instead of a shell command)"
+            },
+            "for": {
+              "$ref": "#/definitions/For",
+              "description": "Loop over values to run a command multiple times with different variables"
+            }
+          }
+        }
+      ]
+    },
+    "Dependency": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Name of the task dependency"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "task": {
+              "type": "string",
+              "description": "Task to depend on"
+            },
+            "vars": {
+              "type": "object",
+              "description": "Variables to pass to the dependency task",
+              "additionalProperties": true
+            },
+            "silent": {
+              "type": "boolean",
+              "description": "Run the dependency silently"
+            },
+            "for": {
+              "$ref": "#/definitions/For",
+              "description": "Loop over values to run a dependency multiple times with different variables"
+            }
+          },
+          "required": ["task"]
+        }
+      ]
+    },
+    "Include": {
+      "type": "object",
+      "properties": {
+        "taskfile": {
+          "type": "string",
+          "description": "The path for the Taskfile or directory to be included. If a directory, Task will look for files named Taskfile.yml or Taskfile.yaml inside that directory. If a relative path, resolved relative to the directory containing the including Taskfile."
+        },
+        "dir": {
+          "type": "string",
+          "description": "The working directory of the included tasks when run."
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "If true, no errors will be thrown if the specified file does not exist.",
+          "default": false
+        },
+        "flatten": {
+          "type": "boolean",
+          "description": "If true, the tasks from the included Taskfile will be available in the including Taskfile without a namespace. If a task with the same name already exists in the including Taskfile, an error will be thrown.",
+          "default": false
+        },
+        "internal": {
+          "type": "boolean",
+          "description": "Stops any task in the included Taskfile from being callable on the command line. These commands will also be omitted from the output when used with --list.",
+          "default": false
+        },
+        "aliases": {
+          "type": "array",
+          "description": "Alternative names for the namespace of the included Taskfile.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "vars": {
+          "type": "object",
+          "description": "A set of variables to apply to the included Taskfile.",
+          "additionalProperties": {
+            "$ref": "#/definitions/Variable"
+          }
+        }
+      },
+      "required": ["taskfile"]
+    },
+    "Variable": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": ["string", "number", "boolean"]
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "sh": {
+              "type": "string",
+              "description": "Shell command to get the variable value"
+            },
+            "default": {
+              "description": "Default value if the command fails or returns empty"
+            }
+          },
+          "required": ["sh"]
+        }
+      ]
+    },
+    "For": {
+      "type": "object",
+      "properties": {
+        "in": {
+          "description": "Values to iterate over",
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": ["string", "number", "boolean", "object"]
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "matrix": {
+          "type": "object",
+          "description": "Matrix of values to iterate over with all combinations",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": ["string", "number", "boolean", "object"]
+            }
+          }
+        },
+        "as": {
+          "type": "string",
+          "description": "Variable name to assign each iteration value to"
+        },
+        "sources": {
+          "type": "string",
+          "description": "Iterate over source files matching this pattern"
+        },
+        "vars": {
+          "type": "string",
+          "description": "Iterate over variables with this glob pattern"
+        }
+      }
+    },
+    "Precondition": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Command to check as a precondition"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "sh": {
+              "type": "string",
+              "description": "Shell command to check as a precondition"
+            },
+            "msg": {
+              "type": "string",
+              "description": "Message to display if the precondition fails"
+            }
+          },
+          "required": ["sh"]
+        }
+      ]
+    },
+    "Requires": {
+      "type": "object",
+      "properties": {
+        "vars": {
+          "type": "array",
+          "description": "List of variables that must be defined",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includes": {
+          "type": "array",
+          "description": "List of includes with required variables",
+          "items": {
+            "type": "object",
+            "properties": {
+              "include": {
+                "type": "string",
+                "description": "Name of the include"
+              },
+              "vars": {
+                "type": "array",
+                "description": "List of variables that must be defined",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["include", "vars"]
+          }
+        }
+      }
+    }
+  }
+}
