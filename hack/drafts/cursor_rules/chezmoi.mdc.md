@@ -1,6 +1,6 @@
 ---
 description: Best practices and reference for working with Chezmoi dotfile manager
-globs: *.go, *.toml, *.tmpl
+globs: "home/dot_*.tmpl, home/**/*.tmpl, home/dot_*, home/executable_*, home/private_*, home/run_*, .chezmoiroot, .chezmoiversion, .chezmoiignore, .chezmoiexternal.toml, .chezmoi.toml.tmpl, .chezmoi.yaml.tmpl"
 alwaysApply: false
 ---
 # Chezmoi Dotfile Manager
@@ -38,6 +38,109 @@ actions:
       2. **Destination Directory**: The directory that chezmoi manages, usually your home directory (`~`).
       3. **Target State**: The computed desired state for the destination directory, based on the source state, configuration, and templates.
       4. **Config File**: Contains machine-specific data, stored in `~/.config/chezmoi/chezmoi.toml` by default.
+
+      ## Core Configuration Files
+
+      ### .chezmoiroot
+
+      The `.chezmoiroot` file defines the root directory of your source state. This is particularly useful when:
+
+      1. **Organizing Multiple Configurations**: Manage different sets of dotfiles in subdirectories
+      2. **Supporting Different Environments**: Separate configurations for different types of machines
+      3. **Modular Organization**: Break up your dotfiles into logical groups
+
+      Example `.chezmoiroot` usage:
+
+      ```
+      .
+      ├── .chezmoiroot        # Points to "home" directory
+      ├── home/               # Main dotfiles directory
+      │   ├── dot_config/     # .config files
+      │   └── dot_zshrc      # .zshrc file
+      ├── work/              # Work-specific configurations
+      │   └── dot_gitconfig  # Work .gitconfig
+      └── server/            # Server configurations
+          └── dot_ssh/       # SSH configuration
+      ```
+
+      ```bash
+      # .chezmoiroot content
+      home
+      ```
+
+      This configuration tells chezmoi to use the `home` directory as the root for source state, allowing you to maintain separate configurations in parallel directories.
+
+      ### .chezmoiversion
+
+      The `.chezmoiversion` file specifies the minimum version of chezmoi required for your dotfiles. This ensures compatibility and prevents issues with older versions.
+
+      Example `.chezmoiversion`:
+
+      ```
+      2.40.0
+      ```
+
+      Key features:
+      1. **Version Enforcement**: Prevents running with incompatible chezmoi versions
+      2. **Feature Compatibility**: Ensures required features are available
+      3. **Smooth Updates**: Helps manage transitions to newer versions
+
+      When chezmoi encounters a `.chezmoiversion` file:
+      - Checks if the current version meets the requirement
+      - Provides clear error messages if version is too old
+      - Suggests updating chezmoi if needed
+
+      ### .chezmoiignore
+
+      The `.chezmoiignore` file specifies which files and directories should be ignored by chezmoi. It uses the same syntax as `.gitignore`.
+
+      Example `.chezmoiignore`:
+
+      ```gitignore
+      # Ignore specific files
+      README.md
+      LICENSE
+
+      # Ignore temporary files
+      *.swp
+      *~
+      .DS_Store
+
+      # Ignore directories
+      .git/
+      node_modules/
+      tmp/
+
+      # Ignore by pattern
+      **/*.log
+      **/.terraform/*
+
+      # OS-specific ignores
+      {{- if ne .chezmoi.os "darwin" }}
+      # Ignore macOS-specific files on non-macOS systems
+      Library/
+      .Trash/
+      {{- end }}
+
+      # Machine-specific ignores
+      {{- if ne .chezmoi.hostname "work-laptop" }}
+      # Ignore work-specific configs on other machines
+      .work-config/
+      {{- end }}
+      ```
+
+      Key features:
+      1. **Pattern Matching**: Supports glob patterns and directory-specific ignores
+      2. **Template Support**: Can use chezmoi template syntax for conditional ignores
+      3. **Nested Ignores**: Supports `.chezmoiignore` files in subdirectories
+      4. **Comments**: Supports comments for better documentation
+
+      Best practices:
+      1. **Start Simple**: Begin with common ignore patterns
+      2. **Use Comments**: Document why certain files are ignored
+      3. **Group Related Patterns**: Organize patterns by category
+      4. **Consider Templates**: Use templates for OS/machine-specific ignores
+      5. **Review Regularly**: Update ignore patterns as your dotfiles evolve
 
       ## Repository Structure
 
