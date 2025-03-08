@@ -1,0 +1,28 @@
+---
+# SOURCE: https://github.com/simonw/datasette/blob/main/.github/workflows/tmate.yml
+name: tmate session
+on:  # yamllint disable-line rule:truthy
+  # To enable a workflow to be triggered manually, you need to configure the workflow_dispatch event. You can manually trigger a workflow run using the GitHub API, GitHub CLI, or GitHub browser interface. For more information, see "Manually running a workflow."
+  # SOURCE: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows
+  # https://github.com/mxschmitt/action-tmate#manually-triggered-debug
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)
+        required: false
+        default: false
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Allow debugging with tmate
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled }}
+        with:
+          limit-access-to-actor: true
