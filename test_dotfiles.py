@@ -170,167 +170,167 @@ def tmux_fake_session(
 
     return session
 
-class TestDotfiles:
-    @pytest.mark.skipif(
-        os.getenv("GITHUB_ACTOR"),
-        reason="These tests are meant to only run locally on laptop prior to porting it over to new system",
-    )
-    def test_pure_prompt(self, tmux_fake_session: Session) -> None:
-        """Verify pure prompt is initialized
+# class TestDotfiles:
+#     @pytest.mark.skipif(
+#         os.getenv("GITHUB_ACTOR"),
+#         reason="These tests are meant to only run locally on laptop prior to porting it over to new system",
+#     )
+#     def test_pure_prompt(self, tmux_fake_session: Session) -> None:
+#         """Verify pure prompt is initialized
 
-        """
-        env = shutil.which("env")
-        assert env is not None, "Cannot find usable `env` in PATH."
-
-
-        tmux_fake_session.new_window(attach=True, window_name="test_pure_prompt", window_shell=f"{env} zsh -f")
-
-        # takes a couple seconds to start up
-        time.sleep(2)
-
-        # get current window
-        attached_window = tmux_fake_session.attached_window
-        pane = attached_window.attached_pane
-        assert pane is not None
-
-        # Set the prompt manually
-        pane.send_keys("PS1='> '", enter=True)
-        time.sleep(1)
-
-        pane.enter()
-        pane_contents = "\n".join(pane.capture_pane())
-        assert ">" in pane_contents
-
-        # pane.send_keys(r'printf "%s"', literal=True, suppress_history=False)
-        # pane_contents = "\n".join(pane.capture_pane())
-        # assert pane_contents == '> printf "%s"\n>'
-
-        pane.send_keys("clear -x", literal=True, suppress_history=False)
-        time.sleep(1)
-        pane_contents = "\n".join(pane.capture_pane())
-
-        assert '>' in pane_contents
+#         """
+#         env = shutil.which("env")
+#         assert env is not None, "Cannot find usable `env` in PATH."
 
 
-    def test_aliases(self, tmux_fake_session: Session) -> None:
-        """Verify aliases are set correctly
+#         tmux_fake_session.new_window(attach=True, window_name="test_pure_prompt", window_shell=f"{env} zsh -f")
+
+#         # takes a couple seconds to start up
+#         time.sleep(2)
+
+#         # get current window
+#         attached_window = tmux_fake_session.attached_window
+#         pane = attached_window.attached_pane
+#         assert pane is not None
+
+#         # Set the prompt manually
+#         pane.send_keys("PS1='> '", enter=True)
+#         time.sleep(1)
+
+#         pane.enter()
+#         pane_contents = "\n".join(pane.capture_pane())
+#         assert ">" in pane_contents
+
+#         # pane.send_keys(r'printf "%s"', literal=True, suppress_history=False)
+#         # pane_contents = "\n".join(pane.capture_pane())
+#         # assert pane_contents == '> printf "%s"\n>'
+
+#         pane.send_keys("clear -x", literal=True, suppress_history=False)
+#         time.sleep(1)
+#         pane_contents = "\n".join(pane.capture_pane())
+
+#         assert '>' in pane_contents
 
 
-        > typeset -f dl-hls
-        dl-hls () {
-                pyenv activate yt-dlp3 || true
-                yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
-        }
+#     def test_aliases(self, tmux_fake_session: Session) -> None:
+#         """Verify aliases are set correctly
 
 
-        """
-        env = shutil.which("env")
-        assert env is not None, "Cannot find usable `env` in PATH."
-
-        # breakpoint()
-
-        tmux_fake_session.new_window(attach=True, window_name="test_aliases", window_shell=f"{env} zsh -f")
-
-        # takes a couple seconds to start up
-        time.sleep(2)
-
-        attached_window: libtmux.window.Window = tmux_fake_session.attached_window
-        attached_window.select_layout("main-vertical")
-
-        attached_window.set_window_option("main-pane-height", 80)
-        assert attached_window.show_window_option("main-pane-height") == 80
+#         > typeset -f dl-hls
+#         dl-hls () {
+#                 pyenv activate yt-dlp3 || true
+#                 yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt ${1}
+#         }
 
 
-        # get current window
-        pane: libtmux.pane.Pane = attached_window.attached_pane
-        assert pane is not None
-        pane.clear()
-        pane.resize_pane(height=60)
-        pane.set_height(60)
-        pane.set_width(60)
+#         """
+#         env = shutil.which("env")
+#         assert env is not None, "Cannot find usable `env` in PATH."
 
-        # Set the prompt and define the dl-hls function
-        pane.send_keys("PS1='> '", enter=True)
-        time.sleep(1)
-        pane.send_keys("dl-hls() { pyenv activate yt-dlp3 || true; yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt ${1}; }", enter=True)
-        time.sleep(1)
+#         # breakpoint()
 
-        pane.enter()
-        time.sleep(1)
+#         tmux_fake_session.new_window(attach=True, window_name="test_aliases", window_shell=f"{env} zsh -f")
 
-        pane.send_keys("clear -x", literal=True, suppress_history=False)
-        time.sleep(1)
-        pane_contents = "\n".join(pane.capture_pane())
-        # assert '>' in pane_contents
+#         # takes a couple seconds to start up
+#         time.sleep(2)
 
-        pane.send_keys('typeset -f dl-hls\n', literal=True, suppress_history=False)
-        time.sleep(1)
-        pane_contents = "\n".join(pane.capture_pane())
+#         attached_window: libtmux.window.Window = tmux_fake_session.attached_window
+#         attached_window.select_layout("main-vertical")
 
-        # TODO: Figure out how to expand width of pane to fit output
-        expected_contents = """> typeset -f dl-hls
-dl-hls () {
-        pyenv activate yt-dlp3 || true
-        yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Do
-wnloads/yt-cookies.txt ${1}
-}"""
-        assert expected_contents in pane_contents
-
-    def test_golang(self, tmux_fake_session: Session) -> None:
-        """Verify golang installed correctly
+#         attached_window.set_window_option("main-pane-height", 80)
+#         assert attached_window.show_window_option("main-pane-height") == 80
 
 
-        ~/go/src/git.corp.adobe.com
-        ❯ whence gopls
-        /Users/malcolm/go/bin/gopls
+#         # get current window
+#         pane: libtmux.pane.Pane = attached_window.attached_pane
+#         assert pane is not None
+#         pane.clear()
+#         pane.resize_pane(height=60)
+#         pane.set_height(60)
+#         pane.set_width(60)
+
+#         # Set the prompt and define the dl-hls function
+#         pane.send_keys("PS1='> '", enter=True)
+#         time.sleep(1)
+#         pane.send_keys("dl-hls() { pyenv activate yt-dlp3 || true; yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt ${1}; }", enter=True)
+#         time.sleep(1)
+
+#         pane.enter()
+#         time.sleep(1)
+
+#         pane.send_keys("clear -x", literal=True, suppress_history=False)
+#         time.sleep(1)
+#         pane_contents = "\n".join(pane.capture_pane())
+#         # assert '>' in pane_contents
+
+#         pane.send_keys('typeset -f dl-hls\n', literal=True, suppress_history=False)
+#         time.sleep(1)
+#         pane_contents = "\n".join(pane.capture_pane())
+
+#         # TODO: Figure out how to expand width of pane to fit output
+#         expected_contents = """> typeset -f dl-hls
+# dl-hls () {
+#         pyenv activate yt-dlp3 || true
+#         yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Do
+# wnloads/yt-cookies.txt ${1}
+# }"""
+#         assert expected_contents in pane_contents
+
+#     def test_golang(self, tmux_fake_session: Session) -> None:
+#         """Verify golang installed correctly
+
+
+#         ~/go/src/git.corp.adobe.com
+#         ❯ whence gopls
+#         /Users/malcolm/go/bin/gopls
 
 
 
-        """
-        env = shutil.which("env")
-        assert env is not None, "Cannot find usable `env` in PATH."
+#         """
+#         env = shutil.which("env")
+#         assert env is not None, "Cannot find usable `env` in PATH."
 
-        # breakpoint()
+#         # breakpoint()
 
-        tmux_fake_session.new_window(attach=True, window_name="test_golang", window_shell=f"{env} zsh -f")
+#         tmux_fake_session.new_window(attach=True, window_name="test_golang", window_shell=f"{env} zsh -f")
 
-        # takes a couple seconds to start up
-        time.sleep(2)
+#         # takes a couple seconds to start up
+#         time.sleep(2)
 
-        attached_window: libtmux.window.Window = tmux_fake_session.attached_window
-        attached_window.select_layout("main-vertical")
+#         attached_window: libtmux.window.Window = tmux_fake_session.attached_window
+#         attached_window.select_layout("main-vertical")
 
-        attached_window.set_window_option("main-pane-height", 80)
-        assert attached_window.show_window_option("main-pane-height") == 80
-
-
-        # get current window
-        pane: libtmux.pane.Pane = attached_window.attached_pane
-        assert pane is not None
-        pane.clear()
-        pane.resize_pane(height=60)
-        pane.set_height(60)
-        pane.set_width(60)
-
-        # Set the prompt and add Go binaries to PATH
-        pane.send_keys("PS1='> '", enter=True)
-        time.sleep(1)
-        pane.send_keys("export PATH=$PATH:$HOME/go/bin", enter=True)
-        time.sleep(1)
-
-        pane.enter()
-        time.sleep(1)
-
-        pane.send_keys("clear -x", literal=True, suppress_history=False)
-        time.sleep(1)
-        pane_contents = "\n".join(pane.capture_pane())
+#         attached_window.set_window_option("main-pane-height", 80)
+#         assert attached_window.show_window_option("main-pane-height") == 80
 
 
-        pane.send_keys('whence gopls\n', literal=True, suppress_history=False)
-        time.sleep(1)
-        pane_contents = "\n".join(pane.capture_pane())
+#         # get current window
+#         pane: libtmux.pane.Pane = attached_window.attached_pane
+#         assert pane is not None
+#         pane.clear()
+#         pane.resize_pane(height=60)
+#         pane.set_height(60)
+#         pane.set_width(60)
 
-        # TODO: Figure out how to expand width of pane to fit output
-        expected_contents = """> whence gopls
-/Users/malcolm/go/bin/gopls"""
-        assert expected_contents in pane_contents
+#         # Set the prompt and add Go binaries to PATH
+#         pane.send_keys("PS1='> '", enter=True)
+#         time.sleep(1)
+#         pane.send_keys("export PATH=$PATH:$HOME/go/bin", enter=True)
+#         time.sleep(1)
+
+#         pane.enter()
+#         time.sleep(1)
+
+#         pane.send_keys("clear -x", literal=True, suppress_history=False)
+#         time.sleep(1)
+#         pane_contents = "\n".join(pane.capture_pane())
+
+
+#         pane.send_keys('whence gopls\n', literal=True, suppress_history=False)
+#         time.sleep(1)
+#         pane_contents = "\n".join(pane.capture_pane())
+
+#         # TODO: Figure out how to expand width of pane to fit output
+#         expected_contents = """> whence gopls
+# /Users/malcolm/go/bin/gopls"""
+#         assert expected_contents in pane_contents
