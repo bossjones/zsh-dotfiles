@@ -31,7 +31,6 @@ jobs:
 
     steps:
       - name: Set up Git repository
-        # uses: actions/checkout@main
         uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -154,7 +153,7 @@ jobs:
           export ASDF_DIR="${HOME}/.asdf"
           export ASDF_COMPLETIONS="$ASDF_DIR/completions"
           . "$HOME/.asdf/asdf.sh"
-          # export PATH="$HOME/.asdf/shims:$HOME/.asdf/bin:$PATH"
+
           echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
           echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
 
