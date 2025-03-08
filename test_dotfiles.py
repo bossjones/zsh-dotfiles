@@ -252,7 +252,7 @@ class TestDotfiles:
         # Set the prompt and define the dl-hls function
         pane.send_keys("PS1='> '", enter=True)
         time.sleep(1)
-        pane.send_keys("dl-hls() { pyenv activate yt-dlp3 || true; yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt $1; }", enter=True)
+        pane.send_keys("dl-hls() { pyenv activate yt-dlp3 || true; yt-dlp -S 'res:500' --downloader ffmpeg -o $(uuidgen).mp4 --cookies=~/Downloads/yt-cookies.txt ${1}; }", enter=True)
         time.sleep(1)
 
         pane.enter()
