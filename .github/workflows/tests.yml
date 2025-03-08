@@ -89,6 +89,7 @@ jobs:
             brew install wget || true
             brew install curl || true
             brew install go || true
+            brew install trash || true
 
             echo "~/bin" >> $GITHUB_PATH
             echo "~/.bin" >> $GITHUB_PATH

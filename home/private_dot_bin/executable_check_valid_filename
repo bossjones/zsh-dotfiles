@@ -1,0 +1,379 @@
+#!/usr/bin/env python3
+from typing import List, Tuple, Union, Any
+import re
+import os
+import unicodedata
+import sys
+import string
+import pathlib
+from typing import List, Tuple, Union, Any
+import re
+import os
+import unicodedata
+import sys
+import string
+import pathlib
+import shutil
+import subprocess
+import sqlite3
+import datetime
+import os
+
+
+# Define ACCENT_CHARS (this is a simplified version, you may need a more comprehensive mapping)
+ACCENT_CHARS: dict[str, str] = {
+    'á': 'a', 'à': 'a', 'ä': 'a',
+    'é': 'e', 'è': 'e', 'ë': 'e',
+    'í': 'i', 'ì': 'i', 'ï': 'i',
+    'ó': 'o', 'ò': 'o', 'ö': 'o',
+    'ú': 'u', 'ù': 'u', 'ü': 'u',
+    'ñ': 'n',
+    # Add more mappings as needed
+}
+
+# Define NO_DEFAULT as a unique object
+NO_DEFAULT = object()
+
+
+
+def init_db() -> sqlite3.Connection:
+    """Initialize SQLite database for filename sanitization.
+
+    Creates a database file in ~/.local/state/dotfiles directory.
+    Creates the directory if it doesn't exist.
+
+    Returns:
+        sqlite3.Connection: Connection to the initialized database.
+    """
+    # Create the directory path
+    db_dir = pathlib.Path.home() / '.local' / 'state' / 'dotfiles'
+    db_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create database file path
+    db_path = db_dir / 'filename_sanitizer.db'
+
+    conn = sqlite3.connect(str(db_path))
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS sanitized_files (
+        id INTEGER PRIMARY KEY,
+        original_filename TEXT,
+        sanitized_filename TEXT,
+        parent_directory TEXT,
+        timestamp DATETIME
+    )
+    ''')
+    conn.commit()
+    return conn
+
+
+# ------------------------------------------------------------
+# NOTE: MOVE THIS TO A FILE UTILITIES LIBRARY
+# ------------------------------------------------------------
+# SOURCE: https://github.com/tgbugs/pyontutils/blob/05dc32b092b015233f4a6cefa6c157577d029a40/ilxutils/tools.py
+def is_file(path: str | pathlib.Path) -> bool:
+    """Check if path contains a file.
+
+    Args:
+        path: Path to check, can be string or Path object.
+
+    Returns:
+        True if the path points to a regular file, False otherwise.
+    """
+    return pathlib.Path(path).is_file()
+
+
+def is_directory(path: str | pathlib.Path) -> bool:
+    """Check if a path points to a directory.
+
+    Args:
+        path: Path to check, can be string or Path object.
+
+    Returns:
+        True if the path points to a directory, False otherwise.
+    """
+    return pathlib.Path(path).is_dir()
+
+
+def is_a_symlink(path: str | pathlib.Path) -> bool:
+    """Check if a path points to a symlink.
+
+    Args:
+        path: Path to check, can be string or Path object.
+
+    Returns:
+        True if the path points to a symlink, False otherwise.
+    """
+    return pathlib.Path(path).is_symlink()
+
+
+def expand_path_str(path: str) -> pathlib.Path:
+    """Expand a path string to a full path.
+
+    Args:
+        path: Path string to expand.
+
+    Returns:
+        Expanded path as a Path object.
+    """
+    return pathlib.Path(tilda(path))
+
+
+def tilda(obj: str | list[str]) -> str | list[str]:
+    """Expand tilde to home directory in a path.
+
+    Args:
+        obj: Path string or list of path strings to expand.
+
+    Returns:
+        Expanded path string or list of expanded path strings. Returns input unchanged
+        if it's neither a string nor a list.
+    """
+    if isinstance(obj, list):
+        return [str(pathlib.Path(o).expanduser()) if isinstance(o, str) else o for o in obj]
+    elif isinstance(obj, str):
+        return str(pathlib.Path(obj).expanduser())
+    else:
+        return obj
+
+
+def fix_path(path: str | list[str]) -> str | list[str]:
+    """Convert path(s) to fully qualified file URI.
+
+    Handles tilde expansion and verification of file existence. For paths starting with
+    tilde, expands to full path. For relative paths, checks if they exist relative to
+    home directory.
+
+    Args:
+        path: Single path string or list of path strings to fix.
+
+    Returns:
+        Fixed path string or list of fixed path strings. Returns input unchanged
+        if it's neither a string nor a list.
+
+    Raises:
+        SystemExit: If a path with tilde doesn't exist after expansion.
+    """
+    def __fix_path(path: str | pathlib.Path | Any) -> str | pathlib.Path | Any:
+        """Fix a single path.
+
+        Args:
+            path: A path to fix, can be string, Path object, or any other type.
+
+        Returns:
+            Fixed path as string if input was string, or input unchanged for other types.
+
+        Raises:
+            SystemExit: If a path with tilde doesn't exist after expansion.
+        """
+        if not isinstance(path, str):
+            return path
+        elif path[0] == "~":
+            tilda_fixed_path = tilda(path)
+            if is_file(tilda_fixed_path):
+                return tilda_fixed_path
+            else:
+                exit(path, ": does not exit.")
+        elif is_file(pathlib.Path.home() / path) or is_directory(pathlib.Path.home() / path):
+            return str(pathlib.Path().home() / path)
+        else:
+            return path
+
+    if isinstance(path, str):
+        return __fix_path(path)
+    elif isinstance(path, list):
+        return [__fix_path(p) for p in path]
+    else:
+        return path
+
+def sanitize_filename(s: str, restricted: bool = False, is_id: Any = NO_DEFAULT) -> str:
+    """Sanitize a string so it can be safely used as a filename.
+
+    Args:
+        s: The string to sanitize.
+        restricted: If True, apply more strict sanitization rules.
+        is_id: Special handling for ID fields. Defaults to NO_DEFAULT.
+
+    Returns:
+        A sanitized string that can be safely used as a filename.
+    """
+    def replace_insane(char: str) -> str:
+        """Replace unsafe characters in a filename with safe alternatives.
+
+        Args:
+            char: Single character to process.
+
+        Returns:
+            A safe replacement character or empty string. Returns:
+                - Unaccented version of character if restricted and char is accented
+                - Empty string for control characters or question mark
+                - Underscore for various special characters
+                - Original character if safe to use
+        """
+        if restricted and char in ACCENT_CHARS:
+            return ACCENT_CHARS[char]
+        if char == '?' or ord(char) < 32 or ord(char) == 127:
+            return ''
+        elif char == '"':
+            return '' if restricted else '\''
+        elif char == ':':
+            return '_-' if restricted else ' -'
+        elif char in '\\/|*<>':
+            return '_'
+        if restricted and (char in '!&\'()[]{}$;`^,#' or char.isspace()):
+            return '_'
+        if restricted and ord(char) > 127:
+            return '_'
+        return char
+
+    # Handle timestamps
+    s = re.sub(r'[0-9]+(?::[0-9]+)+', lambda m: m.group(0).replace(':', '_'), s)
+    result = ''.join(map(replace_insane, s))
+    if restricted and result.startswith('.'):
+        result = result.replace('.', '_', 1)
+    if not result:
+        result = '_'
+    return result
+
+def filename_sanitizer(key: str, value: Any, restricted: bool = False) -> str:
+    """Sanitize a value for use as a filename, with special handling for IDs.
+
+    Args:
+        key: The key associated with the value (used for ID detection).
+        value: The value to sanitize.
+        restricted: If True, apply more strict sanitization rules.
+
+    Returns:
+        A sanitized string suitable for use as a filename.
+    """
+    return sanitize_filename(str(value), restricted=restricted, is_id=(
+        bool(re.search(r'(^|[_.])id(\.|$)', key))
+        if 'filename-sanitization' in ['compat_opts']
+        else False))
+
+def check_filenames(directory: str) -> List[Tuple[str, str, str]]:
+    """Check for invalid filenames in a directory.
+
+    Args:
+        directory: The path to the directory to check.
+
+    Returns:
+        A list of tuples containing (original_filename, sanitized_filename)
+        for all filenames that would be modified by sanitization.
+    """
+    invalid_filenames = []
+    for filename in os.listdir(directory):
+        sanitized = filename_sanitizer('', filename, restricted=True)
+        if sanitized != filename:
+            invalid_filenames.append((filename, sanitized, directory))
+    return invalid_filenames
+
+def insert_sanitized_file(conn, original, sanitized, directory):
+    cursor = conn.cursor()
+    timestamp = datetime.datetime.now()
+    cursor.execute('''
+    INSERT INTO sanitized_files (original_filename, sanitized_filename, parent_directory, timestamp)
+    VALUES (?, ?, ?, ?)
+    ''', (original, sanitized, directory, timestamp))
+    conn.commit()
+
+def copy_and_sanitize_files(directory: str, invalid_files: List[Tuple[str, str]], dry_run: bool = False) -> None:
+    """Copy invalid files to their sanitized versions, preserving mtime.
+
+    Args:
+        directory: The path to the directory containing the files.
+        invalid_files: A list of tuples containing (original_filename, sanitized_filename).
+        dry_run: If True, only print what would be done without making changes.
+    """
+    for original, sanitized in invalid_files:
+        original_path = os.path.join(directory, original)
+        sanitized_path = os.path.join(directory, sanitized)
+
+        if dry_run:
+            print("---")
+            print(f"Would copy: {original} -> {sanitized}")
+            print(f" [dry-run] shutil.copy2(original_path, sanitized_path)=shutil.copy2({original_path, sanitized_path})")
+            print("---")
+        else:
+            # Copy the file
+            print("---")
+            shutil.copy2(original_path, sanitized_path)
+            print(f"Copied: {original} -> {sanitized}")
+            print("---")
+
+def trash_file(file_path: str, dry_run: bool = False) -> None:
+    """Trash a file using trash-cli.
+
+    Args:
+        file_path: The path to the file to be trashed.
+        dry_run: If True, only print what would be done without making changes.
+    """
+    if dry_run:
+        print("---")
+        print(f"Would trash: {file_path}")
+        print(f" [dry-run] subprocess.run(['trash', '-v', {file_path}])=subprocess.run(['trash', '-v', {file_path}])")
+        print("---")
+        return
+
+    try:
+        #   -F          Ask Finder to move the files to the trash, instead of using the system API. This is slower, but it utilizes Finder's UI (e.g. sounds) and ensures that the "put back" feature works.
+
+        subprocess.run(["trash", '-v', file_path], check=True)
+        print(f"Trashed: {file_path}")
+    except subprocess.CalledProcessError:
+        print(f"Failed to trash: {file_path}")
+    except FileNotFoundError:
+        print("trash-cli is not installed. Please install it to use the --trash option.")
+
+# Example usage
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python script_name.py <directory_path> [--write] [--trash] [--dry-run]")
+        sys.exit(1)
+
+    directory = sys.argv[1]
+    write_mode = "--write" in sys.argv
+    trash_mode = "--trash" in sys.argv
+    dry_run = "--dry-run" in sys.argv
+
+    directory = fix_path(directory)
+    print(f"Checking directory: {directory}")
+
+    if dry_run:
+        print("DRY RUN: No changes will be made")
+
+    if not os.path.isdir(directory):
+        print(f"Error: '{directory}' is not a valid directory.")
+        sys.exit(1)
+
+    conn = init_db()
+    invalid_files = check_filenames(directory)
+
+    if invalid_files:
+        print("Potentially invalid filenames:")
+        for original, sanitized, dir_path in invalid_files:
+            print(f"Original: {original}")
+            print(f"Sanitized: {sanitized}")
+            print(f"Directory: {dir_path}")
+            print("---")
+            if not dry_run:
+                insert_sanitized_file(conn, original, sanitized, dir_path)
+
+        if write_mode:
+            print("\nCopying files to sanitized versions...")
+            copy_and_sanitize_files(directory, invalid_files, dry_run=dry_run)
+            print("Copy operation completed.")
+
+        if trash_mode:
+            print("\nTrashing invalid files...")
+            for original, _, _ in invalid_files:
+                trash_file(os.path.join(directory, original), dry_run=dry_run)
+            print("Trash operation completed.")
+        else:
+            print("\nTo copy files to their sanitized versions, run the script with the --write flag.")
+            print("To trash invalid files, run the script with the --trash flag.")
+            print("To simulate operations without making changes, add the --dry-run flag.")
+    else:
+        print("No potentially invalid filenames found.")
+
+    conn.close()

@@ -1,254 +1,6 @@
 # ---------------------------------------------------------
 # chezmoi managed - aliases.zsh
-# #==============================================================#
-# # SOURCE: https://github.com/Vonng/Configuration/blob/master/shit/lib/color.sh
-# #==============================================================#
-# # Author: Vonng(fengruohang@outlook.com)                       #
-# # Desc  : Standard Bash Color Library                          #
-# # Dep   : None                                                 #
-# #==============================================================#
-
-# #--------------------------------------------------------------#
-# # global read-only constant
-# # cymk & rgbw color constant
-# #--------------------------------------------------------------#
-# declare -g -r __NC='\033[0m' # No Color
-# declare -g -r __BLACK='\033[0;30m'
-# declare -g -r __RED='\033[0;31m'
-# declare -g -r __GREEN='\033[0;32m'
-# declare -g -r __YELLOW='\033[0;33m'
-# declare -g -r __BLUE='\033[0;34m'
-# declare -g -r __MAGENTA='\033[0;35m'
-# declare -g -r __CYAN='\033[0;36m'
-# declare -g -r __WHITE='\033[0;37m'
-
-
-# #--------------------------------------------------------------#
-# # public function
-# # return color sequence by human-readable name
-# # $1 :  corlor name
-# # ret:  escape sequence
-# #--------------------------------------------------------------#
-# function color(){
-#     local color=$(echo $1 | tr '[:upper:]' '[:lower:]')
-#     case ${color} in
-#         0|k|black  ) echo -n $__BLACK   ;;
-#         1|r|red    ) echo -n $__RED     ;;
-#         2|g|green  ) echo -n $__GREEN   ;;
-#         3|y|yellow ) echo -n $__YELLOW  ;;
-#         4|b|blue   ) echo -n $__BLUE    ;;
-#         5|m|magenta) echo -n $__MAGENTA ;;
-#         6|c|cyan   ) echo -n $__CYAN    ;;
-#         7|w|white  ) echo -n $__WHITE   ;;
-#         8|n|none   ) echo -n $__NC      ;;
-#         *          ) echo -n ""        ;;
-#     esac
-# }
-
-
-# #--------------------------------------------------------------#
-# # public function
-# # return colored message
-# # $1 :  color name
-# # $2 :  message
-# # ret:  colored message in escape sequence
-# # Usage:    echo -e "$(color_msg red Hello) $(color b)World!"
-# #--------------------------------------------------------------#
-# # color_msg <color> <msg>
-# function color_msg(){
-#     local color=$(echo $1 | tr '[:upper:]' '[:lower:]')
-#     local msg=$2
-#     case ${color} in
-#         0|k|black  ) color=$__BLACK   ;;
-#         1|r|red    ) color=$__RED     ;;
-#         2|g|green  ) color=$__GREEN   ;;
-#         3|y|yellow ) color=$__YELLOW  ;;
-#         4|b|blue   ) color=$__BLUE    ;;
-#         5|m|magenta) color=$__MAGENTA ;;
-#         6|c|cyan   ) color=$__CYAN    ;;
-#         7|w|white  ) color=$__WHITE   ;;
-#         8|n|none   ) color=$__NC      ;;
-#         *          ) color=""        ;;
-#     esac
-
-#     if [[ ${color} != "" ]]; then
-#         echo -n "${color}${msg}${__NC}"
-#         return 0
-#     else
-#         echo -n ${msg}
-#         return 0
-#     fi
-# }
-# alias cm=color_msg
-
-# #--------------------------------------------------------------#
-# # public function
-# # print colored message to console
-# # $1 :  color name
-# # $2 :  message
-# #--------------------------------------------------------------#
-# function color_print(){
-#     local color=$(echo $1 | tr '[:upper:]' '[:lower:]')
-#     local msg=$2
-#     case ${color} in
-#         0|k|black  ) color=$__BLACK   ;;
-#         1|r|red    ) color=$__RED     ;;
-#         2|g|green  ) color=$__GREEN   ;;
-#         3|y|yellow ) color=$__YELLOW  ;;
-#         4|b|blue   ) color=$__BLUE    ;;
-#         5|m|magenta) color=$__MAGENTA ;;
-#         6|c|cyan   ) color=$__CYAN    ;;
-#         7|w|white  ) color=$__WHITE   ;;
-#         8|n|none   ) color=$__NC      ;;
-#         *          ) color=""        ;;
-#     esac
-
-#     if [[ ${color} != "" ]]; then
-#         echo -e "${color}${msg}${__NC}"
-#         return 0
-#     else
-#         echo -e ${msg}
-#         return 0
-#     fi
-# }
-
-# #==============================================================#
-
-# #--------------------------------------------------------------#
-# # global variable (int) & public function
-# # set log level
-# # $1 :  log level (debug:10,info:20,warn:30,error:40,fatal:50)
-# # default level is INFO:20
-# #--------------------------------------------------------------#
-# declare -g -i LOG_LEVEL=20
-
-# function log_level(){
-#     local level=$(echo $1 | tr '[:upper:]' '[:lower:]')
-#     case $level in
-#     1|10|d|debug        ) LOG_LEVEL=10 ;;
-#     2|20|i|info         ) LOG_LEVEL=20 ;;
-#     3|30|w|warn|warning ) LOG_LEVEL=30 ;;
-#     4|40|e|error        ) LOG_LEVEL=40 ;;
-#     5|50|f|fatal        ) LOG_LEVEL=50 ;;
-#     * ) return 1 ;;
-#     esac
-#     return 0
-# }
-
-
-# #--------------------------------------------------------------#
-# # global variable & public function
-# # set log destination
-# # $1 :  log path ("" represent stderr)
-# # default destination is stderr with color output enabled
-# #--------------------------------------------------------------#
-# declare -g LOG_PATH=""
-
-# function log_path(){
-#     LOG_PATH=${1:=''}
-# }
-
-
-# #--------------------------------------------------------------#
-# # global variable
-# # set log timestamp format
-# # $1 :  fmt str (same as date, "" will disable timestamp)
-# # timestamp disabled by default
-# #--------------------------------------------------------------#
-# declare -g LOG_TIME_FMT=""
-
-# function log_time_fmt(){
-#     local fmt=${1:=''}
-#     [[ -z ${fmt} ]] && __LOG_TIME_FMT="" return 0
-#     preset_fmt=$(echo $fmt | tr '[:upper:]' '[:lower:]')
-#     case ${preset_fmt} in
-#     datetime|full|dt ) LOG_TIME_FMT="+%Y-%m-%d %H:%M:%S" ;;
-#     date|d           ) LOG_TIME_FMT="+%Y-%m-%d" ;;
-#     time|t           ) LOG_TIME_FMT="+%H:%M:%S" ;;
-#     ts|timestamp     ) LOG_TIME_FMT="+%s"       ;;
-#     n|none           ) LOG_TIME_FMT=""          ;;
-#     *                ) LOG_TIME_FMT=${fmt}      ;;
-#     esac
-#     return 0
-# }
-
-
-# #--------------------------------------------------------------#
-# # private function
-# # $1 :  log level
-# # $2 :  message
-# #--------------------------------------------------------------#
-# function __log(){
-#     local -i level=$1
-#     shift
-#     # level less then level setting
-#     (( ${LOG_LEVEL} > level )) && return 0
-
-#     # determine head and color by level
-#     local head="[LOG]  "
-#     local color='\033[0;37m' # white
-#     if   (( $level >= 50 )); then head="[FATAL]";color='\033[0;31m' # Red
-#     elif (( $level >= 40 )); then head="[ERROR]";color='\033[0;31m' # Red
-#     elif (( $level >= 30 )); then head="[WARN] ";color='\033[0;33m' # Yellow
-#     elif (( $level >= 20 )); then head="[INFO] ";color='\033[0;32m' # Green
-#     elif (( $level >= 10 )); then head="[DEBUG]";color='\033[0;34m' # Blue
-#     fi
-
-#     # add timestamp if fmt is specified
-#     local timestamp=""
-#     if [[ "${LOG_TIME_FMT}" == "" ]]; then timestamp=""
-#     else timestamp="[$(date "${LOG_TIME_FMT}")] "
-#     fi
-
-#     if [[ "${LOG_PATH}" == "" ]]
-#     then
-#         # write to stderr with color
-#         printf "${color}${head}\033[0m\033[0;37m${timestamp}\033[0m$*\n"  1>&2
-#     else
-#         # write to regular file
-#         echo "${head} ${timestamp}$*" >> ${LOG_PATH}
-#     fi
-# }
-
-
-
-# #--------------------------------------------------------------#
-# # public functions
-# # log with level specified in function name
-# # $1 :  message
-# #--------------------------------------------------------------#
-
-# # blue
-# function log_debug() {
-#     __log 10 $@
-# }
-
-# # green
-# function log_info() {
-#     __log 20 $@
-# }
-
-# # orange
-# function log_warn() {
-#     __log 30 $@
-# }
-
-# function log_warning() {
-#     __log 30 $@
-# }
-
-# # red, write to stderr
-# function log_error(){
-#     __log 40 $@
-# }
-
-# # red, write to stderr and exit script
-# function log_fatal(){
-#     __log 50 $@
-#     exit 1
-# }
-
-# #==============================================================#
+# ---------------------------------------------------------
 
 
 cp_mp4() {
@@ -605,6 +357,11 @@ yt-best-fork () {
 	yt-dlp -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json "${1}"
 }
 
+yt-red () {
+	echo " [running] yt-dlp -v -f hd -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json ${1}"
+	yt-dlp -v -f hd -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json "${1}"
+}
+
 dl-split () {
 	while IFS="" read -r p || [ -n "$p" ]; do
 		yt-best "$p"
@@ -708,6 +465,13 @@ dl-ig() {
 	pyenv activate yt-dlp3 || true
 	echo -e " [running]  gallery-dl --cookies-from-browser Firefox --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata  ${1}\n"
 	gallery-dl --cookies-from-browser Firefox --no-mtime --user-agent Wget/1.21.1 -v --write-info-json --write-metadata  "${1}"
+}
+
+# download using Firefox cookies
+dsfi() {
+	pyenv activate yt-dlp3 || true
+	echo -e " [running] yt-dlp -v -f \"best\" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies-from-browser Firefox --write-info-json --convert-thumbnails jpg ${1}\n"
+	yt-dlp -v -f "best" -n --ignore-errors --restrict-filenames --write-thumbnail --embed-thumbnail --no-mtime --recode-video mp4 --cookies-from-browser Firefox --write-info-json --convert-thumbnails jpg "${1}"
 }
 
 dl-thread() {
@@ -1309,12 +1073,12 @@ klam_env() {
 }
 
 get_all_images(){
-    image_list=$(fd -a --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*')
+    image_list=$(fd -a --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*')
     echo "$image_list"
 }
 
 get_all_videos(){
-    video_list=$(fd -a --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*')
+    video_list=$(fd -a --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*')
     echo "$video_list"
 }
 
@@ -1337,11 +1101,11 @@ image_prepare_primary_color(){
 }
 
 prepare_images_pc(){
-    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
 }
 
 prepare_videos_pc(){
-    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'prepare_for_ig_large_primary_color "$1"' zsh
 }
 
 prepare_dir_all(){
@@ -1355,11 +1119,11 @@ alias prepare_all="prepare_dir_all"
 
 # Normalized version
 prepare_images_n(){
-    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'image_prepare_primary_color "$1"' zsh
 }
 
 prepare_videos_n(){
-    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_large "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'prepare_for_ig_large "$1"' zsh
 }
 
 prepare_dir_all_n(){
@@ -1387,7 +1151,7 @@ export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 
 prepare_videos_small(){
-    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'prepare_for_ig_small "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'prepare_for_ig_small "$1"' zsh
 }
 
 prepare_dir_small(){
@@ -1490,17 +1254,17 @@ mv_orig_media(){
 }
 
 prepare_orig(){
-    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg -e mp4 -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mv_orig_media "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg -e mp4 -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'mv_orig_media "$1"' zsh
 }
 
 show_images_pc(){
     # fd --absolute-path --ignore --full-path -e jpg -e png -e jpeg --exclude '*larger*' --exclude '*smaller*' --exec zsh -ic 'echo "$1"' zsh
-    fd --absolute-path --ignore --full-path -e jpg -e png -e jpeg --exclude '*large*' --exclude '*small*'
+    fd --absolute-path --ignore --full-path -e jpg -e png -e jpeg --exclude '*large*' --exclude '*small*' --exclude '*ig_reel*' --exclude '*ig_story*'
 }
 
 show_videos_pc(){
     # fd --absolute-path --ignore --full-path -e mp4 --exclude '*larger*' --exclude '*smaller*' --exec zsh -ic 'echo "$1"' zsh
-    fd --absolute-path --ignore --full-path -e mp4 --exclude '*large*' --exclude '*small*'
+    fd --absolute-path --ignore --full-path -e mp4 --exclude '*large*' --exclude '*small*' --exclude '*ig_reel*' --exclude '*ig_story*'
 }
 
 show_dir_all(){
@@ -1521,17 +1285,18 @@ gif_to_mp4(){
 
 
 prepare_gif(){
-    fd -a --max-depth=1 --ignore -p -e gif --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'gif_to_mp4 "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e gif --threads=10 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'gif_to_mp4 "$1"' zsh
     rm -fv *.gif
 }
 
 prepare_mov_to_mp4(){
-    fd -a --max-depth=1 --ignore -p -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' -x zsh -ic 'mov_to_mp4 "$1"' zsh
+    fd -a --max-depth=1 --ignore -p -e mov --threads=10 --exclude '*larger*' --exclude '*smaller*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'mov_to_mp4 "$1"' zsh
     rm -fv *.mov
     rm -fv *.MOV
 }
 
 prepare_everything(){
+    ulimit -n 65536
     prepare_gif
     unzip_rm
     json_rm
@@ -1543,6 +1308,8 @@ prepare_everything(){
 }
 
 prepare_everything_small(){
+    ulimit -n 65536
+
     prepare_gif
     unzip_rm
     json_rm
@@ -1620,12 +1387,6 @@ generate_video_thumbnail() {
         check_dependency gawk
         check_dependency pyvideothumbnailer
 
-        # if command -v python3 >/dev/null 2>&1; then
-        #     python3 -m pip install pyvideothumbnailer >/dev/null 2>&1
-        # else
-        #     echo "Python3 is not installed. Please install it to use pyvideothumbnailer."
-        #     return 1
-        # fi
     }
 
     # install_packages || return 1
@@ -1640,20 +1401,6 @@ generate_video_thumbnail() {
         echo "Video file not found: $video_file" >&2
         return 1
     fi
-
-    # # Check for required dependencies
-    # for dep in ffmpeg ffprobe bc gawk python3; do
-    #     check_dependency $dep || return 1
-    # done
-
-    # # Install pyvideothumbnailer if not already installed
-    # if ! python3 -m pip show pyvideothumbnailer >/dev/null 2>&1; then
-    #     echo "Installing pyvideothumbnailer..."
-    #     python3 -m pip install pyvideothumbnailer >/dev/null 2>&1 || {
-    #         echo "Failed to install pyvideothumbnailer" >&2
-    #         return 1
-    #     }
-    # fi
 
     # Get the absolute path of the video file
     absolute_path=$(python3 -c "import os; print(os.path.abspath('$video_file'))")
@@ -1702,7 +1449,7 @@ prepare_for_classifer(){
         if command -v fdfind >/dev/null 2>&1; then
             fdfind -a --max-depth=1 --ignore-case -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
         else
-            fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
+            fd -a --max-depth=1 --ignore -p -e mp4 -e avi -e mov -e mkv --threads=10  --exclude '*preview*' --exclude '*ig_reel*' --exclude '*ig_story*' -x zsh -ic 'generate_video_thumbnail "$1"' zsh
         fi
 
         prepare_orig
@@ -1723,7 +1470,47 @@ get_current_python_interpreter(){
 }
 
 
+extract_first_frame() {
+    input_file="$1"
+    output_file="${input_file%.mp4}.jpg"
+    ffmpeg -y -i "$input_file" -vframes 1 -q:v 2 "$output_file" -loglevel error
+}
+
+# Main script
+prepare_first_frame() {
+    # Check if ffmpeg is installed
+    if ! command -v ffmpeg &> /dev/null; then
+        echo "Error: ffmpeg is not installed. Please install ffmpeg to use this script."
+        exit 1
+    fi
+
+    # Loop through all MP4 files in the current directory
+    for file in *.mp4; do
+        # Check if there are any MP4 files
+        if [ -e "$file" ]; then
+            echo "Processing $file..."
+            extract_first_frame "$file"
+            echo "Saved first frame as ${file%.mp4}.jpg"
+        else
+            echo "No MP4 files found in the current directory."
+            exit 0
+        fi
+    done
+
+    echo "All MP4 files processed successfully."
+}
+
+
+
 alias reddit_dl='yt-best-fork'
+alias red_dl='yt-red'
+
+reddit_dl_improved(){
+    echo " [running] gallery-dl --config ~/.gallery-dl.conf --no-mtime -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/wavy-cookies-instagram.txt ${1}"
+    gallery-dl --config ~/.gallery-dl.conf --no-mtime -v --write-info-json --write-metadata --cookies ~/.config/gallery-dl/wavy-cookies-instagram.txt ${1}
+}
+
+alias rdi='reddit_dl_improved'
 
 download_magnet(){
     # aria2c -d ~/Downloads --seed-time=0 "magnet:?xt=urn:btih:248D0A1CD08284299DE78D5C1ED359BB46717D8C"
@@ -1818,7 +1605,6 @@ Name=dummy*
 Unmanaged=yes
 EOF
 }
-
 
 # examples:
 #     ./execsnoop                      # trace all exec() syscalls
@@ -1941,42 +1727,949 @@ curl_download() {
 bump_ulimit(){
     ulimit -n 70000
 }
-# export _LOGGING_RESET='\e[0m'
 
-# # Simplify colors and print errors to stderr (2).
-# echo_error() { echo -e "\e[1;91m${*}${_LOGGING_RESET}" >&2; } # Use Light Red for errors.
-# echo_info() { echo -e "\e[1;33m${*}${_LOGGING_RESET}" >&1; } # Use Yellow for informational messages.
-# echo_success() { echo -e "\e[1;32m${*}${_LOGGING_RESET}" >&1; } # Use Green for success messages.
-# echo_intra() { echo -e "\e[1;34m${*}${_LOGGING_RESET}" >&1; } # Use Blue for intrafunction messages.
-# echo_out() { echo -e "\e[0;37m${*}${_LOGGING_RESET}" >&1; } # Use Gray for program output.
 
-# function download {
-#     pyenv activate yt-dlp3 || true
-#     log_level debug
-#     log_time_fmt datetime
-# 	# local url=${1}
-# 	# local url=${1}
+resize_twitter_list_banner() {
 
-# 	# dl-thumb
-# 	# dl-thumb-fork ${url}
-# 	# echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg $@"
-# 	log_info $(yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "$@")
-# 	# "$@"
+    local OIFS="$IFS"
+    IFS=$'\n'
 
-# 	_RETVAL=$?
+    if [ $# -ne 2 ]; then
+        echo "Usage: resize_twitter_list_banner <input_file> <output_file>"
+        return 1
+    fi
 
-# 	# if [[ "${_RETVAL}" != "0" ]]; then
-# 	# 		echo "Trying yt-best instead"
-# 	# 		yt-best-fork ${url}
+    local input_file="$1"
+    local output_file="$2"
 
-# 	# 		_RETVAL=$?
+    if [ ! -f "$input_file" ]; then
+        echo "Error: Input file '$input_file' does not exist."
+        return 1
+    fi
 
-# 	# 		if [[ "${_RETVAL}" != "0" ]]; then
-# 	# 				echo "Trying youtube-dl instead"
-# 	# 				yt-dlp --convert-thumbnails jpg ${url}
-# 	# 		fi
-# 	# fi
-# }
+    magick "$input_file" \
+        -resize 1500x500 \
+        -background white \
+        -gravity center \
+        -extent 1500x500 \
+        "$output_file"
+
+    echo "Resized image saved as $output_file"
+    IFS="$OIFS"
+}
+
+convert_flv_to_mp4() {
+    fname="${1}"
+    outputfile="$(python -c "import pathlib;print(pathlib.Path('$fname').stem)").mp4"
+    echo $fname
+    echo $outputfile
+    echo "[running] ffmpeg -y -i \"${fname}\" -c:v libx264 -crf 19 -strict experimental \"${outputfile}\""
+    ffmpeg -y -i "${fname}" -c:v libx264 -crf 19 -strict experimental "${outputfile}"
+}
+
+convert_wmv_to_mp4() {
+    fname="${1}"
+    outputfile="$(python -c "import pathlib;print(pathlib.Path('$fname').stem)").mp4"
+    echo $fname
+    echo $outputfile
+    echo "[running] ffmpeg -y -i \"${fname}\" -c:v libx264 -crf 23 -profile:v high -r 30 -c:a aac -q:a 100 -ar 48000 \"${outputfile}\""
+    ffmpeg -y -i "${fname}" -c:v libx264 -crf 23 -profile:v high -r 30 -c:a aac -q:a 100 -ar 48000 "${outputfile}"
+
+}
+
+convert_avi_to_mp4() {
+    fname="${1}"
+    outputfile="$(python -c "import pathlib;print(pathlib.Path('$fname').stem)").mp4"
+    echo $fname
+    echo $outputfile
+    echo "[running] ffmpeg -y -hide_banner -loglevel warning -i \"${fname}\" -vcodec libx264 -vprofile high -crf 28 \"${outputfile}\""
+    ffmpeg -y -hide_banner -loglevel warning -i "${fname}" -vcodec libx264 -vprofile high -crf 28 "${outputfile}"
+}
+
+
+function gh_clone_structured() {
+    gh repo clone "$1" "$(echo $1 | gsed 's/\// /g' | xargs -n 2 echo | gsed 's/ /\//')"
+}
+
+ps_kill() {
+  local pid
+  pid=$(ps aux |
+    ggrep -i "$1" |
+    ggrep -v ggrep |
+    fzf --height 40% \
+        --reverse \
+        --header='Select process to kill' \
+        --preview 'echo {}' \
+        --preview-window up:3:wrap \
+        --layout=reverse-list \
+        --inline-info \
+        --border \
+        | gawk '{print $2}')
+  if [ -n "$pid" ]; then
+    echo "Killing process $pid"
+    kill -9 "$pid"
+  else
+    echo "No process selected"
+  fi
+}
+
+function download_docs() {
+    # Function to download HTML documentation using wget
+    # Usage: download_docs URL [OUTPUT_DIR]
+    # Example: download_docs https://docs.marimo.io/genindex.html custom_docs
+
+    # Check if URL parameter is provided
+    if [[ -z "$1" ]]; then
+        echo "Error: URL parameter is required"
+        echo "Usage: download_docs URL [OUTPUT_DIR]"
+        return 1
+    fi
+
+    local url="$1"
+    local output_dir="${2:-rtdocs}"  # Use second parameter if provided, otherwise default to 'rtdocs'
+    local original_dir="$PWD"
+
+    # Check if ~/Documents/ai_docs exists
+    if [[ ! -d "$HOME/Documents/ai_docs" ]]; then
+        echo "Error: Directory ~/Documents/ai_docs does not exist"
+        return 1
+    fi
+
+    # Change to the target directory
+    cd "$HOME/Documents/ai_docs" || return 1
+
+    # Run wget command
+    wget -r -A.html -P "$output_dir" "$url"
+    local wget_status=$?
+
+    # Return to original directory
+    cd "$original_dir" || return 1
+
+    # Check if wget was successful
+    if [[ $wget_status -eq 0 ]]; then
+        echo "Documentation downloaded successfully to ~/Documents/ai_docs/$output_dir"
+        return 0
+    else
+        echo "Failed to download documentation"
+        return 1
+    fi
+}
+
+
+
+determine_commands() {
+    if [ "$(uname)" = "Darwin" ]; then
+        # macOS
+        if command -v gsed >/dev/null 2>&1; then
+            SED="gsed"
+        else
+            SED="sed"
+        fi
+        if command -v ggrep >/dev/null 2>&1; then
+            GREP="ggrep"
+        else
+            GREP="grep"
+        fi
+    else
+        # Linux
+        SED="sed"
+        GREP="grep"
+    fi
+}
+
+generate_exclude_patterns() {
+    gitignore_file="$1"
+    exclude_patterns=""
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        [ -z "$line" ] || [ "${line#\#}" != "$line" ] && continue
+        [ "${line#!}" != "$line" ] && continue
+
+        line=$(printf '%s\n' "$line" | $SED -e 's/[]\[\*\?]/\\&/g')
+        exclude_patterns="$exclude_patterns --exclude '$line'"
+
+        # Generate additional patterns for directories
+        case "$line" in
+            */)
+                exclude_patterns="$exclude_patterns --exclude '$line**'"
+                ;;
+            *)
+                if [ -d "$line" ]; then
+                    exclude_patterns="$exclude_patterns --exclude '$line/**'"
+                fi
+                ;;
+        esac
+    done < "$gitignore_file"
+
+    # Add specific patterns for .ruff_cache
+    exclude_patterns="$exclude_patterns --exclude '.ruff_cache/**'"
+
+    printf '%s' "$exclude_patterns"
+}
+
+
+select_and_process_files() {
+    determine_commands
+    printf "Enter the output file path: "
+    read -r output_file
+
+    gitignore_file=".gitignore"
+    exclude_patterns=$(generate_exclude_patterns "$gitignore_file")
+
+    eval "fd --type f --hidden --no-ignore-vcs $exclude_patterns" | \
+    fzf -m | \
+    xargs -I {} files-to-prompt {} --cxml -o "$output_file"
+}
+
+
+download_docs_backoff() {
+    # Function to download HTML documentation using wget with exponential backoff
+    # Usage: download_docs URL [OUTPUT_DIR]
+    # Example: download_docs https://docs.marimo.io/genindex.html custom_docs
+
+    if [ -z "$1" ]; then
+        echo "Error: URL parameter is required"
+        echo "Usage: download_docs URL [OUTPUT_DIR]"
+        return 1
+    fi
+
+    url="$1"
+    output_dir="${2:-rtdocs}"
+    original_dir="$PWD"
+    max_attempts=5
+    base_wait=5
+
+    if [ ! -d "$HOME/Documents/ai_docs" ]; then
+        echo "Error: Directory ~/Documents/ai_docs does not exist"
+        return 1
+    fi
+
+    cd "$HOME/Documents/ai_docs" || return 1
+
+    attempt=0
+    while [ $attempt -lt $max_attempts ]; do
+        attempt=$((attempt + 1))
+        echo "Attempt $attempt of $max_attempts"
+
+        wget -c -r -A.html -P "$output_dir" --wait=1 --random-wait "$url"
+        wget_status=$?
+
+        if [ $wget_status -eq 0 ]; then
+            echo "Documentation downloaded successfully to ~/Documents/ai_docs/$output_dir"
+            cd "$original_dir" || return 1
+            return 0
+        elif [ $wget_status -eq 8 ]; then
+            echo "Server error encountered. Retrying..."
+            wait_time=$((base_wait * 2 ** (attempt - 1)))
+            echo "Waiting for $wait_time seconds before next attempt"
+            sleep $wait_time
+        else
+            echo "Failed to download documentation. Error code: $wget_status"
+            cd "$original_dir" || return 1
+            return 1
+        fi
+    done
+
+    echo "Max attempts reached. Failed to download documentation."
+    cd "$original_dir" || return 1
+    return 1
+}
+
+# escape single quotes for use in shell scripts
+escape_single_quotes() {
+    echo "$1" | gsed "s/'/'\\\\''/g"
+}
+
+process_and_move_files() {
+    local extension="${1:-mp4}"
+    local target_dir="${2:-/Users/malcolm/Downloads/gallery-dl/mp4s}"
+
+    local OIFS="$IFS"
+    IFS=$'\n'
+
+    # Clear existing files
+    rm run_cp.sh run_rm.sh || true
+    touch run_cp.sh run_rm.sh || true
+    chmod +x run_cp.sh run_rm.sh || true
+
+    # Write the header and redirection setup to both scripts
+    cat << 'EOF' | tee run_cp.sh run_rm.sh > /dev/null
+#!/usr/bin/env zsh
+set -e
+
+# Redirect stdout to /dev/null, keep stderr
+exec 1>/dev/null
+
+# Trap to restore stdout on exit
+trap 'exec 1>&3' EXIT
+
+# Save original stdout
+exec 3>&1
+
+OIFS="$IFS"
+IFS=$'\n'
+
+ulimit -n 65536
+ulimit -a
+EOF
+
+    local count=0
+    local total=$(find . -maxdepth 1 -type f \( -name "*.$extension" -o -name "*.$extension*" \) | wc -l)
+
+    for i in *."$extension" *."$extension"*; do
+        if [[ -f "$i" ]]; then
+            ((count++))
+            local escaped_filename=$(escape_single_quotes "$i")
+            if [ $count -eq $total ]; then
+                echo "cp -av -- '${escaped_filename}' '$target_dir'" >> run_cp.sh
+                echo "trash -- '${escaped_filename}'" >> run_rm.sh
+            else
+                echo "cp -av -- '${escaped_filename}' '$target_dir' && \\" >> run_cp.sh
+                echo "trash -- '${escaped_filename}' && \\" >> run_rm.sh
+            fi
+        fi
+    done
+
+    # Write the footer to both scripts
+    cat << 'EOF' | tee -a run_cp.sh run_rm.sh > /dev/null
+echo 'done' >&2
+IFS="$OIFS"
+EOF
+
+    echo -e "\n========== Contents of run_cp.sh ==========\n"
+    cat run_cp.sh
+    echo -e "\n========== Contents of run_rm.sh ==========\n"
+    cat run_rm.sh
+    echo -e "\nCommands have been written to run_cp.sh and run_rm.sh"
+
+    # Prompt user to run the copy script
+    printf "Do you want to run the copy script now? (y/n): "
+    read -r user_input
+    user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
+    if [[ "$user_input" =~ ^(yes|y)$ ]]; then
+        echo "Running ./run_cp.sh"
+        ./run_cp.sh
+    else
+        echo "Not running the script."
+        echo "To run the copy script later, use: ./run_cp.sh"
+        echo "To run the remove script later, use: ./run_rm.sh"
+    fi
+
+    IFS="$OIFS"
+}
+
+
+# # 1. With automatic destination mapping
+# lms_sync -s "/Users/malcolm/Downloads/gallery-dl/artstation"
+
+# # 2. With explicit destination (overrides automatic mapping)
+# lms_sync -s "/Users/malcolm/Downloads/gallery-dl/artstation" -d "/custom/backup/path"
+
+# # 3. With automatic mapping and no confirmation
+# lms_sync -s "/Users/malcolm/Downloads/gallery-dl/artstation" -y
+
+# Color setup for the terminal
+setup_colors() {
+    # Only setup colors if connected to a terminal
+    if [ -t 1 ]; then
+        # Reset
+        RESET='\033[0m'
+
+        # Regular Colors
+        GREEN='\033[0;32m'
+        YELLOW='\033[0;33m'
+        RED='\033[0;31m'
+        BLUE='\033[0;34m'
+        CYAN='\033[0;36m'
+
+        # Bold Colors
+        BOLD_GREEN='\033[1;32m'
+        BOLD_YELLOW='\033[1;33m'
+        BOLD_RED='\033[1;31m'
+        BOLD_BLUE='\033[1;34m'
+        BOLD_CYAN='\033[1;36m'
+    else
+        # No colors if not in a terminal
+        RESET=''
+        GREEN=''
+        YELLOW=''
+        RED=''
+        BLUE=''
+        CYAN=''
+        BOLD_GREEN=''
+        BOLD_YELLOW=''
+        BOLD_RED=''
+        BOLD_BLUE=''
+        BOLD_CYAN=''
+    fi
+}
+
+# Logging functions
+log_info() {
+    echo -e "${GREEN}[INFO]${RESET} $*" >&2
+}
+
+log_success() {
+    echo -e "${BOLD_GREEN}[SUCCESS]${RESET} $*" >&2
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARNING]${RESET} $*" >&2
+}
+
+log_error() {
+    echo -e "${BOLD_RED}[ERROR]${RESET} $*" >&2
+}
+
+log_prompt() {
+    echo -e "${BOLD_BLUE}[PROMPT]${RESET} $*" >&2
+}
+
+log_cmd() {
+    echo -e "${CYAN}[CMD]${RESET} $*" >&2
+}
+
+lms_sync() {
+    ulimit -n 65536
+    OIFS="$IFS"
+    IFS=$'\n'
+
+    # Setup colors
+    setup_colors
+
+    setup_commands() {
+        # Initialize command check status
+        local cmd_check_failed=0
+
+        # Initialize commands as empty
+        GREP=""
+        AWK=""
+        SED=""
+        STAT=""
+        DF=""
+        DU=""
+
+        # Detect OS
+        local os_type
+        os_type="$(uname -s)"
+
+        if [ "$os_type" = "Darwin" ]; then
+            # On macOS, prefer GNU versions if available
+            if command -v ggrep >/dev/null 2>&1; then
+                GREP="ggrep"
+            elif command -v grep >/dev/null 2>&1; then
+                log_warn "ggrep not found, using BSD grep. Some features might not work correctly."
+                log_warn "Hint: Install GNU grep with 'brew install grep'"
+                GREP="grep"
+                cmd_check_failed=1
+            else
+                log_error "Neither ggrep nor grep found"
+                return 1
+            fi
+
+            if command -v gawk >/dev/null 2>&1; then
+                AWK="gawk"
+            elif command -v awk >/dev/null 2>&1; then
+                log_warn "gawk not found, using BSD awk. Some features might not work correctly."
+                log_warn "Hint: Install GNU awk with 'brew install gawk'"
+                AWK="awk"
+                cmd_check_failed=1
+            else
+                log_error "Neither gawk nor awk found"
+                return 1
+            fi
+
+            if command -v gsed >/dev/null 2>&1; then
+                SED="gsed"
+            elif command -v sed >/dev/null 2>&1; then
+                log_warn "gsed not found, using BSD sed. Some features might not work correctly."
+                log_warn "Hint: Install GNU sed with 'brew install gnu-sed'"
+                SED="sed"
+                cmd_check_failed=1
+            else
+                log_error "Neither gsed nor sed found"
+                return 1
+            fi
+
+            if command -v gdf >/dev/null 2>&1; then
+                DF="gdf"
+            elif command -v df >/dev/null 2>&1; then
+                log_warn "gdf not found, using BSD df. Some features might not work correctly."
+                log_warn "Hint: Install GNU df with 'brew install coreutils'"
+                DF="df"
+                cmd_check_failed=1
+            else
+                log_error "Neither gdf nor df found"
+                return 1
+            fi
+
+            if command -v gdu >/dev/null 2>&1; then
+                DU="gdu"
+            elif command -v du >/dev/null 2>&1; then
+                log_warn "gdu not found, using BSD du. Some features might not work correctly."
+                log_warn "Hint: Install GNU du with 'brew install coreutils'"
+                DU="du"
+                cmd_check_failed=1
+            else
+                log_error "Neither gdu nor du found"
+                return 1
+            fi
+        else
+            # On Linux, use standard GNU versions
+            GREP="grep"
+            AWK="awk"
+            SED="sed"
+            STAT="stat"
+            DF="df"
+            DU="du"
+        fi
+
+        # Add summary if any commands were missing
+        if [ "$cmd_check_failed" -eq 1 ]; then
+            echo "" >&2
+            log_warn "Some GNU utilities were not found. For best results, install them with:"
+            echo -e "${CYAN}brew install coreutils grep gnu-sed gawk${RESET}" >&2
+            echo "" >&2
+        fi
+
+        # Export for use in subshells
+        export GREP AWK SED STAT DF DU
+    }
+
+    local source=""
+    local dest=""
+    local skip_confirm=0
+    # Default backup prefix - can be changed as needed
+    local BACKUP_PREFIX="/Volumes/elements4tb2022/backups/silicontop"
+    local SOURCE_PREFIX="/Users/malcolm"
+
+    # Create detailed help message with colors
+    local help_msg="${BOLD_BLUE}lms_sync${RESET} - Wrapper for lms sync with path mapping
+
+${BOLD_CYAN}Usage:${RESET} lms_sync [OPTIONS]
+
+${BOLD_CYAN}Options:${RESET}
+    ${GREEN}-s, --source${RESET} <path>     Source directory path (required)
+    ${GREEN}-d, --dest${RESET} <path>       Destination directory path (optional)
+                           If not provided, automatically mapped from source:
+                           $SOURCE_PREFIX/path/to/dir → $BACKUP_PREFIX/path/to/dir
+    ${GREEN}-y, --yes${RESET}              Skip confirmation prompt
+    ${GREEN}-h, --help${RESET}             Display this help message
+
+${BOLD_CYAN}Examples:${RESET}
+    # With automatic destination mapping:
+    lms_sync -s \"$SOURCE_PREFIX/Downloads/gallery-dl/artstation\"
+
+    # With explicit destination:
+    lms_sync -s \"$SOURCE_PREFIX/Downloads/gallery-dl/artstation\" -d \"/custom/backup/path\"
+
+    # Skip confirmation:
+    lms_sync -s \"$SOURCE_PREFIX/Downloads/gallery-dl/artstation\" -y
+
+${BOLD_CYAN}Notes:${RESET}
+    - Source path must exist and be readable
+    - Destination parent directory must exist and be writable
+    - Uses --nodelete and --secure flags with lms sync
+    - Automatically detects and uses GNU utilities on macOS if available"
+
+    local usage="Usage: lms_sync [-s|--source <source>] [-d|--dest <destination>] [-y|--yes] [-h|--help]"
+
+    # Display help if no arguments provided
+    if [ $# -eq 0 ]; then
+        echo -e "$help_msg" >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    # Check if lms command exists
+    if ! command -v lms >/dev/null 2>&1; then
+        log_error "'lms' command not found. Please ensure it's installed and in your PATH"
+        IFS="$OIFS"
+        return 1
+    fi
+
+    # Setup commands
+    setup_commands || {
+        IFS="$OIFS"
+        return 1
+    }
+
+    # Parse arguments
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                echo -e "$help_msg" >&2
+                IFS="$OIFS"
+                return 0
+                ;;
+            -s|--source)
+                if [ -n "$2" ]; then
+                    source="$2"
+                    shift 2
+                else
+                    log_error "Source argument is missing"
+                    echo -e "$usage" >&2
+                    IFS="$OIFS"
+                    return 1
+                fi
+                ;;
+            -d|--dest)
+                if [ -n "$2" ]; then
+                    dest="$2"
+                    shift 2
+                else
+                    log_error "Destination argument is missing"
+                    echo -e "$usage" >&2
+                    IFS="$OIFS"
+                    return 1
+                fi
+                ;;
+            -y|--yes)
+                skip_confirm=1
+                shift
+                ;;
+            *)
+                log_error "Unknown argument: $1"
+                echo -e "Try 'lms_sync --help' for more information." >&2
+                IFS="$OIFS"
+                return 1
+                ;;
+        esac
+    done
+
+    # Check if source is provided
+    if [ -z "$source" ]; then
+        log_error "Source is required"
+        echo -e "Try 'lms_sync --help' for more information." >&2
+        IFS="$OIFS"
+        return 1
+    fi
+
+    # If destination is not provided, derive it from source
+    if [ -z "$dest" ]; then
+        # Check if source starts with SOURCE_PREFIX
+        if ! "$GREP" -q "^$SOURCE_PREFIX" <<< "$source"; then
+            log_error "Source path must start with $SOURCE_PREFIX when using automatic destination mapping"
+            IFS="$OIFS"
+            return 1
+        fi
+
+        # Replace SOURCE_PREFIX with BACKUP_PREFIX to create destination path
+        dest="$($SED "s|^$SOURCE_PREFIX|$BACKUP_PREFIX|" <<< "$source")"
+        log_info "Using derived destination path: $dest"
+    fi
+
+    # Validation checks
+    if [ ! -e "$source" ]; then
+        log_error "Source '$source' does not exist"
+        IFS="$OIFS"
+        return 1
+    fi
+
+    if [ ! -r "$source" ]; then
+        log_error "Source '$source' is not readable"
+        IFS="$OIFS"
+        return 1
+    fi
+
+    if [ ! -d "$source" ]; then
+        log_error "Source '$source' is not a directory"
+        IFS="$OIFS"
+        return 1
+    fi
+
+    dest_parent="$(dirname "$dest")"
+    if [ ! -d "$dest_parent" ]; then
+        log_error "Destination parent directory '$dest_parent' does not exist"
+        IFS="$OIFS"
+        return 1
+    fi
+
+    if [ ! -w "$dest_parent" ]; then
+        log_error "Destination parent directory '$dest_parent' is not writable"
+        IFS="$OIFS"
+        return 1
+    fi
+
+    if [ -e "$dest" ]; then
+        if [ ! -d "$dest" ]; then
+            log_error "Destination '$dest' exists but is not a directory"
+            IFS="$OIFS"
+            return 1
+        fi
+        if [ ! -w "$dest" ]; then
+            log_error "Destination '$dest' exists but is not writable"
+            IFS="$OIFS"
+            return 1
+        fi
+    fi
+
+    # Check disk space
+    if [ -d "$dest" ]; then
+        source_size=$("$DU" -s "$source" 2>/dev/null | "$AWK" '{print $1}')
+        dest_free=$("$DF" -P "$dest" 2>/dev/null | "$AWK" 'NR==2 {print $4}')
+
+        if [ -n "$source_size" ] && [ -n "$dest_free" ]; then
+            if [ "$source_size" -gt "$dest_free" ]; then
+                log_warn "Destination may not have enough free space"
+                log_warn "Source size: $(($source_size / 1024)) MB"
+                log_warn "Destination free space: $(($dest_free / 1024)) MB"
+                if [ "$skip_confirm" -eq 1 ]; then
+                    log_warn "Continuing anyway due to --yes flag..."
+                else
+                    log_prompt "Do you want to continue anyway? (y/N) "
+                    read -r space_answer
+                    case "$space_answer" in
+                        [Yy]*)
+                            log_info "Continuing..."
+                            ;;
+                        *)
+                            log_info "Operation cancelled"
+                            IFS="$OIFS"
+                            return 1
+                            ;;
+                    esac
+                fi
+            fi
+        else
+            log_warn "Unable to check available disk space"
+        fi
+    fi
+
+    # Construct the command
+    local cmd="lms sync --nodelete --secure \"$source\" \"$dest\""
+
+    # Handle confirmation
+    if [ "$skip_confirm" -eq 1 ]; then
+        log_cmd "Executing command: $cmd"
+    else
+        log_prompt "About to execute command:"
+        log_cmd "$cmd"
+        log_prompt "Do you want to continue? (y/N) "
+        read -r answer
+        case "$answer" in
+            [Yy]*)
+                log_info "Executing command..."
+                ;;
+            *)
+                log_info "Operation cancelled"
+                IFS="$OIFS"
+                return 1
+                ;;
+        esac
+    fi
+
+    # Create trap to restore IFS in case of interrupt
+    trap 'log_error "Operation interrupted"; IFS="$OIFS"; return 1' INT TERM
+
+    # Execute the command
+    eval "$cmd"
+    local cmd_status=$?
+
+    # Remove trap
+    trap - INT TERM
+
+    if [ $cmd_status -eq 0 ]; then
+        log_success "Sync completed successfully"
+    else
+        log_error "Sync failed with exit code $cmd_status"
+    fi
+
+    log_info "Done"
+    IFS="$OIFS"
+    return $cmd_status
+}
+
+dl_thumb_only() {
+    pyenv activate yt-dlp3 || true
+    echo " [running] yt-dlp -n --ignore-errors --restrict-filenames --skip-download --write-thumbnail --convert-thumbnails png --cookies=~/Downloads/yt-cookies.txt ${1}"
+    yt-dlp -n --ignore-errors --restrict-filenames --skip-download --write-thumbnail --convert-thumbnails png --cookies=~/Downloads/yt-cookies.txt "${1}"
+}
+
+alias dto='dl_thumb_only'
+
+
+
+copy_to_large_and_small_folders(){
+    local fname="${1}"
+    echo "$fname"
+    mkdir -p large/ small/
+    gfind "${fname}" -type f \( \
+        -iname "*.jpg"  -o \
+        -iname "*.jpeg" -o \
+        -iname "*.png"  -o \
+        -iname "*.gif"  -o \
+        -iname "*.bmp"  -o \
+        -iname "*.tiff" -o \
+        -iname "*.webp" -o \
+        -iname "*.mp4"  -o \
+        -iname "*.mov"  -o \
+        -iname "*.avi"  -o \
+        -iname "*.mkv"  -o \
+        -iname "*.flv"  -o \
+        -iname "*.wmv" \) \
+        -exec sh -c 'cp -- "$0" large/ && cp -- "$0" small/' {} \;
+}
+
+prepare_for_ig_story() {
+    local input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    local output_file="$(python -c "import pathlib;print(pathlib.Path('${1}').stem)")_ig_story.mp4"
+    local get_timestamp=$(gstat -c %y "${input_file}")
+    local bg_color
+
+    echo -e "Input file: ${input_file}"
+    echo -e "Output file: ${output_file}"
+
+    # Sample color from top-left pixel (0,0) of the first frame
+    bg_color=$(ffmpeg -i "${input_file}" -vf "crop=1:1:0:0,boxblur=luma_radius=0:chroma_radius=0:alpha_radius=0" -frames:v 1 -f rawvideo -pix_fmt rgb24 pipe:1 | xxd -p -c 3 | sed 's/$/ff/' | sed 's/^/0x/')
+
+    # If color sampling fails, use black
+    if [ -z "$bg_color" ]; then
+        bg_color="0x000000"
+    fi
+
+    echo "Using background color: $bg_color"
+
+    time ffmpeg -y \
+    -hide_banner -loglevel warning \
+    -i "${input_file}" \
+    -c:v h264_videotoolbox \
+    -bufsize 5200K \
+    -b:v 5200K \
+    -maxrate 5200K \
+    -level 42 \
+    -bf 2 \
+    -g 63 \
+    -refs 4 \
+    -threads 16 \
+    -preset:v fast \
+    -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=${bg_color}" \
+    -c:a aac \
+    -ar 44100 \
+    -ac 2 \
+    "${output_file}"
+
+    gtouch -d "$get_timestamp" "${output_file}"
+}
+
+image_prepare_for_ig_reel() {
+    local full_path_input_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}{p.suffix}\")")"
+    local full_path_output_file="$(python -c "import pathlib;p=pathlib.Path('${1}');print(f\"{p.stem}_ig_story{p.suffix}\")")"
+    local primary_color=$(magick "${full_path_input_file}" -format "%[hex:p{0,0}]" info:)
+    local get_timestamp=$(gstat -c %y "${full_path_input_file}")
+
+    echo -e "Input file: ${full_path_input_file}"
+    echo -e "Output file: ${full_path_output_file}"
+    echo -e "Primary color: ${primary_color}"
+
+    # Instagram Reel dimensions: 1080x1920
+    magick "${full_path_input_file}" \
+        -resize 1080x1920^ \
+        -gravity center \
+        -extent 1080x1920 \
+        -background "#${primary_color}" \
+        -compose Copy \
+        -quality 95 \
+        "${full_path_output_file}"
+
+    gtouch -d "$get_timestamp" "${full_path_output_file}"
+}
+
+
+prepare_images_story() {
+    fd -a --max-depth=1 --ignore -p -e jpg -e png -e jpeg --exclude '*_ig_reel*' --exclude '*_ig_story*' --exclude '*smaller*' --exclude '*larger*' -x zsh -ic 'image_prepare_for_ig_reel "$1"' zsh
+}
+
+prepare_videos_story() {
+    fd -a --max-depth=1 --ignore -p -e mp4 --exclude '*_ig_reel*' --exclude '*_ig_story*' --exclude '*smaller*' --exclude '*larger*' -x zsh -ic 'prepare_for_ig_story "$1"' zsh
+}
+
+prepare_all_story() {
+    prepare_images_story
+    prepare_videos_story
+}
+
+
+prepare_everything_story(){
+    ulimit -n 65536
+    prepare_gif
+    unzip_rm
+    json_rm
+    webp_to_jpg
+    heic_to_jpg
+    prepare_mov_to_mp4
+    prepare_all_story
+    prepare_orig
+}
+
+add_text_to_ig_video() {
+    local input_file="$1"
+    local text="$2"
+    local output_file="${input_file%.*}_with_text.mp4"
+    local font_file="/System/Library/Fonts/Supplemental/Arial.ttf"
+    local font_size=50
+    local padding=20  # Space between text and video content
+
+    # Get video dimensions
+    local video_info=$(ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=width,height -of csv=p=0 "$input_file")
+    local width=$(echo $video_info | cut -d',' -f1)
+    local height=$(echo $video_info | cut -d',' -f2)
+
+    # Calculate text position above video content
+    local text_y=$((height * 1/4))  # Position text in top quarter
+    local box_height=$((font_size + padding))
+
+    ffmpeg -i "$input_file" \
+        -vf "drawbox=x=0:y=$((text_y - padding/2)):w=iw:h=${box_height}:color=black@0.5:t=fill,
+             drawtext=fontfile='${font_file}':fontsize=${font_size}:fontcolor=white:box=0:boxcolor=black@0.5:
+                      x=(w-tw)/2:y=${text_y}+(th/${padding}):text='${text}'" \
+        -c:a copy \
+        "${output_file}"
+
+    echo "Video with text created: $output_file"
+}
+
+
+# Function to extract Twitter handles from images in a directory recursively
+extract_twitter_handles() {
+  local dir="$1"
+  local output_file="extracted_handles.txt"
+
+  # Ensure the output file is empty before starting
+  > "$output_file"
+
+  # Ensure Tesseract is installed
+  if ! command -v tesseract >/dev/null 2>&1; then
+    echo "Error: Tesseract is not installed. Install it using Homebrew: brew install tesseract"
+    return 1
+  fi
+
+  # Find and process image files recursively
+  find "$dir" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.bmp' -o -iname '*.tiff' \) | while read -r image_path; do
+    # Perform OCR on the image and extract text
+    text=$(tesseract "$image_path" - -l eng 2>/dev/null)
+
+    # Use grep with regex to find Twitter handles (e.g., @username)
+    echo "$text" | grep -oE '@[a-zA-Z0-9_]+' | while read -r handle; do
+      # Prefix the handle with https://x.com/ and save it to the output file
+      url="https://x.com/${handle#@}"
+      echo "$image_path: $url" >> "$output_file"
+      echo "Extracted: $url from $image_path"
+    done
+  done
+
+  echo "Extraction complete. Results saved to '$output_file'."
+}
+
+
+dl_helldivers() {
+    local uri="$1"
+    pyenv activate yt-dlp3 || true
+    echo " [running] yt-dlp -v -f 299+bestaudio -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "$uri""
+    yt-dlp -v -f 299+bestaudio -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "$uri"
+}
+
+alias dlh='dl_helldivers'
 
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
