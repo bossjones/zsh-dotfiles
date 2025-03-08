@@ -16,8 +16,9 @@ import typing as t
 from libtmux.server import Server
 from libtmux import exc
 from libtmux.test.constants import TEST_SESSION_PREFIX
-from libtmux.test import get_test_session_name, namer
+from libtmux.test.random import get_test_session_name, get_test_window_name, namer
 from libtmux.session import Session
+
 
 
 if t.TYPE_CHECKING:
