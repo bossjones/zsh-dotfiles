@@ -150,7 +150,7 @@ jobs:
           python -m venv venv
           source ./venv/bin/activate
           pip install -U pip setuptools wheel
-          pip install -r requirements-test.txt
+          pip install -U -r requirements-test.txt
           export ASDF_DIR="${HOME}/.asdf"
           export ASDF_COMPLETIONS="$ASDF_DIR/completions"
           . "$HOME/.asdf/asdf.sh"
