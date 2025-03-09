@@ -1,39 +1,38 @@
 ---
-description: Documentation Standards and Workflows for Codegen Lab
-globs: *.md, mkdocs.yml, scripts/serve_docs.py
+description: Documentation Standards for Chezmoi Dotfiles
+globs: *.md, *.tmpl, .chezmoi*
 alwaysApply: false
 ---
-# Documentation Standards and Workflows
+# Chezmoi Dotfiles Documentation Standards
 
-Guidelines for creating, editing, and serving documentation for the Codegen Lab project.
+Guidelines for creating and maintaining documentation for the zsh-dotfiles repository managed with chezmoi.
 
 <rule>
-name: documentation_standards
-description: Standards for documentation in markdown files
+name: chezmoi_documentation_standards
+description: Standards for documenting chezmoi-managed dotfiles
 filters:
   # Match documentation files
   - type: file_extension
     pattern: "\\.md$"
-  # Match MkDocs configuration
+  # Match chezmoi template files
   - type: file_path
-    pattern: "mkdocs\\.yml$"
-  # Match documentation scripts
-  - type: file_path
-    pattern: "scripts/serve_docs\\.py$"
+    pattern: "\\.chezmoi.*"
+  - type: file_extension
+    pattern: "\\.tmpl$"
 
 actions:
   - type: suggest
     message: |
-      # Documentation Best Practices
+      # Dotfiles Documentation Best Practices
 
-      This project uses MkDocs with the Material theme for documentation. Follow these guidelines:
+      This project uses chezmoi to manage dotfiles with templating. Follow these guidelines for documentation:
 
       ## Content Guidelines
 
       1. **Structure**:
          - Use consistent heading levels (# for title, ## for sections, etc.)
          - Keep paragraphs concise and focused
-         - Use lists for steps or multiple related items
+         - Use tables to compare original templates and rendered files
 
       2. **Formatting**:
          - Use **bold** for emphasis and UI elements
@@ -42,240 +41,168 @@ actions:
 
       3. **Code Samples**:
          - Use fenced code blocks with language specification
-         ```python
-         def example_function():
-             """Example docstring."""
-             return True
-         ```
-
-      4. **Admonitions**:
-         - Use note, warning, tip, etc. for important callouts
-         ```markdown
-         !!! note
-             Important information that users should know about.
-         ```
-
-      ## Local Development Workflow
-
-      1. **Serving Documentation**:
          ```bash
-         # Serve docs with local URL (http://127.0.0.1:8000/)
-         make docs-serve
+         # Example chezmoi command
+         chezmoi apply
          ```
 
-      2. **Building Only**:
+      4. **Template Transformation Tables**:
+         - Document template transformations using tables
+         - Include the original template and the rendered result
+         - Explain the variables and logic used in the transformation
+
+         Example:
+
+         | Original Template | Rendered Result | Description |
+         |-------------------|-----------------|-------------|
+         | `{{ if eq .chezmoi.os "darwin" }}alias ls="ls -G"{{ else }}alias ls="ls --color=auto"{{ end }}` | `alias ls="ls -G"` (on macOS) or `alias ls="ls --color=auto"` (on Linux) | Sets the appropriate color flag for the ls command based on the operating system |
+
+      5. **Variable Documentation**:
+         - Document all chezmoi variables used in templates
+         - Explain their purpose and possible values
+         - Group related variables together
+
+      ## Chezmoi Workflow Documentation
+
+      1. **Installation**:
          ```bash
-         make docs-build
+         # Install chezmoi and dotfiles
+         sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply bossjones
+         ```
+
+      2. **Updating**:
+         ```bash
+         # Update dotfiles
+         chezmoi update
          ```
 
       3. **Important Notes**:
-         - The `serve_docs.py` script automatically handles URL configuration
-         - NEVER delete the `mkdocs.yml.bak` file - it's essential for deployment
-         - The `.bak` file preserves GitHub Pages configuration
-         - Changes to docs are hot-reloaded when served locally
+         - Document any system-specific configurations
+         - Explain how to customize dotfiles for different environments
+         - Provide troubleshooting guidance for common issues
 
 examples:
   - input: |
-      # Bad: Inconsistent formatting
-      The project uses PYTHON for development.
+      # Bad: No explanation of template transformation
+      ```
+      {{ if eq .chezmoi.os "darwin" }}
+      export PATH="/opt/homebrew/bin:$PATH"
+      {{ else }}
+      export PATH="/usr/local/bin:$PATH"
+      {{ end }}
+      ```
 
-      # Good: Proper formatting
-      The project uses `Python` for development.
-
-      # Using admonitions properly
-      !!! warning
-          Ensure all dependencies are installed before running this command.
-    output: "Properly formatted documentation with consistent style"
+      # Good: Clear explanation with table
+      | Original Template | Rendered Result | Description |
+      |-------------------|-----------------|-------------|
+      | `{{ if eq .chezmoi.os "darwin" }}export PATH="/opt/homebrew/bin:$PATH"{{ else }}export PATH="/usr/local/bin:$PATH"{{ end }}` | `export PATH="/opt/homebrew/bin:$PATH"` (on macOS) or `export PATH="/usr/local/bin:$PATH"` (on Linux) | Sets the appropriate Homebrew path based on the operating system |
+    output: "Properly documented template transformation with table"
 
   - input: |
-      # Bad: Incorrect code block
-      The command is:
-      ```
-      uv run python script.py
-      ```
+      # Bad: Missing variable documentation
+      The template uses `.chezmoi.os` to determine the configuration.
 
-      # Good: Language-specific code block
-      The command is:
-      ```bash
-      uv run python script.py
-      ```
-    output: "Proper use of language-specific code blocks"
+      # Good: Complete variable documentation
+      | Variable | Description | Example Values |
+      |----------|-------------|----------------|
+      | `.chezmoi.os` | Operating system name | "darwin", "linux", "windows" |
+      | `.chezmoi.arch` | CPU architecture | "amd64", "arm64" |
+      | `.chezmoi.hostname` | Host name | "macbook-pro", "work-desktop" |
+    output: "Comprehensive variable documentation with examples"
 
 metadata:
   priority: high
   version: 1.0
   tags:
     - documentation
-    - markdown
-    - mkdocs
+    - chezmoi
+    - dotfiles
+    - zsh
 </rule>
 
-## MkDocs Configuration
+## Chezmoi Template System
 
-The documentation is built using MkDocs with the Material theme. Key configuration:
+Chezmoi uses Go's text/template system to transform template files into actual configuration files. This allows for dynamic configuration based on the system environment.
 
-```yaml
-# Theme configuration
-theme:
-  name: material
-  palette:
-    primary: indigo
-    accent: indigo
-  features:
-    - navigation.instant
-    - navigation.tracking
-    - navigation.expand
-    - navigation.indexes
-    - navigation.top
-    - search.highlight
-    - search.share
-    - content.code.copy
-
-# Extensions
-markdown_extensions:
-  - admonition
-  - codehilite
-  - toc:
-      permalink: true
-  - pymdownx.highlight
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
-```
-
-## Documentation Structure
-
-Follow this structure when adding new content:
+### Template Syntax
 
 ```
-docs/
-├── index.md              # Main landing page
-├── getting-started.md    # Getting started guide
-├── user-guide/           # User guide directory
-│   ├── installation.md   # Installation instructions
-│   └── configuration.md  # Configuration guidelines
-├── api-reference.md      # API documentation
-├── troubleshooting.md    # Troubleshooting guide
-├── contributing.md       # Contribution guidelines
-└── changelog.md          # Version history
+{{ if condition }}
+  # content for when condition is true
+{{ else }}
+  # content for when condition is false
+{{ end }}
 ```
 
-## URL Configuration Mechanism
+### Common Variables
 
-The project uses a clever mechanism to handle two URL patterns:
+| Variable | Description |
+|----------|-------------|
+| `.chezmoi.os` | Operating system (e.g., "darwin", "linux", "windows") |
+| `.chezmoi.arch` | Architecture (e.g., "amd64", "arm64") |
+| `.chezmoi.hostname` | Host name |
+| `.chezmoi.username` | User name |
+| `.chezmoi.homeDir` | Home directory |
+| `.chezmoi.sourceDir` | Source directory |
 
-1. **Local Development URL**: `http://127.0.0.1:8000/`
-   - Makes local testing easier with simpler URLs
-   - No `/codegen-lab/` path suffix in URLs
-   - Enabled automatically with `make docs-serve`
+### Template Functions
 
-2. **GitHub Pages URL**: `https://bossjones.github.io/codegen-lab/`
-   - Required for production deployment
-   - Includes the `/codegen-lab/` path suffix in URLs
+Chezmoi provides several built-in functions for use in templates:
 
-### How the URL Switching Works:
+| Function | Description | Example |
+|----------|-------------|---------|
+| `eq` | Equal comparison | `{{ if eq .chezmoi.os "darwin" }}...{{ end }}` |
+| `ne` | Not equal comparison | `{{ if ne .chezmoi.os "windows" }}...{{ end }}` |
+| `lookPath` | Check if a command exists | `{{ if lookPath "brew" }}...{{ end }}` |
+| `joinPath` | Join path components | `{{ joinPath .chezmoi.homeDir ".config" }}` |
+| `include` | Include the contents of another file | `{{ include "path/to/file" }}` |
 
-The `serve_docs.py` script manages this process automatically:
+## Documentation Examples
 
-1. When running with `--no-gh-deploy-url` flag:
-   - Creates a backup of `mkdocs.yml` as `mkdocs.yml.bak`
-   - Modifies the live `mkdocs.yml` to use `http://127.0.0.1:8000/` as `site_url`
-   - This removes the `/codegen-lab/` path from all URLs
+### Example 1: Shell Configuration
 
-2. When the server stops (or if an error occurs):
-   - Restores the original configuration from `mkdocs.yml.bak`
-   - This ensures the GitHub Pages URL is ready for deployment
+| Original Template (.zshrc.tmpl) | Rendered Result (.zshrc) | Description |
+|----------------------------------|--------------------------|-------------|
+| `{{ if eq .chezmoi.os "darwin" }}source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh{{ else }}source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh{{ end }}` | `source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh` (on macOS) | Loads zsh-autosuggestions from the appropriate location based on OS |
 
-**Important:** Never delete the `.bak` file as it's essential for this workflow!
+### Example 2: Git Configuration
 
-## Available Documentation Commands
+| Original Template (.gitconfig.tmpl) | Rendered Result (.gitconfig) | Description |
+|-------------------------------------|------------------------------|-------------|
+| `name = {{ .name }}`<br>`email = {{ .email }}` | `name = John Doe`<br>`email = john@example.com` | Sets Git user name and email based on chezmoi data values |
 
-The Makefile includes these documentation-related targets:
+### Example 3: Conditional Configuration
 
-```makefile
-# Documentation targets
-.PHONY: docs-serve docs-build docs-deploy docs-clean
+| Original Template (.tmux.conf.tmpl) | Rendered Result (.tmux.conf) | Description |
+|-------------------------------------|------------------------------|-------------|
+| `set -g default-terminal "screen-256color"`<br>`{{ if eq .chezmoi.os "darwin" }}set -g default-command "reattach-to-user-namespace -l $SHELL"{{ end }}` | `set -g default-terminal "screen-256color"`<br>`set -g default-command "reattach-to-user-namespace -l $SHELL"` (on macOS only) | Adds macOS-specific tmux configuration |
 
-# Serve documentation locally (with local URL)
-docs-serve:
-	uv run python scripts/serve_docs.py --no-gh-deploy-url
+## Creating Documentation for New Templates
 
-# Build documentation without serving
-docs-build:
-	uv run python scripts/serve_docs.py --build-only
+When adding a new template file to the repository, follow these steps to document it:
 
-# Clean and build documentation
-docs-clean-build:
-	uv run python scripts/serve_docs.py --build-only --clean
-
-# Deploy documentation to GitHub Pages
-docs-deploy:
-	uv run mkdocs gh-deploy --force
-
-# Install documentation dependencies
-docs-setup:
-	uv add --dev mkdocs mkdocs-material
-
-# Clean documentation build
-docs-clean:
-	rm -rf site/
-
-# Test if documentation builds without errors
-docs-test:
-	uv run mkdocs build -s
-```
-
-## Common Documentation Tasks
-
-### Adding a New Page
-
-1. Create a markdown file in the appropriate directory
-2. Add the file to `nav` section in `mkdocs.yml`
-3. Follow the style guide for consistent formatting
-4. Test locally with `make docs-serve`
-
-### Adding Images
-
-1. Place images in the `docs/assets/images/` directory
-2. Reference in markdown with relative paths:
-   ```markdown
-   ![Alt text](../assets/images/example.png)
-   ```
-
-### Including Code Samples
-
-Use fenced code blocks with appropriate language:
-
-```markdown
-```python
-def example():
-    """This is a docstring."""
-    return True
-```
-```
+1. Create a markdown file in the `docs/` directory with the same name as the template
+2. Include a description of the file's purpose
+3. Document all variables used in the template
+4. Create a table showing the original template and possible rendered results
+5. Explain any conditional logic or complex transformations
+6. Include examples of how to customize the template
 
 ## Troubleshooting
 
-If you encounter issues with documentation:
+If you encounter issues with template rendering:
 
-1. Check terminal output for error messages
-2. Ensure both `mkdocs.yml` and `mkdocs.yml.bak` exist
-3. Verify URL behavior:
-   - Local development should NOT have `/codegen-lab/` in URLs
-   - GitHub Pages deployment SHOULD have `/codegen-lab/` in URLs
-4. Use `make docs-clean-build` to rebuild from scratch
-5. Check for missing files referenced in `mkdocs.yml` nav section
+1. Use `chezmoi execute-template` to test template rendering:
+   ```bash
+   chezmoi execute-template < ~/.local/share/chezmoi/dot_zshrc.tmpl
+   ```
 
-### Common Issues
+2. Check the values of variables:
+   ```bash
+   chezmoi data
+   ```
 
-1. **302 Redirects**:
-   - This often happens if the URL configuration doesn't match the expected format
-   - Check if the site is being served with or without the `/codegen-lab/` path
-
-2. **Missing Pages in Navigation**:
-   - Files exist in docs directory but aren't listed in the `nav` section
-   - Add them to `mkdocs.yml` under the appropriate section
-
-3. **File Conflicts**:
-   - Having both `README.md` and `index.md` in the same directory
-   - Rename or remove one of the conflicting files
+3. Verify template syntax:
+   ```bash
+   chezmoi doctor
+   ```
