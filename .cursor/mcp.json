@@ -19,6 +19,13 @@
           "run",
           "/Users/malcolm/dev/bossjones/codegen-lab/src/codegen_lab/prompt_library.py"
         ]
-      }
+      },
+    "sequentialthinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    }
   }
 }
