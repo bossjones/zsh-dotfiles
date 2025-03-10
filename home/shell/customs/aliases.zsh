@@ -2671,6 +2671,8 @@ dl_helldivers() {
 
 alias dlh='dl_helldivers'
 
+alias cn='cursor-nightly'
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
