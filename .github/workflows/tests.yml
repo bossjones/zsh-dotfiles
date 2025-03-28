@@ -71,6 +71,8 @@ jobs:
             brew install kadwanev/brew/retry || true
             brew install go || true
 
+            brew install openssl@3 readline libyaml gmp autoconf || true
+
             { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
             export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
 
