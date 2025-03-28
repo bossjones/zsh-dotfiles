@@ -24,9 +24,10 @@ concurrency:
   cancel-in-progress: true
 jobs:
   tests:
-    runs-on: macos-14
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: ['macos-14', 'macos-15']
         python-version: ['3.12']
 
     steps:
@@ -51,6 +52,11 @@ jobs:
         run: |
             brew tap schniz/tap || true
 
+      - name: macos-15 requires a custom tap for openssl@1.1
+        if: matrix.os == 'macos-15'
+        run: |
+          brew install rbenv/tap/openssl@1.1
+
       - name: Run zsh-dotfiles-prep
         env:
           ZSH_DOTFILES_PREP_CI: 1
@@ -73,6 +79,27 @@ jobs:
             retry -t 4  -- ./zsh-dotfiles-prereq-installer --debug
 
             # curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
+
+
+      - name: macos-15 needs you to explicitly add an argument for openssl@3
+        if: matrix.os == 'macos-15'
+        run: |
+          zsh -c '
+          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
+          export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
+
+          export ASDF_DIR="${HOME}/.asdf"
+          export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+          . "$HOME/.asdf/asdf.sh"
+
+          echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+          echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+
+          export LDFLAGS="-L$(brew --prefix openssl@3)/lib"
+          export CPPFLAGS="-I$(brew --prefix openssl@3)/include"
+
+          asdf install ruby 3.2.1 -- --with-openssl-dir="$(brew --prefix openssl@3)"
+          '
 
       - name: Rerun zsh-dotfiles-prep
         env:
@@ -105,11 +132,6 @@ jobs:
           ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
           ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
         run: |
-          # set -x;pwd
-          # set -x;ls -lta
-          # set -x;ls -lta ~/.bin
-          # set +x
-
           { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
           export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
 
@@ -132,13 +154,6 @@ jobs:
           limit-access-to-actor: true
 
       - name: pytest
-        # env:
-        #   # Unlike the above, we are actually distributing these
-        #   # wheels, so they need to be built for production use.
-        #   CPPFLAGS: "-O3 -flto -ffunction-sections"
-        #   CFLAGS:   "-O3 -flto -ffunction-sections"
-        #   # Build for both architectures
-        #   ARCHFLAGS: "-arch x86_64 -arch arm64"
         run: |
           # Removed 'exec zsh' to prevent script termination
           zsh -c '

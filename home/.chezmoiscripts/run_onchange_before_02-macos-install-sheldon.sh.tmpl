@@ -9,6 +9,7 @@ if [ ! -f ~/.cargo/env ]; then
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 	source $HOME/.cargo/env
 	cargo install ripgrep fd-find
+	cargo install cross
 	fd /root
 fi
 
