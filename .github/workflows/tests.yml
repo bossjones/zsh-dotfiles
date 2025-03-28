@@ -131,6 +131,16 @@ jobs:
           brew install rbenv/tap/openssl@1.1 || true
           brew info gnu-getopt || true
 
+
+      # Allow debugging with tmate
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled }}
+        with:
+          # Use registered public SSH key(s)
+          # If you have registered one or more public SSH keys with your GitHub profile, tmate will be started such that only those keys are authorized to connect, otherwise anybody can connect to the tmate session. If you want to require a public SSH key to be installed with the tmate session, no matter whether the user who started the workflow has registered any in their GitHub profile, you will need to configure the setting limit-access-to-actor to true, like so:
+          limit-access-to-actor: true
+
       - name: macos-15 needs you to explicitly add an argument for openssl 3 on ${{ matrix.os }}
         if: matrix.os == 'macos-latest'
         env:
@@ -174,20 +184,18 @@ jobs:
 
           brew install openssl@3 readline libyaml gmp autoconf || true
 
+          export ASDF_DIR="${HOME}/.asdf"
+          export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+          . "$HOME/.asdf/asdf.sh"
+
+          echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+          echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
           asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
 
           retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --source=.
 
           retry -t 4  -- post-install-chezmoi
 
-      # Allow debugging with tmate
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled }}
-        with:
-          # Use registered public SSH key(s)
-          # If you have registered one or more public SSH keys with your GitHub profile, tmate will be started such that only those keys are authorized to connect, otherwise anybody can connect to the tmate session. If you want to require a public SSH key to be installed with the tmate session, no matter whether the user who started the workflow has registered any in their GitHub profile, you will need to configure the setting limit-access-to-actor to true, like so:
-          limit-access-to-actor: true
 
       - name: pytest on ${{ matrix.os }}
         run: |
