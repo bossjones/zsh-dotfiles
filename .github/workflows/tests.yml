@@ -31,12 +31,12 @@ jobs:
         python-version: ['3.12']
 
     steps:
-      - name: Set up Git repository
+      - name: Set up Git repository on ${{ matrix.os }}
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -48,16 +48,12 @@ jobs:
           go-version: '1.20.5' # The Go version to download (if necessary) and use.
       - run: go version
 
-      - name: brew taps
+      - name: brew taps on ${{ matrix.os }}
         run: |
             brew tap schniz/tap || true
 
-      - name: macos-15 requires a custom tap for openssl@1.1
-        if: matrix.os == 'macos-15'
-        run: |
-          brew install rbenv/tap/openssl@1.1
 
-      - name: Run zsh-dotfiles-prep
+      - name: Run zsh-dotfiles-prep on ${{ matrix.os }}
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -71,7 +67,7 @@ jobs:
             brew install kadwanev/brew/retry || true
             brew install go || true
 
-            brew install openssl@3 readline libyaml gmp autoconf || true
+            brew install openssl@3 readline libyaml gmp autoconf tmux || true
 
             { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
             export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
@@ -80,10 +76,13 @@ jobs:
             chmod +x zsh-dotfiles-prereq-installer
             retry -t 4  -- ./zsh-dotfiles-prereq-installer --debug
 
-            # curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
+      - name: macos-15 requires a custom tap for openssl@1.1
+        if: matrix.os == 'macos-15'
+        run: |
+          brew install openssl@3 readline libyaml gmp autoconf tmux || true
+          brew install rbenv/tap/openssl@1.1
 
-
-      - name: macos-15 needs you to explicitly add an argument for openssl@3
+      - name: macos-15 needs you to explicitly add an argument for openssl@3 on ${{ matrix.os }}
         if: matrix.os == 'macos-15'
         run: |
           zsh -c '
@@ -103,7 +102,7 @@ jobs:
           asdf install ruby 3.2.1 -- --with-openssl-dir="$(brew --prefix openssl@3)"
           '
 
-      - name: Rerun zsh-dotfiles-prep
+      - name: Rerun zsh-dotfiles-prep on ${{ matrix.os }}
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -126,7 +125,7 @@ jobs:
 
             # curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
 
-      - name: full chezmoi install
+      - name: full chezmoi install on ${{ matrix.os }}
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -155,7 +154,7 @@ jobs:
           # If you have registered one or more public SSH keys with your GitHub profile, tmate will be started such that only those keys are authorized to connect, otherwise anybody can connect to the tmate session. If you want to require a public SSH key to be installed with the tmate session, no matter whether the user who started the workflow has registered any in their GitHub profile, you will need to configure the setting limit-access-to-actor to true, like so:
           limit-access-to-actor: true
 
-      - name: pytest
+      - name: pytest on ${{ matrix.os }}
         run: |
           # Removed 'exec zsh' to prevent script termination
           zsh -c '
