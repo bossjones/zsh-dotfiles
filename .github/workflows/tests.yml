@@ -172,8 +172,8 @@ jobs:
           export LDFLAGS="-L${OPENSSL3_PREFIX}/lib"
           export CPPFLAGS="-I${OPENSSL3_PREFIX}/include"
 
-
-          brew install openssl readline sqlite3 xz zlib tcl-tk pkg-config autogen bash bzip2 libffi cheat python@3.10
+          brew install rust || true
+          brew install openssl readline sqlite3 xz zlib tcl-tk pkg-config autogen bash bzip2 libffi cheat python@3.10 || true
 
           brew install cmake || true
 
@@ -196,6 +196,7 @@ jobs:
 
           echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
           echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+          # ruby-build 3.2.1 ~/.asdf/installs/ruby/3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
           asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
 
           retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --source=.
