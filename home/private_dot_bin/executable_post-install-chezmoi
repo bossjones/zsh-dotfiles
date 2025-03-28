@@ -338,7 +338,7 @@ if [ "$CURRENT_OS" = "macos" ]; then
 
   # https://github.com/jiaaro/pydub#installation
   # libav
-  brew install libav || true
+  # brew install libav || true
   brew install just || true
 
   brew install highlight || true
@@ -353,7 +353,8 @@ if [ "$CURRENT_OS" = "macos" ]; then
   brew install libraw || true
   brew install imagemagick || true
   brew install graphviz || true
-  brew install ibmediainfo bc || true
+  brew install libmediainfo bc || true
+  brew install ffmpeg || true
   brew install --verbose bossjones/tap/ffmpeg@6.0 || true
 
 fi
