@@ -157,15 +157,21 @@ jobs:
           export ASDF_COMPLETIONS="$ASDF_DIR/completions"
           . "$HOME/.asdf/asdf.sh"
 
+          set -x
+
           echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
           echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+
+          GNUGETOPT_BIN="$(brew --prefix gnu-getopt)/bin"
+          echo "$GNUGETOPT_BIN" >> "${GITHUB_PATH}"
+
+          export PATH="${GNUGETOPT_BIN}:${PATH}"
 
           # Fix SC2155: Declare and assign separately
           OPENSSL3_PREFIX="$(brew --prefix openssl@3)"
           export LDFLAGS="-L${OPENSSL3_PREFIX}/lib"
           export CPPFLAGS="-I${OPENSSL3_PREFIX}/include"
 
-          set -x
 
           brew install openssl readline sqlite3 xz zlib tcl-tk pkg-config autogen bash bzip2 libffi cheat python@3.10
 
