@@ -125,6 +125,7 @@ brew install kadwanev/brew/retry || true
 brew install go || true
 brew install trash || true
 
+
 # Set up PATH to include user bin directories
 echo "Setting up PATH..."
 mkdir -p "$HOME/bin" "$HOME/.bin" "$HOME/.local/bin"
