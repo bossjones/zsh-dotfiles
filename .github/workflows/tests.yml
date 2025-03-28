@@ -24,18 +24,19 @@ concurrency:
   cancel-in-progress: true
 jobs:
   tests:
-    runs-on: macos-14
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: ['macos-14', 'macos-latest']
         python-version: ['3.12']
 
     steps:
-      - name: Set up Git repository
+      - name: Set up Git repository on ${{ matrix.os }}
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -47,11 +48,16 @@ jobs:
           go-version: '1.20.5' # The Go version to download (if necessary) and use.
       - run: go version
 
-      - name: brew taps
+      - name: brew taps on ${{ matrix.os }}
         run: |
             brew tap schniz/tap || true
 
-      - name: Run zsh-dotfiles-prep
+      - name: brew install actionlint ${{ matrix.os }}
+        run: |
+            brew install actionlint || true
+
+
+      - name: Run zsh-dotfiles-prep on ${{ matrix.os }}
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -65,6 +71,8 @@ jobs:
             brew install kadwanev/brew/retry || true
             brew install go || true
 
+            brew install openssl@3 readline libyaml gmp autoconf tmux || true
+
             { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
             export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
 
@@ -72,9 +80,8 @@ jobs:
             chmod +x zsh-dotfiles-prereq-installer
             retry -t 4  -- ./zsh-dotfiles-prereq-installer --debug
 
-            # curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
 
-      - name: Rerun zsh-dotfiles-prep
+      - name: Rerun zsh-dotfiles-prep on ${{ matrix.os }}
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -95,9 +102,8 @@ jobs:
             chmod +x zsh-dotfiles-prereq-installer
             retry -t 4  -- ./zsh-dotfiles-prereq-installer --debug
 
-            # curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
 
-      - name: full chezmoi install
+      - name: full chezmoi install on ${{ matrix.os }}
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -105,11 +111,6 @@ jobs:
           ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
           ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
         run: |
-          # set -x;pwd
-          # set -x;ls -lta
-          # set -x;ls -lta ~/.bin
-          # set +x
-
           { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
           export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
 
@@ -122,6 +123,15 @@ jobs:
           export LV_BRANCH="release-1.3/neovim-0.9"
           curl -s "https://raw.githubusercontent.com/LunarVim/LunarVim/${LV_BRANCH}/utils/installer/install.sh" | bash -s -- --install-dependencies -y
 
+
+      - name: macos-15 requires a custom tap for openssl@1.1
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install openssl@3 readline libyaml gmp autoconf tmux || true
+          brew install rbenv/tap/openssl@1.1 || true
+          brew info gnu-getopt || true
+
+
       # Allow debugging with tmate
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
@@ -131,14 +141,70 @@ jobs:
           # If you have registered one or more public SSH keys with your GitHub profile, tmate will be started such that only those keys are authorized to connect, otherwise anybody can connect to the tmate session. If you want to require a public SSH key to be installed with the tmate session, no matter whether the user who started the workflow has registered any in their GitHub profile, you will need to configure the setting limit-access-to-actor to true, like so:
           limit-access-to-actor: true
 
-      - name: pytest
-        # env:
-        #   # Unlike the above, we are actually distributing these
-        #   # wheels, so they need to be built for production use.
-        #   CPPFLAGS: "-O3 -flto -ffunction-sections"
-        #   CFLAGS:   "-O3 -flto -ffunction-sections"
-        #   # Build for both architectures
-        #   ARCHFLAGS: "-arch x86_64 -arch arm64"
+      - name: macos-15 needs you to explicitly add an argument for openssl 3 on ${{ matrix.os }}
+        if: matrix.os == 'macos-latest'
+        env:
+          ZSH_DOTFILES_PREP_CI: 1
+          ZSH_DOTFILES_PREP_DEBUG: 1
+          # NOTE: Skip Brew bundle for now, speed up tests
+          ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
+          ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: 1
+        run: |
+          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
+          export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
+
+          export ASDF_DIR="${HOME}/.asdf"
+          export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+          . "$HOME/.asdf/asdf.sh"
+
+          set -x
+
+          echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+          echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+
+          GNUGETOPT_BIN="$(brew --prefix gnu-getopt)/bin"
+          echo "$GNUGETOPT_BIN" >> "${GITHUB_PATH}"
+
+          export PATH="${GNUGETOPT_BIN}:${PATH}"
+
+          # Fix SC2155: Declare and assign separately
+          OPENSSL3_PREFIX="$(brew --prefix openssl@3)"
+          export LDFLAGS="-L${OPENSSL3_PREFIX}/lib"
+          export CPPFLAGS="-I${OPENSSL3_PREFIX}/include"
+
+          brew install rust || true
+          brew install openssl readline sqlite3 xz zlib tcl-tk pkg-config autogen bash bzip2 libffi cheat python@3.10 || true
+
+          brew install cmake || true
+
+          brew install curl diff-so-fancy direnv fd gnutls findutils fnm fpp fzf gawk gcc gh git gnu-indent gnu-sed gnu-tar grep gzip || true
+
+          brew install hub jq less lesspipe libxml2 lsof luarocks luv moreutils neofetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper || true
+
+          brew install ruby-build rbenv reattach-to-user-namespace ripgrep rsync screen screenfetch shellcheck shfmt unzip urlview vim watch wget zlib zsh openssl@1.1 git-delta || true
+          brew install kadwanev/brew/retry || true
+
+          brew install tmux || true
+          brew install openssl@3 readline libyaml gmp autoconf || true
+          brew install rbenv/tap/openssl@1.1 || true
+
+          brew install openssl@3 readline libyaml gmp autoconf || true
+
+          export ASDF_DIR="${HOME}/.asdf"
+          export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+          . "$HOME/.asdf/asdf.sh"
+
+          echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+          echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+          # ruby-build 3.2.1 ~/.asdf/installs/ruby/3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+          asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+
+          retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --source=.
+
+          retry -t 4  -- post-install-chezmoi
+
+
+      - name: pytest on ${{ matrix.os }}
         run: |
           # Removed 'exec zsh' to prevent script termination
           zsh -c '
