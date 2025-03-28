@@ -27,7 +27,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['macos-14', 'macos-15']
+        os: ['macos-14', 'macos-latest']
         python-version: ['3.12']
 
     steps:
@@ -51,6 +51,10 @@ jobs:
       - name: brew taps on ${{ matrix.os }}
         run: |
             brew tap schniz/tap || true
+
+      - name: brew install actionlint ${{ matrix.os }}
+        run: |
+            brew install actionlint || true
 
 
       - name: Run zsh-dotfiles-prep on ${{ matrix.os }}
@@ -121,13 +125,13 @@ jobs:
 
 
       - name: macos-15 requires a custom tap for openssl@1.1
-        if: matrix.os == 'macos-15'
+        if: matrix.os == 'macos-latest'
         run: |
           brew install openssl@3 readline libyaml gmp autoconf tmux || true
           brew install rbenv/tap/openssl@1.1
 
-      - name: macos-15 needs you to explicitly add an argument for openssl@3 on ${{ matrix.os }}
-        if: matrix.os == 'macos-15'
+      - name: macos-15 needs you to explicitly add an argument for openssl 3 on ${{ matrix.os }}
+        if: matrix.os == 'macos-latest'
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -145,10 +149,12 @@ jobs:
           echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
           echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
 
-          export LDFLAGS="-L$(brew --prefix openssl@3)/lib"
-          export CPPFLAGS="-I$(brew --prefix openssl@3)/include"
+          # Fix SC2155: Declare and assign separately
+          OPENSSL3_PREFIX="$(brew --prefix openssl@3)"
+          export LDFLAGS="-L${OPENSSL3_PREFIX}/lib"
+          export CPPFLAGS="-I${OPENSSL3_PREFIX}/include"
 
-          asdf install ruby 3.2.1 -- --with-openssl-dir="$(brew --prefix openssl@3)"
+          asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}"
 
           retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --source=.
 
