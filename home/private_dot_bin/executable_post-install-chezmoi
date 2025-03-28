@@ -306,26 +306,26 @@ if [ "$CURRENT_OS" = "macos" ]; then
   brew install font-fira-code || true
   brew install font-fira-code-nerd-font || true
 
-  brew install "font-droid-sans-mono-nerd-font" || true
-  brew install "font-fira-code" || true
-  brew install "font-fira-code-nerd-font" || true
-  brew install "font-fira-mono-nerd-font" || true
-  brew install "font-fontawesome" || true
-  brew install "font-hack-nerd-font" || true
-  brew install "font-inconsolata-nerd-font" || true
-  brew install "font-jetbrains-mono-nerd-font" || true
-  brew install "font-liberation" || true
-  brew install "font-liberation-nerd-font" || true
-  brew install "font-meslo-lg-nerd-font" || true
-  brew install "font-mononoki-nerd-font" || true
-  brew install "font-noto-color-emoji" || true
-  brew install "font-noto-emoji" || true
-  brew install "font-noto-nerd-font" || true
-  brew install "font-sauce-code-pro-nerd-font" || true
-  brew install "font-symbols-only-nerd-font" || true
-  brew install "font-ubuntu-mono-nerd-font" || true
-  brew install "font-ubuntu-nerd-font" || true
-  brew install "font-victor-mono-nerd-font" || true
+  brew install font-droid-sans-mono-nerd-font || true
+  brew install font-fira-code || true
+  brew install font-fira-code-nerd-font || true
+  brew install font-fira-mono-nerd-font || true
+  brew install font-fontawesome || true
+  brew install font-hack-nerd-font || true
+  brew install font-inconsolata-nerd-font || true
+  brew install font-jetbrains-mono-nerd-font || true
+  brew install font-liberation || true
+  brew install font-liberation-nerd-font || true
+  brew install font-meslo-lg-nerd-font || true
+  brew install font-mononoki-nerd-font || true
+  brew install font-noto-color-emoji || true
+  brew install font-noto-emoji || true
+  brew install font-noto-nerd-font || true
+  brew install font-sauce-code-pro-nerd-font || true
+  brew install font-symbols-only-nerd-font || true
+  brew install font-ubuntu-mono-nerd-font || true
+  brew install font-ubuntu-nerd-font || true
+  brew install font-victor-mono-nerd-font || true
   brew install repomix pstree imagemagick uv fdupes || true
   brew install ffmpeg tesseract || true
   brew install libmagic || true
@@ -333,14 +333,31 @@ if [ "$CURRENT_OS" = "macos" ]; then
   brew install atomicparsley || true
   brew install tree || true
   brew install tesseract || true
+  brew install graphicsmagick || true
 
 
   # https://github.com/jiaaro/pydub#installation
   # libav
   brew install libav || true
+  brew install just || true
+
+  brew install highlight || true
+  brew install htop || true
+  brew install http-prompt || true
+  brew install httpie || true
+  brew install httpstat || true
+  brew install hub || true
+  brew install hyperfine || true
+  brew install iftop || true
+  brew install liblqr || true
+  brew install libraw || true
+  brew install imagemagick || true
+  brew install graphviz || true
+  brew install ibmediainfo bc || true
   brew install --verbose bossjones/tap/ffmpeg@6.0 || true
 
 fi
+
 echo "run the following when confirmed installed"
 echo ""
 echo 'export LUNARVIM_LOG_LEVEL="debug"'
