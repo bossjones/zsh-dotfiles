@@ -128,7 +128,8 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           brew install openssl@3 readline libyaml gmp autoconf tmux || true
-          brew install rbenv/tap/openssl@1.1
+          brew install rbenv/tap/openssl@1.1 || true
+          brew info gnu-getopt || true
 
       - name: macos-15 needs you to explicitly add an argument for openssl 3 on ${{ matrix.os }}
         if: matrix.os == 'macos-latest'
@@ -154,7 +155,7 @@ jobs:
           export LDFLAGS="-L${OPENSSL3_PREFIX}/lib"
           export CPPFLAGS="-I${OPENSSL3_PREFIX}/include"
 
-          asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}"
+          asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
 
           retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --source=.
 
