@@ -359,13 +359,191 @@ if [ "$CURRENT_OS" = "macos" ]; then
 
 fi
 
+# # lunarvim setup
+# if [ "$CURRENT_OS" = "macos" ]; then
+#   echo "===== Setting up LunarVim environment ====="
+
+#   # Install dependencies
+#   echo "Installing dependencies..."
+#   brew install go-task || true
+#   brew install ctags || true
+
+#   # Installing Python dependencies
+#   echo "Installing Python packages..."
+#   pip3 install pynvim
+#   pip3 install jedi
+#   pip3 install vim-vint
+
+#   # Check versions
+#   echo "Checking environment versions..."
+#   nvim --version
+#   asdf current
+#   fnm ls
+#   python --version
+
+#   # Install LunarVim (version specific for Neovim 0.9)
+#   echo "Installing LunarVim..."
+#   LV_BRANCH='release-1.4/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.4/neovim-0.9/utils/installer/install.sh)
+
+#   # Fix permissions and clear caches (troubleshooting steps)
+#   echo "Applying fixes for common issues..."
+#   # Remove problematic plugin
+#   rm -rf ~/.local/share/lunarvim/site/pack/lazy/opt/bufferline.nvim || true
+#   # Clear Neovim cache
+#   rm -rf ~/.cache/nvim || true
+#   # Fix runtime permissions
+#   chmod -R 755 ~/.asdf/installs/neovim/0.11.0/share/nvim/runtime || true
+#   # Update ASDF shims
+#   asdf reshim neovim
+
+#   # Generate settings
+#   echo "Generating LunarVim settings..."
+#   lvim --headless +'lua require("lvim.utils").generate_settings()' +qa && sort -o lv-settings.lua{,}
+
+#   echo "===== Setup complete ====="
+#   echo "You can now run 'lvim' to start LunarVim"
+#   echo "Edit configuration with: lvim ~/.config/lvim/config.lua"
+#   echo "List available tasks with: task -g --list"
+# fi
+
 echo "run the following when confirmed installed"
 echo ""
 echo 'export LUNARVIM_LOG_LEVEL="debug"'
-echo 'export LV_BRANCH="release-1.3/neovim-0.9"'
+echo 'export LV_BRANCH="release-1.4/neovim-0.9"'
 echo 'curl -s "https://raw.githubusercontent.com/LunarVim/LunarVim/${LV_BRANCH}/utils/installer/install.sh" | bash -s -- --install-dependencies -y'
 echo "curl -L 'https://raw.githubusercontent.com/bossjones/lunarvim-config/main/config-simple.lua' > ~/.config/lvim/config.lua"
 echo "lvim"
+
+# cat cat <<"EOF" >~/.config/lvim/config.lua
+# -- ❯ \cat ~/.config/lvim/config.lua
+# -- Read the docs: https://www.lunarvim.org/docs/configuration
+# -- Video Tutorials: https://www.youtube.com/watch?v=sFA9kX-Ud_c&list=PLhoH5vyxr6QqGu0i7tt_XoVK9v-KvZ3m6
+# -- Forum: https://www.reddit.com/r/lunarvim/
+# -- Discord: https://discord.com/invite/Xb9B4Ny
+
+# -- TODO: Try these configs eventually
+# -- Defaults from lvim
+
+# -- SOURCE: https://github.com/LunarVim/starter.lvim/blob/python-ide/config.lua
+# -- install plugins
+# lvim.plugins = {
+#   {"akinsho/bufferline.nvim", tag = "v4.6.1"},  -- Pin to a stable version
+#   "nvim-neotest/nvim-nio", -- Add this line
+#   "ChristianChiarulli/swenv.nvim",
+#   "stevearc/dressing.nvim",
+#   "mfussenegger/nvim-dap-python",
+#   "nvim-neotest/neotest",
+#   "nvim-neotest/neotest-python",
+# }
+
+# -- lvim.debug = false
+# -- vim.lsp.set_log_level "error"
+# -- lvim.log.level = "warn"
+
+# lvim.log.level = "warn"
+# lvim.format_on_save.enabled = false
+# lvim.colorscheme = "lunar"
+# lvim.leader = "space"
+# lvim.keys.normal_mode["<C-s>"] = ":w<cr>"
+# lvim.builtin.alpha.active = true
+# lvim.builtin.alpha.mode = "dashboard"
+# lvim.builtin.terminal.active = true
+# lvim.builtin.nvimtree.setup.view.side = "left"
+# lvim.builtin.nvimtree.setup.renderer.icons.show.git = false
+
+# -- automatically install python syntax highlighting
+# lvim.builtin.treesitter.ensure_installed = {
+#   "awk",
+#   "bash",
+#   "c",
+#   "cmake",
+#   "cpp",
+#   "css",
+#   "diff",
+#   "dockerfile",
+#   "git_config",
+#   "gitattributes",
+#   "gitcommit",
+#   "gitignore",
+#   "ini",
+#   "javascript",
+#   "json",
+#   "lua",
+#   "make",
+#   "passwd",
+#   "python",
+#   "rst",
+#   "ruby",
+#   "rust",
+#   "toml",
+#   "tsx",
+#   "typescript",
+#   "yaml",
+# }
+
+# lvim.builtin.treesitter.ignore_install = { "haskell" }
+# lvim.builtin.treesitter.highlight.enable = true
+
+# -- Custom vim options
+# -- vim.opt.relativenumber=true
+
+# -- setup formatting
+# local formatters = require "lvim.lsp.null-ls.formatters"
+# formatters.setup { { name = "black" }, }
+# lvim.format_on_save.enabled = true
+# lvim.format_on_save.pattern = { "*.py" }
+
+# -- setup linting
+# local linters = require "lvim.lsp.null-ls.linters"
+# linters.setup { { command = "flake8", filetypes = { "python" } } }
+
+# -- setup debug adapter
+# lvim.builtin.dap.active = true
+# local mason_path = vim.fn.glob(vim.fn.stdpath "data" .. "/mason/")
+# pcall(function()
+#   require("dap-python").setup(mason_path .. "packages/debugpy/venv/bin/python")
+# end)
+
+# -- setup testing
+# require("neotest").setup({
+#   adapters = {
+#     require("neotest-python")({
+#       -- Extra arguments for nvim-dap configuration
+#       -- See https://github.com/microsoft/debugpy/wiki/Debug-configuration-settings for values
+#       dap = {
+#         justMyCode = false,
+#         console = "integratedTerminal",
+#       },
+#       args = { "--log-level", "DEBUG", "--quiet" },
+#       runner = "pytest",
+#     })
+#   }
+# })
+
+# lvim.builtin.which_key.mappings["dm"] = { "<cmd>lua require('neotest').run.run()<cr>",
+#   "Test Method" }
+# lvim.builtin.which_key.mappings["dM"] = { "<cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>",
+#   "Test Method DAP" }
+# lvim.builtin.which_key.mappings["df"] = {
+#   "<cmd>lua require('neotest').run.run({vim.fn.expand('%')})<cr>", "Test Class" }
+# lvim.builtin.which_key.mappings["dF"] = {
+#   "<cmd>lua require('neotest').run.run({vim.fn.expand('%'), strategy = 'dap'})<cr>", "Test Class DAP" }
+# lvim.builtin.which_key.mappings["dS"] = { "<cmd>lua require('neotest').summary.toggle()<cr>", "Test Summary" }
+
+
+# -- binding for switching
+# lvim.builtin.which_key.mappings["C"] = {
+#   name = "Python",
+#   c = { "<cmd>lua require('swenv.api').pick_venv()<cr>", "Choose Env" },
+# }
+
+# -- local formatters = require "lvim.lsp.null-ls.formatters"
+# -- formatters.setup { { name = "black" }}
+
+# -- local linters = require "lvim.lsp.null-ls.linters"
+# -- linters.setup { { command = "flake8", args = { "--ignore=E203" }, filetypes = { "python" } }}
+# EOF
+
 
 # export LUNARVIM_LOG_LEVEL="debug"
 # export LV_BRANCH='release-1.3/neovim-0.9'
