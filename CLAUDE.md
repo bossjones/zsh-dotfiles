@@ -158,18 +158,39 @@ Key packages installed during CI:
 
 ### Ubuntu-Specific Packages
 **Essential Development Libraries:**
-- Build tools: `build-essential`, `autotools-dev`, `automake`
-- Image processing: `libjpeg-dev`, `libtiff5-dev`, `libwebp-dev`, `libfreetype6-dev`
-- Database: `libmysqlclient-dev`, `libpq-dev`, `postgresql-client`
-- XML/Text: `libxml2-dev`, `libxslt-dev`, `pandoc`
+- Build tools: `build-essential`, `autotools-dev`, `automake`, `cmake`, `meson`, `ninja-build`
+- Image processing: `libjpeg-dev`, `libtiff-dev`, `libpng-dev`, `libwebp-dev`, `libfreetype6-dev`, `imagemagick`
+- Database: `libmysqlclient-dev`, `libpq-dev`, `postgresql-client`, `sqlite3`, `libhdf5-serial-dev`
+- XML/Text: `libxml2-dev`, `libxslt-dev`, `pandoc`, `doxygen`
 - Compression: `libbz2-dev`, `zlib1g-dev`, `xz-utils`
-- SSL/Crypto: `libssl-dev`, `libffi-dev`
-- Python deps: `libreadline-dev`, `liblzma-dev`, `libncursesw5-dev`
+- SSL/Crypto: `libssl-dev`, `libffi-dev`, `libgnutls28-dev`
+- Python deps: `libreadline-dev`, `liblzma-dev`, `libncursesw5-dev`, `python3-numpy`, `python3-scipy`, `python3-matplotlib`
+
+**Multimedia & Video Processing:**
+- **ffmpeg**: Core video/audio processing framework with comprehensive codec support
+- Video codecs: `libx264-dev`, `libx265-dev`, `libvpx-dev`, `libxvidcore-dev`, `libaom-dev`
+- Audio codecs: `libmp3lame-dev`, `libopus-dev`, `libfdk-aac-dev`, `libvorbis-dev`, `libass-dev`, `libtheora-dev`
+- Streaming: `libavcodec-dev`, `libavformat-dev`, `libswscale-dev`, `libv4l-dev`
+- Hardware acceleration: `libva-dev`, `libvdpau-dev`
+- SDL/Graphics: `libsdl2-dev`, `libsdl2-image-dev`, `libsdl2-mixer-dev`, `libsdl2-ttf-dev`
+- Gstreamer: `libgstreamer1.0-dev`, `libgstreamer-plugins-base1.0-dev`
+
+**Computer Vision & OpenCV:**
+- OpenCV: `libopencv-dev`, `python3-opencv`
+- Math libraries: `libopenblas-dev`, `liblapack-dev`, `libatlas-base-dev`, `libeigen3-dev`
+- Threading: `libtbb-dev`, `libtbb2`, `libomp-dev`
+- Graphics: `libgtk-3-dev`, `openexr`, `libopenexr-dev`
+
+**Network & Download Tools:**
+- Download utilities: `aria2`, `atomicparsley`, `nmap`
+- Network libraries: `libaria2-dev`, `python3-netaddr`
+- OCR: `tesseract-ocr` (version 5 from PPA)
 
 **CLI Tools:**
 - Search: `fd-find`, `ripgrep`, `silversearcher-ag`, `fzf`
-- File operations: `tree`, `parallel`, `file`, `jq`
-- System: `curl`, `git`, `vim`, `direnv`, `awscli`, `ccze`
+- File operations: `tree`, `parallel`, `file`, `jq`, `fdupes`
+- System: `curl`, `git`, `vim`, `direnv`, `awscli`, `ccze`, `linux-headers`
+- Development: `pkg-config`, `git-core`, `mercurial`, `graphviz`
 
 ### Kubernetes Tools (krew plugins)
 - **Debugging**: `node-shell`, `netshoot`, `pod-inspect`, `explore`
