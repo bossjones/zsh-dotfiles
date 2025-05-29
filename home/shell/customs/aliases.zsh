@@ -2673,6 +2673,16 @@ alias dlh='dl_helldivers'
 
 alias cn='cursor-nightly'
 
+dl_using_chrome(){
+    local uri="$1"
+    local profile_name="${2:-2}"  # Default to 2 if not provided
+
+    pyenv activate yt-dlp3 || true
+    yt-dlp -I "1::2" --cookies-from-browser chrome:Profile\ $profile_name "$uri"
+
+}
+alias dlc='dl_using_chrome'
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
