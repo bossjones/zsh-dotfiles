@@ -2683,6 +2683,20 @@ dl_using_chrome(){
 }
 alias dlc='dl_using_chrome'
 
+ytdl_by_id() {
+    if [ $# -ne 2 ]; then
+        echo "Usage: ytdl <format_code> <url>"
+        echo "Example: ytdl 617 'https://youtube.com/watch?v=example'"
+        return 1
+    fi
+
+    local format_code="$1"
+    local url="$2"
+    pyenv activate yt-dlp3 || true
+
+    yt-dlp -v -f "${format_code}+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "$url"
+}
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
