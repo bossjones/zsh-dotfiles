@@ -89,24 +89,24 @@ This plan outlines the step-by-step process to create CentOS equivalents of the 
 | `libbz2-dev` | `bzip2-devel` | Compression |
 | `libffi-dev` | `libffi-devel` | Foreign function interface |
 
-## Phase 3: Implementation Order
-### Step 1: High Priority Scripts
-1. Create `run_before-00-prereq-centos.sh.tmpl`
-2. Create `run_before-00-prereq-centos-pyenv.sh.tmpl`  
-3. Create `run_onchange_before_01-centos-install-packages.sh.tmpl`
+## Phase 3: Implementation Order (COMPLETED)
+### Step 1: High Priority Scripts ✓
+1. [x] Create `run_before-00-prereq-centos.sh.tmpl`
+2. [x] Create `run_before-00-prereq-centos-pyenv.sh.tmpl`  
+3. [x] Create `run_onchange_before_01-centos-install-packages.sh.tmpl`
 
-### Step 2: Medium Priority Tool Installation
-4. Create `run_onchange_before_02-centos-install-asdf.sh.tmpl`
-5. Create `run_onchange_before_02-centos-install-fd.sh.tmpl`
-6. Create `run_onchange_before_02-centos-install-fnm.sh.tmpl`
-7. Create `run_onchange_before_02-centos-install-opencv-deps.sh.tmpl`
-8. Create `run_onchange_before_02-centos-install-sheldon.sh.tmpl`
-9. Create `run_onchange_before_03-centos-install-krew.sh.tmpl`
+### Step 2: Medium Priority Tool Installation ✓
+4. [x] Create `run_onchange_before_02-centos-install-asdf.sh.tmpl`
+5. [x] Create `run_onchange_before_02-centos-install-fd.sh.tmpl`
+6. [x] Create `run_onchange_before_02-centos-install-fnm.sh.tmpl`
+7. [x] Create `run_onchange_before_02-centos-install-opencv-deps.sh.tmpl`
+8. [x] Create `run_onchange_before_02-centos-install-sheldon.sh.tmpl`
+9. [x] Create `run_onchange_before_03-centos-install-krew.sh.tmpl`
 
-### Step 3: Configuration and Completion Scripts
-10. Create `run_onchange_after_50-centos-install-asdf-plugins.sh.tmpl`
-11. Create `run_after-00-adhoc-centos.sh.tmpl`
-12. Create `run_onchange_before_99-centos-write-completions.sh.tmpl`
+### Step 3: Configuration and Completion Scripts ✓
+10. [x] Create `run_onchange_after_50-centos-install-asdf-plugins.sh.tmpl`
+11. [x] Create `run_after-00-adhoc-centos.sh.tmpl`
+12. [x] Create `run_onchange_before_99-centos-write-completions.sh.tmpl`
 
 ## Phase 4: Template Integration
 ### Chezmoi Template Variables
@@ -150,8 +150,22 @@ This plan outlines the step-by-step process to create CentOS equivalents of the 
 5. **Firewall settings**: Different from Ubuntu's ufw
 
 ## Success Criteria
-- [ ] All 12 CentOS scripts created and functional
+- [x] All 12 CentOS scripts created and functional
 - [ ] Template conditions properly isolate Ubuntu vs CentOS logic
 - [ ] All tools install successfully on CentOS 9
 - [ ] No conflicts with existing Ubuntu functionality
 - [ ] Proper error handling and logging maintained
+
+## Phase 6: Oracle Linux Support (COMPLETED)
+### Template Configuration Updates
+- [x] **Updated Sheldon Plugin Configuration**: Modified both `home/dot_sheldon/plugins.toml.tmpl` and `home/private_dot_config/sheldon/plugins.toml.tmpl`
+  - Added Oracle Linux Server support alongside CentOS Linux for Red Hat-based plugins (salt, saltstack, docker, docker-compose, rust)
+  - Extended CUDA plugin support to Oracle Linux Server (based on chezmoi data showing CUDA availability)
+  - Added FZF shell integration support for Oracle Linux Server
+  - Used `or` conditions to group Oracle Linux Server with appropriate distributions for plugin loading
+
+### Oracle Linux Integration Notes
+- Oracle Linux Server uses the same Red Hat-based ecosystem as CentOS
+- CUDA support enabled based on system capabilities (`"cuda": true` in chezmoi data)  
+- Plugin configuration now supports three major Linux distributions: Ubuntu, CentOS Linux, and Oracle Linux Server
+- Template conditions use `{{ if (or (eq .chezmoi.osRelease.name "CentOS Linux") (eq .chezmoi.osRelease.name "Oracle Linux Server")) -}}` pattern
