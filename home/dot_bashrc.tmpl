@@ -124,6 +124,33 @@ fi
 
 {{ end -}}
 {{ end -}}
+{{- if or (eq .chezmoi.osRelease.id "ol") (contains "centos" (.chezmoi.osRelease.id | lower)) (contains "rhel" (.chezmoi.osRelease.id | lower)) (eq .chezmoi.osRelease.idLike "fedora") -}}
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+    . /etc/bashrc
+fi
+
+# User specific environment
+if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]
+then
+    PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+fi
+export PATH
+
+# Uncomment the following line if you don't like systemctl's auto-paging feature:
+# export SYSTEMD_PAGER=
+
+# User specific aliases and functions
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+# chezmoi managed (shell: bash)
+[ -f "$HOME/compat.bash" ] && source "$HOME/compat.bash"
+
+{{ end -}}
 {{ end -}}
 
 {{ if eq .chezmoi.os "darwin" -}}
