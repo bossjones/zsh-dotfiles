@@ -1,0 +1,9 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if or (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "ol") (eq .chezmoi.osRelease.id "rhel") -}}
+
+#!/usr/bin/env zsh
+
+# noop
+
+{{ end -}}
+{{ end -}}

@@ -66,7 +66,7 @@ use = ["**/fancy-ctrl-z/*.plugin.zsh"]
 apply = ["defer"]
 
 {{ if (eq .chezmoi.os "linux") -}}
-{{ if (eq .chezmoi.osRelease.name "CentOS Linux") -}}
+{{ if (or (eq .chezmoi.osRelease.name "CentOS Linux") (eq .chezmoi.osRelease.name "Oracle Linux Server")) -}}
 [plugins.salt]
 github = "ohmyzsh/ohmyzsh"
 use = ["**/salt/_salt"]
@@ -184,7 +184,7 @@ apply = ["defer"]
 # apply = ["defer-more"]
 
 {{if (eq .chezmoi.os "linux") -}}
-{{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+{{if (or (eq .chezmoi.osRelease.name "Ubuntu") (eq .chezmoi.osRelease.name "Oracle Linux Server")) -}}
 [plugins.cuda]
 local = "~/.local/share/chezmoi/home/shell/cuda"
 use = ["custom.zsh"]
@@ -200,7 +200,7 @@ local = "~/.local/share/chezmoi/home/shell"
 use = ["**/aliases.zsh"]
 
 {{if (eq .chezmoi.os "linux") -}}
-{{if (eq .chezmoi.osRelease.name "Ubuntu") -}}
+{{if (or (eq .chezmoi.osRelease.name "Ubuntu") (eq .chezmoi.osRelease.name "Oracle Linux Server")) -}}
 [plugins.boss_fzf]
 inline='[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh'
 {{ end }}

@@ -1,0 +1,9 @@
+{{- if (eq .chezmoi.os "linux") -}}
+#!/bin/sh
+
+# Install asdf
+
+printf "${green}[10 - linux] ${reset}"
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --depth 1 --branch {{ .myAsdfVersion}} || true
+
+{{ end -}}

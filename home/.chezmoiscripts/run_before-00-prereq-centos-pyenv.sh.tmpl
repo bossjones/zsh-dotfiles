@@ -1,0 +1,54 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if or (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "ol") (eq .chezmoi.osRelease.id "rhel") -}}
+#!/bin/bash
+
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$HOME/.pyenv/bin:$HOME/.pyenv/shims:$PATH"
+
+if [[ ! -s "$HOME/.pyenv/bin/pyenv" ]]
+then
+
+    sudo dnf update -y
+    sudo dnf install -y glibc-langpack-en ca-certificates && \
+    sudo localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+
+    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+
+    export PYENV_ROOT="$HOME/.pyenv"
+    command -v pyenv >/dev/null || export PATH="$HOME/.pyenv/bin:$HOME/.pyenv/shims:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+
+    git clone https://github.com/yyuu/pyenv-pip-rehash.git $(pyenv root)/plugins/pyenv-pip-rehash || true
+    git clone https://github.com/pyenv/pyenv-virtualenvwrapper.git $(pyenv root)/plugins/pyenv-virtualenvwrapper || true
+
+    # install pyenv dependencies
+    sudo dnf update -y
+    sudo dnf install -y make gcc-c++ openssl-devel zlib-devel bzip2-devel readline-devel sqlite-devel wget curl llvm ncurses-devel xz tk-devel libxml2-devel libxmlsec1-devel libffi-devel xz-devel
+
+    # eval "$(pyenv init --path)"
+    # eval "$(pyenv init -)"
+    # pyenv virtualenvwrapper_lazy
+
+    echo "3.9.9" > $HOME/python-versions.txt
+    echo "3.9.10" >> $HOME/python-versions.txt
+
+    set -x
+    pyenv update && \
+            xargs -P 4 -n 1 pyenv install < $HOME/python-versions.txt && \
+            pyenv global $(pyenv versions --bare) && \
+            find $PYENV_ROOT/versions -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rfv '{}' + && \
+            find $PYENV_ROOT/versions -type f '(' -name '*.py[co]' -o -name '*.exe' ')' -exec rm -fv '{}' + && \
+            mv -v -- $HOME/python-versions.txt $PYENV_ROOT/version
+    set +x
+
+    python3 -c "import sys;print(sys.executable)"
+
+    pip install -U pip setuptools virtualenvwrapper wheel pyvideothumbnailer
+
+    pyenv rehash
+
+fi
+
+{{ end -}}
+{{ end -}}

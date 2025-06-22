@@ -1,0 +1,95 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if or (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "ol") (eq .chezmoi.osRelease.id "rhel") -}}
+#!/bin/sh
+
+# Install common packages for RHEL/CentOS/Oracle Linux 9
+
+printf "${green}[10 - rhel-family] ${reset}"
+
+# Enable EPEL and PowerTools/CRB repositories
+sudo dnf install -y epel-release
+sudo dnf config-manager --set-enabled crb
+
+# Update package database
+sudo dnf update -y
+
+# Basic tools and utilities
+sudo dnf install -y curl git gnupg2 zsh tar vim direnv
+sudo dnf install -y fd-find
+sudo dnf install -y the_silver_searcher
+sudo dnf install -y ripgrep
+sudo dnf install -y jq tree parallel file
+sudo dnf install -y fzf perl gettext direnv vim awscli2 ccze
+
+# Development tools and libraries
+sudo dnf groupinstall -y "Development Tools"
+sudo dnf install -y \
+        bzr \
+        curl \
+        doxygen \
+        gcc-c++ \
+        git-core \
+        graphviz-devel \
+        bzip2-devel \
+        cairo-devel \
+        enchant2-devel \
+        libevent-devel \
+        libffi-devel \
+        freetype \
+        freetype-devel \
+        graphviz-devel \
+        libjpeg-turbo-devel \
+        libjpeg-turbo-devel \
+        lcms2-devel \
+        mysql-devel \
+        postgresql-devel \
+        readline-devel \
+        sqlite-devel \
+        libtiff-devel \
+        libwebp-devel \
+        libxml2-devel \
+        libxslt-devel \
+        libxslt-devel \
+        mercurial \
+        pandoc \
+        pkgconf-pkg-config \
+        postgresql \
+        subversion \
+        zlib-devel
+
+# asdf Python extra requirements
+# https://github.com/pyenv/pyenv/wiki#suggested-build-environment
+sudo dnf install -y \
+    xz-devel \
+    ncurses-devel \
+    openssl-devel \
+    libxmlsec1-devel \
+    llvm \
+    make \
+    tk-devel \
+    wget \
+    xz
+
+# asdf nodejs extra requirements
+# https://github.com/asdf-vm/asdf-nodejs#linux-debian
+sudo dnf install -y \
+    gpg2
+
+# asdf Golang extra requirements
+# https://github.com/kennyp/asdf-golang#linux-debian
+sudo dnf install -y \
+    coreutils
+
+# Install fd-find and create symlink
+sudo dnf install -y fd-find fdupes net-tools ripgrep
+mkdir -p ~/bin || true
+# CentOS uses 'fd' directly, not 'fdfind'
+if command -v fdfind >/dev/null 2>&1; then
+    ln -sv $(which fdfind) ~/bin/fd || true
+elif command -v fd >/dev/null 2>&1; then
+    ln -sv $(which fd) ~/bin/fd || true
+fi
+
+{{ end -}}
+
+{{ end -}}
