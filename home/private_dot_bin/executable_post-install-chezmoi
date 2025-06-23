@@ -75,6 +75,7 @@ if [ ! -f ~/.cargo/env ]; then
       echo "The operating system is CentOS/RHEL-based. Install rust package deps"
       sudo dnf groupinstall "Development Tools" -y
       sudo dnf install libxcb-devel libxcb-render-devel libxcb-shape-devel libxcb-xfixes-devel -y
+      sudo dnf install lua-devel -y
     fi
   fi
 
@@ -250,6 +251,7 @@ if [ "$CURRENT_OS" != "macos" ]; then
     # Install EPEL repository for additional packages
     sudo dnf install epel-release -y
     sudo dnf install luarocks neofetch -y
+    sudo dnf install lua-devel -y
     sudo luarocks install luacheck
     curl -L "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-$(display_tarball_platform_dash)" >~/.local/bin/hadolint && \
       chmod +x ~/.local/bin/hadolint && \
