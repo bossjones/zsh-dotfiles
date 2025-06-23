@@ -2,7 +2,7 @@
 #!/bin/bash
 
 {{ if or (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "ol") (eq .chezmoi.osRelease.id "rhel") }}
-sudo dnf install -y autotools automake unzip zip
+sudo dnf install -y --allowerasing automake unzip zip
 sudo dnf install -y libyaml-devel
 {{ end }}
 
