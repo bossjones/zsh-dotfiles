@@ -6,6 +6,19 @@ export LANG=C.UTF-8
 
 mkdir -p $HOME/.git-template || true
 
+# Logging functions
+log_info() {
+    echo "[INFO] $*"
+}
+
+log_warn() {
+    echo "[WARN] $*"
+}
+
+log_debug() {
+    echo "[DEBUG] $*"
+}
+
 is_docker() {
     [ -f /.dockerenv ] ||
     grep -q docker /proc/1/cgroup ||
@@ -13,14 +26,146 @@ is_docker() {
     [[ "$(hostname)" == *"docker"* ]]
 }
 
-if is_docker; then
-    dnf update -y
-    dnf install -y curl git gnupg2 zsh tar vim fzf perl gettext awscli2 wget gcc-c++ bash-completion sudo ffmpeg bc gawk --allowerasing
+# Install CentOS/RHEL dependencies
+install_centos_deps() {
+  log_info "Installing CentOS/RHEL dependencies"
+
+  # Enable Oracle Linux specific repositories if detected
+  if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    if [ "$ID" = "ol" ]; then
+      log_info "Detected Oracle Linux - enabling required repositories"
+
+      # Try to enable CodeReady Builder repository for Oracle Linux 9+
+      if sudo dnf config-manager --set-enabled ol9_codeready_builder 2>/dev/null; then
+        log_info "Enabled ol9_codeready_builder repository"
+      else
+        log_warn "Could not enable CodeReady Builder repository - continuing without it"
+      fi
+
+      # Install EPEL for Oracle Linux
+      sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm || \
+      log_warn "Could not install EPEL repository"
+    fi
+  fi
+
+  # Update package lists
+  log_info "Updating package lists"
+  sudo dnf update -y
+
+  # Install EPEL repository for additional packages (if not already installed for Oracle Linux)
+  if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    if [ "$ID" != "ol" ]; then
+      log_info "Installing EPEL repository"
+      sudo dnf install -y epel-release
+    fi
+  fi
+
+  # Configure locales
+  log_info "Configuring locales"
+  sudo dnf install -y glibc-locale-source glibc-langpack-en
+  sudo localedef -c -i en_US -f UTF-8 en_US.UTF-8
+
+  # Install essential system packages
+  log_info "Installing essential system packages"
+  essential_packages="sudo curl wget git ca-certificates gnupg gnupg2 procps-ng"
+  sudo dnf install -y $essential_packages
+
+  # Install build tools and development libraries
+  log_info "Installing build tools and development libraries"
+  sudo dnf groupinstall -y "Development Tools"
+  build_packages="gcc gcc-c++ make pkgconfig llvm"
+  dev_libraries="bzip2-devel cairo-devel libffi-devel xz-devel ncurses-devel libpq-devel readline-devel sqlite-devel openssl-devel python3-devel zlib-devel tk-devel libevent-devel xmlsec1-devel xmlsec1-openssl-devel libyaml-devel xvidcore-devel"
+
+  sudo dnf install -y $build_packages $dev_libraries
+
+  # Install shells and utilities
+  log_info "Installing shells and utilities"
+  shell_packages="zsh fish"
+  utility_packages="tree unzip vim xz sqlite openssl procps-ng man-pages bash-completion gzip"
+
+  sudo dnf install -y $shell_packages $utility_packages
+
+  sudo dnf install --enablerepo=ol9_codeready_builder libyaml-devel libevent-devel openssl-devel readline-devel ncurses-devel zlib-devel bzip2-devel libffi-devel -y
+
+  # Install Oracle Linux specific packages that need special handling
+  if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    if [ "$ID" = "ol" ]; then
+      log_info "Installing Oracle Linux specific packages"
+
+      # Install direnv via binary installer
+      if ! command -v direnv >/dev/null 2>&1; then
+        log_info "Installing direnv via binary installer"
+        curl -sfL https://direnv.net/install.sh | bash
+      fi
+
+      # Try to install bzr from EPEL
+      log_info "Attempting to install bzr"
+      sudo dnf install -y bzr || log_warn "bzr not available, consider pip install bzr"
+
+      # Download and install AtomicParsley manually
+      if ! command -v AtomicParsley >/dev/null 2>&1; then
+        log_info "Installing AtomicParsley manually"
+        cd /tmp
+        wget https://github.com/wez/atomicparsley/releases/latest/download/AtomicParsleyLinux.zip
+        unzip AtomicParsleyLinux.zip
+        sudo mv AtomicParsley /usr/local/bin/
+        sudo chmod +x /usr/local/bin/AtomicParsley
+        cd -
+      fi
+    fi
+  fi
+
+  # Install Python 3.12 if not available from system packages
+  if ! command -v python3.12 >/dev/null 2>&1; then
+    log_info "Installing Python 3.12"
+    sudo dnf install -y python3.12 python3.12-devel python3.12-pip
+  fi
+
+  # Install Go 1.20.5 if not available or if overwrite flag is set
+  if [ "$OVERWRITE_GO" = "1" ] || ! command -v go >/dev/null 2>&1 || [ "$(go version | cut -d' ' -f3)" != "go1.20.5" ]; then
+    log_info "Installing Go 1.20.5"
+    cd /tmp
+    wget -q https://go.dev/dl/go1.20.5.linux-amd64.tar.gz
+    sudo rm -rf /usr/local/go
+    sudo tar -C /usr/local -xzf go1.20.5.linux-amd64.tar.gz
+    rm go1.20.5.linux-amd64.tar.gz
+    cd -
+
+    # Add Go to PATH (smarter check to avoid duplicates)
+    if ! echo "$PATH" | grep -q "/usr/local/go/bin"; then
+      # Check if the PATH export line already exists in .bashrc
+      if ! grep -qF "export PATH=\$PATH:/usr/local/go/bin" "$HOME/.bashrc" 2>/dev/null; then
+        echo "export PATH=\$PATH:/usr/local/go/bin" >>"$HOME/.bashrc"
+        log_info "Added Go to PATH in .bashrc"
+      else
+        log_debug "Go PATH already exists in .bashrc"
+      fi
+      export PATH="$PATH":/usr/local/go/bin
+    else
+      log_debug "Go PATH already in current PATH"
+    fi
+  else
+    log_info "Go 1.20.5 already installed, skipping (use --overwrite to force reinstall)"
+  fi
+
+  # Install additional tools
+  log_info "Installing additional tools"
+  sudo dnf install -y tar vim fzf perl gettext awscli2 ffmpeg bc gawk --allowerasing
+
+  # Install retry tool
+  if ! command -v retry >/dev/null 2>&1; then
+    log_info "Installing retry tool"
     curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry
+  fi
+}
+
+if is_docker; then
+    install_centos_deps
 else
-    sudo dnf update -y
-    sudo dnf install -y curl git gnupg2 zsh tar vim fzf perl gettext awscli2 wget gcc-c++ bash-completion sudo ffmpeg bc gawk --allowerasing
-    sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+    install_centos_deps
 fi
 {{ end -}}
 {{ end -}}
