@@ -8,18 +8,18 @@ printf "${green}[10 - rhel-family] ${reset}"
 
 # Enable EPEL and PowerTools/CRB repositories
 sudo dnf install -y epel-release
-sudo dnf config-manager --set-enabled crb
+sudo dnf config-manager --set-enabled ol9_codeready_builder
 
 # Update package database
 sudo dnf update -y
 
 # Basic tools and utilities
-sudo dnf install -y curl git gnupg2 zsh tar vim direnv
+sudo dnf install -y curl git gnupg2 zsh tar vim
 sudo dnf install -y fd-find
 sudo dnf install -y the_silver_searcher
 sudo dnf install -y ripgrep
 sudo dnf install -y jq tree parallel file
-sudo dnf install -y fzf perl gettext direnv vim awscli2 ccze
+sudo dnf install -y fzf perl gettext vim awscli2 ccze
 
 # Development tools and libraries
 sudo dnf groupinstall -y "Development Tools"
