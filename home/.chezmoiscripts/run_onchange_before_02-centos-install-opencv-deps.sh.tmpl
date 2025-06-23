@@ -1,0 +1,126 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if or (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "ol") (eq .chezmoi.osRelease.id "rhel") -}}
+{{ if .opencv -}}
+#!/bin/sh
+
+# Install common packages for RHEL/CentOS/Oracle Linux 9
+
+# SOURCE: https://github.com/bossjones/debug-tools/blob/228bc7d32d3977b7173e433767a35ccdc3bfe52f/install-opencv-deps.sh
+
+printf "${green}[Installing prereqs opencv-deps] ${reset}"
+
+# Enable RPM Fusion repositories for multimedia packages
+sudo dnf install -y https://download1.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm
+sudo dnf install -y https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm
+
+sudo dnf update -y
+sudo dnf install -y --allowerasing gcc-c++ cmake git pkgconf-pkg-config gtk3-devel \
+    ffmpeg-devel gstreamer1-devel gstreamer1-plugins-base-devel \
+    libv4l-devel x264-devel libjpeg-turbo-devel libpng-devel libtiff-devel \
+    gcc-gfortran openexr-devel openblas-devel python3-devel python3-numpy \
+    tbb-devel tbb \
+    gstreamer1-plugins-base-devel gstreamer1-devel
+
+printf "${green}[Installing prereqs ffmpeg] ${reset}"
+sudo dnf install -y --allowerasing \
+    autoconf \
+    automake \
+    gcc-c++ \
+    cmake \
+    git-core \
+    libass-devel \
+    freetype-devel \
+    gnutls-devel \
+    SDL2-devel \
+    libtool \
+    libva-devel \
+    libvdpau-devel \
+    libvorbis-devel \
+    libxcb-devel \
+    pkgconf-pkg-config \
+    texinfo \
+    wget \
+    yasm \
+    zlib-devel
+
+sudo dnf install -y opus-devel lame-devel fdk-aac-free-devel libvpx-devel x264-devel yasm libass-devel libtheora-devel libvorbis-devel mercurial cmake gcc-c++
+
+sudo dnf install -y nasm
+sudo dnf install -y x264-devel
+sudo dnf install -y x265-devel numactl-devel
+sudo dnf install -y libvpx-devel
+sudo dnf install -y fdk-aac-free-devel
+sudo dnf install -y lame-devel
+sudo dnf install -y opus-devel
+sudo dnf install -y libaom-devel
+sudo dnf install -y libunistring-devel
+
+printf "${green}[Installing prereqs youtube-dl] ${reset}"
+sudo dnf install -y kernel-headers kernel-devel
+sudo dnf install -y ImageMagick
+sudo dnf install -y fdupes perl-Image-ExifTool libicu-devel
+sudo dnf install -y libxslt-devel perl doxygen
+sudo dnf install -y hdf5-devel
+sudo dnf install -y libjpeg-turbo-devel
+sudo dnf install -y libpng-devel
+sudo dnf install -y libtiff-devel
+sudo dnf install -y openexr-devel eigen3-devel tbb-devel tbb
+sudo dnf install -y python3-numpy openblas-devel
+sudo dnf install -y libomp-devel
+sudo dnf install -y openmpi tcl-devel
+sudo dnf install -y sqlite
+sudo dnf install -y xz
+sudo dnf install -y zlib-devel
+sudo dnf install -y file-devel libffi-devel
+sudo dnf install -y tree
+sudo dnf install -y tesseract nmap
+sudo dnf install -y ffmpeg-devel SDL2-devel SDL2_image-devel SDL2-devel SDL2_ttf-devel python3-pygame
+sudo dnf install -y SDL2_mixer-devel
+sudo dnf install -y python3-netaddr
+
+# SOURCE: https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
+sudo dnf update -y && sudo dnf install -y --allowerasing \
+autoconf \
+automake \
+gcc-c++ \
+cmake \
+git-core \
+libass-devel \
+freetype-devel \
+gnutls-devel \
+lame-devel \
+SDL2-devel \
+libtool \
+libva-devel \
+libvdpau-devel \
+libvorbis-devel \
+libxcb-devel \
+meson \
+ninja-build \
+pkgconf-pkg-config
+
+sudo dnf install -y libunistring-devel libaom-devel
+sudo dnf install -y gcc-c++ cmake git unzip pkgconf-pkg-config openblas-devel lapack-devel
+sudo dnf install -y python3-numpy python3-scipy python3-matplotlib
+sudo dnf install -y hdf5-devel python3-h5py
+sudo dnf install -y graphviz
+sudo dnf install -y python3-opencv
+# pip install pydot-ng
+
+sudo dnf install -y --allowerasing gcc-c++ cmake git pkgconf-pkg-config gtk3-devel \
+ffmpeg-devel gstreamer1-devel gstreamer1-plugins-base-devel libv4l-devel \
+x264-devel libjpeg-turbo-devel libpng-devel libtiff-devel \
+gcc-gfortran openexr-devel openblas-devel python3-devel python3-numpy \
+tbb-devel tbb \
+gstreamer1-plugins-base-devel gstreamer1-devel
+
+sudo dnf install -y --allowerasing aria2
+
+sudo dnf install -y --allowerasing opencv-devel python3-opencv ffmpeg
+set +x
+
+{{ end -}}
+
+{{ end -}}
+
+{{ end -}}

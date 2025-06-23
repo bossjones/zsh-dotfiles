@@ -1,0 +1,52 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if or (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "ol") (eq .chezmoi.osRelease.id "rhel") -}}
+
+#!/bin/sh
+
+
+if [ -n "$(command which kubectl 2>/dev/null)" ]; then
+    (
+      set -x; cd "$(mktemp -d)" &&
+      OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+      ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+      KREW="krew-${OS}_${ARCH}" &&
+      curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+      tar zxvf "${KREW}.tar.gz" &&
+      ./"${KREW}" install krew
+    )
+fi
+
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
+if [ -n "$(command which kubectl-krew 2>/dev/null)" ]; then
+    kubectl krew install resource-capacity || true
+    kubectl krew index add kvaps kvaps/krew-index || true
+    kubectl krew index add kvaps https://github.com/kvaps/krew-index || true
+    kubectl krew install kvaps/node-shell || true
+    kubectl krew install kurt || true
+    kubectl krew install images || true
+    kubectl krew install explore || true
+    kubectl krew install allctx || true
+    kubectl krew install gadget || true
+    kubectl krew install ingress-nginx || true
+    kubectl krew install ktop || true
+    kubectl krew install pod-inspect || true
+    kubectl krew install permissions || true
+    kubectl krew install node-logs || true
+    kubectl krew install resource-versions || true
+    kubectl krew install access-matrix || true
+    kubectl krew index add netshoot https://github.com/nilic/kubectl-netshoot.git || true
+    kubectl krew install netshoot/netshoot || true
+    kubectl krew install slice || true
+    kubectl krew install get-all || true
+    kubectl krew install foreach || true
+    kubectl krew install evict-pod || true
+    kubectl krew install clog || true
+    kubectl krew install view-secret || true
+    kubectl krew install neat || true
+fi
+
+
+{{ end -}}
+
+{{ end -}}

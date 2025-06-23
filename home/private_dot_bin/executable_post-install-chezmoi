@@ -2,15 +2,42 @@
 
 # SOURCE: https://rtx.pub/install.sh
 #region environment setup
+detect_platform() {
+  case "$(uname -s)" in
+    Darwin*)
+      PLATFORM="macos"
+      ;;
+    Linux*)
+      PLATFORM="linux"
+      # Detect specific Linux distribution
+      if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        case "$ID" in
+          debian|ubuntu)
+            LINUX_DISTRO="$ID"
+            ;;
+          centos|rhel|rocky|almalinux|ol)
+            LINUX_DISTRO="centos"
+            ;;
+          *)
+            echo "Unsupported Linux distribution: $ID"
+            echo "This script supports Debian, Ubuntu, and CentOS/RHEL-based distributions"
+            ;;
+        esac
+      else
+        echo "Cannot detect Linux distribution"
+      fi
+      ;;
+    *)
+      echo "Unsupported platform: $(uname -s)"
+      echo "This script only supports macOS and Linux"
+      ;;
+  esac
+}
+
 get_os() {
-  os="$(uname -s)"
-  if [ "$os" = Darwin ]; then
-    echo "macos"
-  elif [ "$os" = Linux ]; then
-    echo "linux"
-  else
-    error "unsupported OS: $os"
-  fi
+  detect_platform
+  echo "$PLATFORM"
 }
 
 # SOURCE: https://rtx.pub/install.sh
@@ -25,12 +52,14 @@ get_arch() {
   fi
 }
 
-CURRENT_OS="$(get_os)"
+detect_platform
+CURRENT_OS="$PLATFORM"
 # shellcheck disable=SC2034  # Unused variables left for readability
 CURRENT_ARCH="$(get_arch)"
 
 get_system() {
-  os="$(get_os)"
+  detect_platform
+  os="$PLATFORM"
   arch="$(get_arch)"
 }
 
@@ -38,12 +67,14 @@ if [ ! -f ~/.cargo/env ]; then
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
   source "$HOME"/.cargo/env
   if [ "$CURRENT_OS" != "macos" ]; then
-    # shellcheck disable=SC2002 # Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead
-    os_name=$(cat /etc/os-release | grep -oP '^NAME="\K[^"]+')
-    # Check if the operating system is Ubuntu
-    if [ "${os_name}" = "Ubuntu" ]; then
-      echo "The operating system is Ubuntu. Install rust package deps"
+    # Check if the operating system is Ubuntu or CentOS
+    if [ "$LINUX_DISTRO" = "ubuntu" ] || [ "$LINUX_DISTRO" = "debian" ]; then
+      echo "The operating system is $LINUX_DISTRO. Install rust package deps"
       sudo apt install build-essential libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev -y
+    elif [ "$LINUX_DISTRO" = "centos" ]; then
+      echo "The operating system is CentOS/RHEL-based. Install rust package deps"
+      sudo dnf groupinstall "Development Tools" -y
+      sudo dnf install libxcb-devel libxcb-render-devel libxcb-shape-devel libxcb-xfixes-devel -y
     fi
   fi
 
@@ -83,15 +114,17 @@ mkdir -p ~/.local/src || true
 # cd nvim-install
 # git checkout 29370c9b89963539bbe36ca1aa4cd1dbd1bcfb53 || true
 
-if [ "$CURRENT_OS" = "centos" ]; then
-  if [ ! -d /usr/local/n ]; then
-    set +e
-    # need nodejs
-    curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s lts
-    npm install -g n
-    set -e
-  else
-    echo "n already installed. skipping"
+if [ "$CURRENT_OS" != "macos" ]; then
+  if [ "$LINUX_DISTRO" = "centos" ]; then
+    if [ ! -d /usr/local/n ]; then
+      set +e
+      # need nodejs
+      curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -s lts
+      npm install -g n
+      set -e
+    else
+      echo "n already installed. skipping"
+    fi
   fi
 fi
 
@@ -197,11 +230,9 @@ display_tarball_platform_underscore() {
 }
 
 if [ "$CURRENT_OS" != "macos" ]; then
-  # shellcheck disable=SC2002 # Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead
-  os_name=$(cat /etc/os-release | grep -oP '^NAME="\K[^"]+')
-  # Check if the operating system is Ubuntu
-  if [ "${os_name}" = "Ubuntu" ]; then
-    echo "The operating system is Ubuntu."
+  # Check if the operating system is Ubuntu or CentOS
+  if [ "$LINUX_DISTRO" = "ubuntu" ] || [ "$LINUX_DISTRO" = "debian" ]; then
+    echo "The operating system is $LINUX_DISTRO."
     sudo apt install luarocks neofetch -y
     sudo luarocks install luacheck
     curl -L "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-$(display_tarball_platform_dash)" >~/.local/bin/hadolint && \
@@ -214,8 +245,24 @@ if [ "$CURRENT_OS" != "macos" ]; then
       tar -xvzf vale.tar.gz -C ~/.local/bin && \
       rm vale.tar.gz && \
       npm install -g markdownlint-cli
+  elif [ "$LINUX_DISTRO" = "centos" ]; then
+    echo "The operating system is CentOS/RHEL-based."
+    # Install EPEL repository for additional packages
+    sudo dnf install epel-release -y
+    sudo dnf install luarocks neofetch -y
+    sudo luarocks install luacheck
+    curl -L "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-$(display_tarball_platform_dash)" >~/.local/bin/hadolint && \
+      chmod +x ~/.local/bin/hadolint && \
+      pip install vim-vint && \
+      npm install -g @fsouza/prettierd && \
+      pip install yapf flake8 black && \
+      cd ~/.local/src && \
+      wget "https://github.com/errata-ai/vale/releases/download/v2.26.0/vale_2.26.0_$(display_tarball_platform_underscore).tar.gz" -O vale.tar.gz && \
+      tar -xvzf vale.tar.gz -C ~/.local/bin && \
+      rm vale.tar.gz && \
+      npm install -g markdownlint-cli
   else
-    echo "The operating system is not Ubuntu."
+    echo "The operating system is not supported: $LINUX_DISTRO"
   fi
 fi
 

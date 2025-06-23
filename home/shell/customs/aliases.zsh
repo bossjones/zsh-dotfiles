@@ -2683,6 +2683,60 @@ dl_using_chrome(){
 }
 alias dlc='dl_using_chrome'
 
+ytdl_by_id() {
+    if [ $# -ne 2 ]; then
+        echo "Usage: ytdl <format_code> <url>"
+        echo "Example: ytdl 617 'https://youtube.com/watch?v=example'"
+        return 1
+    fi
+
+    local format_code="$1"
+    local url="$2"
+    pyenv activate yt-dlp3 || true
+
+    yt-dlp -v -f "${format_code}+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "$url"
+}
+
+ytdl_auto() {
+    if [ $# -ne 1 ]; then
+        echo "Usage: ytdl_auto <url>"
+        echo "Example: ytdl_auto 'https://youtube.com/watch?v=example'"
+        return 1
+    fi
+
+    local url="$1"
+
+    echo "Fetching available formats..."
+
+    # Get the format list and find the highest resolution MP4 format
+    local best_format=$((pyenv activate yt-dlp3 || true; yt-dlp -F "$url") 2>/dev/null | \
+        grep -E '^[0-9]+.*mp4.*[0-9]+x[0-9]+.*video only' | \
+        awk '{
+            # Extract resolution width from column 3 (e.g., "1920x804" -> 1920)
+            if ($3 ~ /^[0-9]+x[0-9]+$/) {
+                split($3, res, "x")
+                width = res[1]
+                print width " " $0
+            }
+        }' | \
+        sort -n -r | \
+        head -1 | \
+        awk '{print $2}')
+
+    if [ -z "$best_format" ]; then
+        echo "Error: Could not find suitable MP4 format"
+        return 1
+    fi
+
+    echo "Found best MP4 format: $best_format"
+    echo "Downloading with format $best_format..."
+
+    # Call the original ytdl function with the detected format
+    ytdl_by_id "$best_format" "$url"
+}
+
+alias dl_auto='ytdl_auto'
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
