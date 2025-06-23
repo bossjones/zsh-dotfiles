@@ -14,7 +14,7 @@ sudo dnf install -y https://download1.rpmfusion.org/free/el/rpmfusion-free-relea
 sudo dnf install -y https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm
 
 sudo dnf update -y
-sudo dnf install -y gcc-c++ cmake git pkgconf-pkg-config gtk3-devel \
+sudo dnf install -y --allowerasing gcc-c++ cmake git pkgconf-pkg-config gtk3-devel \
     ffmpeg-devel gstreamer1-devel gstreamer1-plugins-base-devel \
     libv4l-devel xvid-devel x264-devel libjpeg-turbo-devel libpng-devel libtiff-devel \
     gcc-gfortran openexr-devel openblas-devel python3-devel python3-numpy \
@@ -22,7 +22,7 @@ sudo dnf install -y gcc-c++ cmake git pkgconf-pkg-config gtk3-devel \
     gstreamer1-plugins-base-devel gstreamer1-devel
 
 printf "${green}[Installing prereqs ffmpeg] ${reset}"
-sudo dnf install -y \
+sudo dnf install -y --allowerasing \
     autoconf \
     automake \
     gcc-c++ \
@@ -79,7 +79,7 @@ sudo dnf install -y SDL2_mixer-devel
 sudo dnf install -y python3-netaddr
 
 # SOURCE: https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
-sudo dnf update -y && sudo dnf install -y \
+sudo dnf update -y && sudo dnf install -y --allowerasing\
 autoconf \
 automake \
 gcc-c++ \
@@ -107,16 +107,16 @@ sudo dnf install -y graphviz
 sudo dnf install -y python3-opencv
 # pip install pydot-ng
 
-sudo dnf install -y gcc-c++ cmake git pkgconf-pkg-config gtk3-devel \
+sudo dnf install -y --allowerasinggcc-c++ cmake git pkgconf-pkg-config gtk3-devel \
 ffmpeg-devel gstreamer1-devel gstreamer1-plugins-base-devel libv4l-devel \
 xvid-devel x264-devel libjpeg-turbo-devel libpng-devel libtiff-devel \
 gcc-gfortran openexr-devel openblas-devel python3-devel python3-numpy \
 tbb-devel tbb \
 gstreamer1-plugins-base-devel gstreamer1-devel
 
-sudo dnf install -y aria2
+sudo dnf install -y --allowerasing aria2
 
-sudo dnf install -y opencv-devel python3-opencv ffmpeg
+sudo dnf install -y --allowerasing opencv-devel python3-opencv ffmpeg
 set +x
 
 {{ end -}}
