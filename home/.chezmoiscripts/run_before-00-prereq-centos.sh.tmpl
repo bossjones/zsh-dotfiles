@@ -15,11 +15,11 @@ is_docker() {
 
 if is_docker; then
     dnf update -y
-    dnf install -y curl git gnupg2 zsh tar vim fzf perl gettext direnv awscli2 wget gcc-c++ bash-completion sudo ffmpeg bc gawk mediainfo-devel --allowerasing
+    dnf install -y curl git gnupg2 zsh tar vim fzf perl gettext awscli2 wget gcc-c++ bash-completion sudo ffmpeg bc gawk --allowerasing
     curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry
 else
     sudo dnf update -y
-    sudo dnf install -y curl git gnupg2 zsh tar vim fzf perl gettext direnv awscli2 wget gcc-c++ bash-completion sudo ffmpeg bc gawk mediainfo-devel --allowerasing
+    sudo dnf install -y curl git gnupg2 zsh tar vim fzf perl gettext awscli2 wget gcc-c++ bash-completion sudo ffmpeg bc gawk --allowerasing
     sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
 fi
 {{ end -}}
