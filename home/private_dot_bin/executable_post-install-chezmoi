@@ -607,3 +607,4 @@ echo "lvim"
 # source ~/.profile
 # npm install -g jshint
 # NPM_CONFIG_PREFIX=~/.npm-global
+cargo install git-delta || true
