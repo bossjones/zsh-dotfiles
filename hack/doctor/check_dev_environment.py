@@ -28,7 +28,8 @@ class EnvironmentChecker:
             'brew_packages': [],
             'sheldon': None,
             'chezmoi': None,
-            'asdf_tools': []
+            'asdf_tools': [],
+            'env_vars': []
         }
         self.failed_checks = []
 
@@ -168,6 +169,118 @@ class EnvironmentChecker:
                 result['installed'] = True
                 result['current_version'] = parts[1]
                 result['version_correct'] = result['current_version'] == expected_version
+
+        return result
+
+    def parse_shell_config_for_var(self, var_name: str) -> Dict[str, str]:
+        """Parse shell configuration files to find where a variable is defined
+
+        Checks common shell configuration files for export statements or variable
+        assignments. Returns a dictionary mapping file paths to the defined values.
+        """
+        import os
+        import re
+
+        # Common shell configuration files to check
+        config_files = [
+            Path.home() / '.zshrc',
+            Path.home() / '.zprofile',
+            Path.home() / '.bashrc',
+            Path.home() / '.profile',
+            Path.home() / '.bash_profile',
+        ]
+
+        found_in_files = {}
+
+        # Regex patterns to match variable definitions
+        # Matches: export VAR=value, export VAR="value", VAR=value
+        patterns = [
+            re.compile(rf'^\s*export\s+{var_name}=(["\']?)(.+?)\1\s*$', re.MULTILINE),
+            re.compile(rf'^\s*{var_name}=(["\']?)(.+?)\1\s*$', re.MULTILINE),
+        ]
+
+        for config_file in config_files:
+            if not config_file.exists():
+                continue
+
+            try:
+                content = config_file.read_text()
+
+                for pattern in patterns:
+                    matches = pattern.findall(content)
+                    if matches:
+                        # Get the last match (in case variable is set multiple times)
+                        value = matches[-1][1] if isinstance(matches[-1], tuple) else matches[-1]
+                        found_in_files[str(config_file)] = value
+                        break  # Found in this file, move to next file
+
+            except (IOError, PermissionError):
+                # Skip files we can't read
+                continue
+
+        return found_in_files
+
+    def check_env_var(self, var_name: str, expected_value: Optional[str] = None) -> Dict:
+        """Check if an environment variable is set and optionally verify its value
+
+        This method checks both:
+        1. The current live environment (os.environ) - what's actually active
+        2. Shell configuration files - where the variable should be defined
+
+        Returns a comprehensive result showing both the current state and config state.
+        """
+        import os
+
+        result = {
+            'var_name': var_name,
+            'expected_value': expected_value,
+            'is_set': False,
+            'current_value': None,
+            'value_correct': False,
+            'defined_in_configs': {},  # Maps file path to defined value
+            'in_config_files': False,
+            'config_value_correct': False
+        }
+
+        # Check current live environment
+        current_value = os.environ.get(var_name)
+
+        if current_value is not None:
+            result['is_set'] = True
+            result['current_value'] = current_value
+
+            if expected_value is not None:
+                # Handle $HOME expansion in expected value
+                if '$HOME' in expected_value or '~' in expected_value:
+                    home = os.path.expanduser('~')
+                    expanded_expected = expected_value.replace('$HOME', home).replace('~', home)
+                    result['value_correct'] = current_value == expanded_expected
+                else:
+                    result['value_correct'] = current_value == expected_value
+            else:
+                # If no expected value specified, just being set is correct
+                result['value_correct'] = True
+
+        # Check shell configuration files
+        config_definitions = self.parse_shell_config_for_var(var_name)
+        result['defined_in_configs'] = config_definitions
+        result['in_config_files'] = len(config_definitions) > 0
+
+        # Check if any config file has the correct value
+        if expected_value is not None and config_definitions:
+            for file_path, config_value in config_definitions.items():
+                # Handle $HOME expansion for comparison
+                if '$HOME' in expected_value or '~' in expected_value:
+                    home = os.path.expanduser('~')
+                    expanded_expected = expected_value.replace('$HOME', home).replace('~', home)
+                    # Also check if config file has unexpanded version
+                    if config_value == expected_value or config_value == expanded_expected:
+                        result['config_value_correct'] = True
+                        break
+                else:
+                    if config_value == expected_value:
+                        result['config_value_correct'] = True
+                        break
 
         return result
 
@@ -332,6 +445,153 @@ class EnvironmentChecker:
         print(f"\n{Colors.BOLD}Summary:{Colors.ENDC} {installed_count}/{len(tools)} tools installed")
         print(f"{Colors.BOLD}Correct versions:{Colors.ENDC} {correct_version_count}/{len(tools)}")
 
+    def check_all_envs(self):
+        """Check all required environment variables
+
+        This function verifies that all necessary environment variables for the
+        zsh-dotfiles development environment are properly set with correct values.
+        It checks each variable in TWO places:
+        1. Current live environment (what's actively loaded in this shell session)
+        2. Shell configuration files (~/.zshrc, ~/.zprofile, ~/.bashrc, ~/.profile)
+
+        This dual-check ensures variables are both currently active AND persisted
+        in config files for future shell sessions.
+        """
+        # Print a formatted header to clearly identify this section of checks
+        self.print_header("Checking Environment Variables")
+
+        # Define required environment variables with their expected values
+        # These variables control various aspects of the zsh-dotfiles environment:
+        # - ZSH_DOTFILES_PREP_CI: Enables CI mode for automated testing
+        # - ZSH_DOTFILES_PREP_DEBUG: Enables debug output for troubleshooting
+        # - ZSH_DOTFILES_PREP_GITHUB_USER: Sets the GitHub username for repo operations
+        # - ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: Skips brew bundle installation (for speed)
+        # - SHELDON_CONFIG_DIR: Directory where Sheldon plugin manager stores configs
+        # - SHELDON_DATA_DIR: Directory where Sheldon plugin manager stores data
+        env_vars = {
+            'ZSH_DOTFILES_PREP_CI': '1',
+            'ZSH_DOTFILES_PREP_DEBUG': '1',
+            'ZSH_DOTFILES_PREP_GITHUB_USER': 'bossjones',
+            'ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE': '1',
+            'SHELDON_CONFIG_DIR': '$HOME/.sheldon',
+            'SHELDON_DATA_DIR': '$HOME/.sheldon'
+        }
+
+        # Initialize the results storage for environment variables if not already present
+        # This ensures we have a place to store the check results for later use
+        if 'env_vars' not in self.results:
+            self.results['env_vars'] = []
+
+        # Initialize counters to track the status of environment variables
+        # live_set_count: How many variables are set in current environment
+        # live_correct_count: How many have correct values in current environment
+        # config_count: How many are defined in shell config files
+        # config_correct_count: How many have correct values in config files
+        live_set_count = 0
+        live_correct_count = 0
+        config_count = 0
+        config_correct_count = 0
+
+        # Iterate through each environment variable and check its status
+        for var_name, expected_value in env_vars.items():
+            # Check the individual environment variable and get detailed result
+            # This checks BOTH live environment AND config files
+            result = self.check_env_var(var_name, expected_value)
+
+            # Store the result for later reference and reporting
+            self.results['env_vars'].append(result)
+
+            # Display live environment status
+            if result['is_set']:
+                # Variable is set in live environment
+                live_set_count += 1
+
+                if result['value_correct']:
+                    # Variable has the correct value in live environment
+                    self.print_success(f"{var_name} = {result['current_value']} (live)")
+                    live_correct_count += 1
+                else:
+                    # Variable is set but has wrong value in live environment
+                    self.print_warning(f"{var_name} = {result['current_value']} (live, expected: {expected_value})")
+            else:
+                # Variable is not set in live environment
+                self.print_failure(f"{var_name} - NOT SET in live environment (expected: {expected_value})")
+
+            # Display config file status
+            if result['in_config_files']:
+                config_count += 1
+                # Show where the variable is defined in config files
+                for config_file, config_value in result['defined_in_configs'].items():
+                    short_path = config_file.replace(str(Path.home()), '~')
+
+                    if result['config_value_correct']:
+                        print(f"  {Colors.GREEN}↳{Colors.ENDC} Defined in {short_path}: {config_value}")
+                        if var_name not in [r['var_name'] for r in self.results['env_vars'][:-1]]:
+                            config_correct_count += 1
+                    else:
+                        print(f"  {Colors.YELLOW}↳{Colors.ENDC} Defined in {short_path}: {config_value} (expected: {expected_value})")
+            else:
+                # Variable not found in any config file
+                print(f"  {Colors.RED}↳{Colors.ENDC} NOT defined in shell config files")
+
+            print()  # Add blank line between variables for readability
+
+        # Properly count config correct values
+        config_correct_count = sum(1 for var in self.results['env_vars'] if var['config_value_correct'])
+
+        # Print summary statistics showing status in both live and config
+        print(f"{Colors.BOLD}Live Environment Summary:{Colors.ENDC}")
+        print(f"  Variables set: {live_set_count}/{len(env_vars)}")
+        print(f"  Correct values: {live_correct_count}/{len(env_vars)}")
+
+        print(f"\n{Colors.BOLD}Config Files Summary:{Colors.ENDC}")
+        print(f"  Variables defined: {config_count}/{len(env_vars)}")
+        print(f"  Correct values: {config_correct_count}/{len(env_vars)}")
+
+        # If any variables are missing or incorrect, provide helpful export commands
+        # This gives the user ready-to-use commands to fix their environment
+        if live_correct_count < len(env_vars) or config_correct_count < len(env_vars):
+            print(f"\n{Colors.YELLOW}{Colors.BOLD}Recommendations:{Colors.ENDC}")
+
+            # Show which variables need attention
+            needs_live_fix = []
+            needs_config_fix = []
+
+            for result in self.results['env_vars']:
+                if not result['value_correct']:
+                    needs_live_fix.append(result)
+                if not result['config_value_correct']:
+                    needs_config_fix.append(result)
+
+            # If variables are missing from config files, show how to add them permanently
+            if needs_config_fix:
+                print(f"\n{Colors.YELLOW}Add these to your ~/.zshrc or ~/.bashrc for persistence:{Colors.ENDC}")
+                print()
+
+                for result in needs_config_fix:
+                    expected = result['expected_value']
+                    # Add quotes around values containing $HOME to preserve the variable reference
+                    if '$HOME' in expected:
+                        print(f'export {result["var_name"]}="{expected}"')
+                    else:
+                        print(f'export {result["var_name"]}={expected}')
+
+            # If variables are missing from live environment, show how to set them temporarily
+            if needs_live_fix:
+                print(f"\n{Colors.YELLOW}Set these temporarily in your current shell (until next shell restart):{Colors.ENDC}")
+                print()
+
+                for result in needs_live_fix:
+                    expected = result['expected_value']
+                    # Add quotes around values containing $HOME to preserve the variable reference
+                    if '$HOME' in expected:
+                        print(f'export {result["var_name"]}="{expected}"')
+                    else:
+                        print(f'export {result["var_name"]}={expected}')
+
+                print(f"\n{Colors.YELLOW}Then reload your shell or run: source ~/.zshrc{Colors.ENDC}")
+
+
     def generate_report(self):
         """Generate a summary report"""
         self.print_header("Final Report")
@@ -344,8 +604,18 @@ class EnvironmentChecker:
         asdf_correct = sum(1 for tool in self.results['asdf_tools'] if tool['version_correct'])
         asdf_total = len(self.results['asdf_tools'])
 
+        # Environment variables statistics
+        env_set = 0
+        env_correct = 0
+        env_total = 0
+        if 'env_vars' in self.results:
+            env_set = sum(1 for var in self.results['env_vars'] if var['is_set'])
+            env_correct = sum(1 for var in self.results['env_vars'] if var['value_correct'])
+            env_total = len(self.results['env_vars'])
+
         print(f"Brew Packages: {brew_installed}/{brew_total} installed")
         print(f"ASDF Tools: {asdf_installed}/{asdf_total} installed ({asdf_correct} correct versions)")
+        print(f"Environment Variables: {env_set}/{env_total} set ({env_correct} correct values)")
         print(f"Sheldon: {'✓' if self.results['sheldon'].get('installed') else '✗'}")
         print(f"Chezmoi: {'✓' if self.results['chezmoi'].get('installed') else '✗'}")
 
@@ -365,6 +635,7 @@ class EnvironmentChecker:
         self.check_all_sheldon()
         self.check_all_chezmoi()
         # self.check_all_asdf_tools()
+        self.check_all_envs()
 
         return self.generate_report()
 
