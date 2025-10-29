@@ -5,5 +5,10 @@
       "Bash(grep:*)"
     ]
   },
-  "enableAllProjectMcpServers": false
+  "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": [
+    "ElevenLabs",
+    "firecrawl-mcp",
+    "perplexity-ask"
+  ]
 }

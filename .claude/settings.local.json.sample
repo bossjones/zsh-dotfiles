@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__sequentialthinking__sequentialthinking",
+      "WebFetch(domain:docs.mermaidchart.com)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(tree:*)",
+      "Bash(mkdir:*)",
+      "WebFetch(domain:www.perplexity.ai)",
+      "WebFetch(domain:job-boards.greenhouse.io)"
+    ]
+  },
+  "enableAllProjectMcpServers": false
+}
