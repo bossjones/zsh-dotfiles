@@ -16,7 +16,8 @@ eval "`fnm env`"
 
 
 if [ -n "$(command which fnm 2>/dev/null)" ]; then
-    fnm install v{{myfnmNodeVersion}}
+    # fnm install v{{myfnmNodeVersion}}
+    fnm install v20.19.5
     fnm use v20.19.5
     fnm current
     npm install -g pure-prompt
