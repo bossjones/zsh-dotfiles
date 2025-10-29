@@ -1,11 +1,4 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(find:*)",
-      "Bash(grep:*)"
-    ]
-  },
-  "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": [
     "ElevenLabs",
     "firecrawl-mcp",
