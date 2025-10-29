@@ -1,0 +1,69 @@
+Example Output of Enhanced Environment Variable Checker
+============================================================
+
+The check_all_envs() function now provides comprehensive dual-checking:
+
+1. LIVE ENVIRONMENT CHECK (Current Shell Session)
+   - Uses os.environ to check what's actively loaded
+   - Shows current values that are in effect RIGHT NOW
+
+2. CONFIG FILE CHECK (Persistent Configuration)
+   - Parses ~/.zshrc, ~/.zprofile, ~/.bashrc, ~/.profile, ~/.bash_profile
+   - Shows where variables are defined for future shell sessions
+   - Ensures variables persist after shell restart
+
+Example Output Format:
+----------------------
+
+======================================================================
+Checking Environment Variables
+======================================================================
+
+✓ ZSH_DOTFILES_PREP_CI = 1 (live)
+  ↳ Defined in ~/.zshrc: 1
+
+✓ ZSH_DOTFILES_PREP_DEBUG = 1 (live)
+  ↳ Defined in ~/.zshrc: 1
+
+✗ ZSH_DOTFILES_PREP_GITHUB_USER - NOT SET in live environment (expected: bossjones)
+  ↳ NOT defined in shell config files
+
+⚠ ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE = 0 (live, expected: 1)
+  ↳ Defined in ~/.profile: 0 (expected: 1)
+
+✓ SHELDON_CONFIG_DIR = /Users/username/.sheldon (live)
+  ↳ Defined in ~/.zshrc: $HOME/.sheldon
+
+✓ SHELDON_DATA_DIR = /Users/username/.sheldon (live)
+  ↳ Defined in ~/.zshrc: $HOME/.sheldon
+
+
+Live Environment Summary:
+  Variables set: 5/6
+  Correct values: 4/6
+
+Config Files Summary:
+  Variables defined: 4/6
+  Correct values: 3/6
+
+Recommendations:
+
+Add these to your ~/.zshrc or ~/.bashrc for persistence:
+export ZSH_DOTFILES_PREP_GITHUB_USER=bossjones
+export ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE=1
+
+Set these temporarily in your current shell (until next shell restart):
+export ZSH_DOTFILES_PREP_GITHUB_USER=bossjones
+export ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE=1
+
+Then reload your shell or run: source ~/.zshrc
+
+
+Key Improvements:
+-----------------
+1. ✅ Checks LIVE environment variables (os.environ) - what's active NOW
+2. ✅ Checks CONFIG files (shell startup files) - what's persistent
+3. ✅ Shows which file defines each variable
+4. ✅ Separate summaries for live vs config status
+5. ✅ Clear recommendations for fixing both live and persistent issues
+6. ✅ Handles $HOME expansion properly in comparisons
