@@ -49,3 +49,6 @@ data/splunk/1759972386_103178_02D4481B-981F-4097-8DF0-9D3DDF53938F.csv
 
 # idk if we need to comment this out or not
 .cursor/mcp.json
+
+
+hack/doctor/bin/chezmoi

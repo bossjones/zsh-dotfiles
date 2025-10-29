@@ -29,7 +29,8 @@ class EnvironmentChecker:
             'sheldon': None,
             'chezmoi': None,
             'asdf_tools': [],
-            'env_vars': []
+            'env_vars': [],
+            'path_dirs': []
         }
         self.failed_checks = []
 
@@ -127,26 +128,43 @@ class EnvironmentChecker:
         return result
 
     def check_chezmoi(self) -> Dict:
-        """Check chezmoi installation"""
+        """Check chezmoi installation and preferred location"""
+        preferred_location = Path.home() / ".bin" / "chezmoi"
+
         result = {
             'installed': False,
             'location': None,
-            'version': None
+            'version': None,
+            'location_preferred': False
         }
 
-        # Check if chezmoi is in PATH
-        success, stdout, _ = self.run_command(['which', 'chezmoi'])
-        if success:
+        # Check if chezmoi exists at preferred location (~/.bin/chezmoi)
+        if preferred_location.exists():
             result['installed'] = True
-            result['location'] = stdout.strip()
+            result['location'] = str(preferred_location)
+            result['location_preferred'] = True
 
             # Get version
-            success, stdout, _ = self.run_command(['chezmoi', '--version'])
+            success, stdout, _ = self.run_command([str(preferred_location), '--version'])
             if success:
                 # Parse version from output
                 match = re.search(r'(\d+\.\d+\.\d+)', stdout)
                 if match:
                     result['version'] = match.group(1)
+        else:
+            # Check if chezmoi is in PATH
+            success, stdout, _ = self.run_command(['which', 'chezmoi'])
+            if success:
+                result['installed'] = True
+                result['location'] = stdout.strip()
+
+                # Get version
+                success, stdout, _ = self.run_command(['chezmoi', '--version'])
+                if success:
+                    # Parse version from output
+                    match = re.search(r'(\d+\.\d+\.\d+)', stdout)
+                    if match:
+                        result['version'] = match.group(1)
 
         return result
 
@@ -284,6 +302,115 @@ class EnvironmentChecker:
 
         return result
 
+    def check_path_directory(self, directory: str) -> Dict:
+        """Check if a directory is in the PATH environment variable
+
+        Args:
+            directory: Path to check (can use ~ for home directory)
+
+        Returns:
+            Dictionary containing check results
+        """
+        import os
+
+        result = {
+            'directory': directory,
+            'expanded_path': None,
+            'exists': False,
+            'in_path': False,
+            'path_entries': []
+        }
+
+        # Expand ~ to home directory
+        expanded_dir = os.path.expanduser(directory)
+        result['expanded_path'] = expanded_dir
+
+        # Check if directory exists
+        dir_path = Path(expanded_dir)
+        result['exists'] = dir_path.exists() and dir_path.is_dir()
+
+        # Get PATH and split into entries
+        path_env = os.environ.get('PATH', '')
+        path_entries = path_env.split(':')
+        result['path_entries'] = path_entries
+
+        # Check if directory is in PATH (check both unexpanded and expanded versions)
+        result['in_path'] = any(
+            entry == expanded_dir or entry == directory
+            for entry in path_entries
+        )
+
+        return result
+
+    def check_all_path_dirs(self):
+        """Check that critical directories are in PATH"""
+        self.print_header("Checking PATH Configuration")
+
+        # Critical directories that should be in PATH
+        critical_dirs = [
+            '~/.bin',
+            '~/.local/bin',
+            '/usr/local/bin',
+            '/opt/homebrew/bin',
+        ]
+
+        in_path_count = 0
+        exists_count = 0
+
+        for directory in critical_dirs:
+            result = self.check_path_directory(directory)
+            self.results['path_dirs'].append(result)
+
+            # Show detailed status
+            if result['in_path']:
+                if result['exists']:
+                    self.print_success(f"{directory} is in PATH and exists")
+                    in_path_count += 1
+                    exists_count += 1
+                else:
+                    self.print_warning(f"{directory} is in PATH but directory doesn't exist")
+                    in_path_count += 1
+            else:
+                if result['exists']:
+                    self.print_failure(f"{directory} exists but is NOT in PATH")
+                    exists_count += 1
+                else:
+                    self.print_warning(f"{directory} is NOT in PATH and doesn't exist")
+
+        print(f"\n{Colors.BOLD}Summary:{Colors.ENDC} {in_path_count}/{len(critical_dirs)} critical directories in PATH")
+        print(f"{Colors.BOLD}Existing:{Colors.ENDC} {exists_count}/{len(critical_dirs)} directories exist on filesystem")
+
+        # Show current PATH for debugging
+        import os
+        current_path = os.environ.get('PATH', '')
+        print(f"\n{Colors.BOLD}Current PATH:{Colors.ENDC}")
+        for entry in current_path.split(':'):
+            # Highlight our critical directories
+            short_entry = entry.replace(str(Path.home()), '~')
+            if any(d.replace('~', str(Path.home())) == entry or d == short_entry for d in critical_dirs):
+                print(f"  {Colors.GREEN}✓{Colors.ENDC} {short_entry}")
+            else:
+                print(f"    {short_entry}")
+
+        # Provide recommendations if directories are missing from PATH
+        missing_from_path = [
+            r for r in self.results['path_dirs']
+            if not r['in_path'] and r['exists']
+        ]
+
+        if missing_from_path:
+            print(f"\n{Colors.YELLOW}{Colors.BOLD}Recommendations:{Colors.ENDC}")
+            print(f"\n{Colors.YELLOW}Add these to your ~/.zshrc or ~/.bashrc:{Colors.ENDC}")
+            print()
+            for result in missing_from_path:
+                print(f'export PATH="{result["directory"]}:$PATH"')
+
+            print(f"\n{Colors.YELLOW}Or add them temporarily:{Colors.ENDC}")
+            print()
+            for result in missing_from_path:
+                print(f'export PATH="{result["directory"]}:$PATH"')
+            print(f"\n{Colors.YELLOW}Then reload your shell or run: source ~/.zshrc{Colors.ENDC}")
+
     def check_all_brew_packages(self):
         """Check all brew packages from the requirements"""
         self.print_header("Checking Homebrew Packages")
@@ -393,6 +520,13 @@ class EnvironmentChecker:
             self.print_success(f"Chezmoi is installed")
             print(f"  Location: {result['location']}")
             print(f"  Version: {result['version']}")
+
+            if result['location_preferred']:
+                self.print_success(f"Location is correct (~/.bin/chezmoi)")
+            else:
+                self.print_warning(f"Location is not ~/.bin/chezmoi")
+                print(f"\n  {Colors.YELLOW}Note: ~/.bin/chezmoi is the preferred location{Colors.ENDC}")
+                print(f"  {Colors.YELLOW}Make sure ~/.bin is in your PATH{Colors.ENDC}")
         else:
             self.print_failure("Chezmoi is NOT installed")
             print(f"\n  Install with:")
@@ -596,6 +730,15 @@ class EnvironmentChecker:
         """Generate a summary report"""
         self.print_header("Final Report")
 
+        # PATH directories statistics
+        path_in_path = 0
+        path_exists = 0
+        path_total = 0
+        if 'path_dirs' in self.results:
+            path_in_path = sum(1 for dir_info in self.results['path_dirs'] if dir_info['in_path'])
+            path_exists = sum(1 for dir_info in self.results['path_dirs'] if dir_info['exists'])
+            path_total = len(self.results['path_dirs'])
+
         # Count statistics
         brew_installed = sum(1 for pkg in self.results['brew_packages'] if pkg['installed'])
         brew_total = len(self.results['brew_packages'])
@@ -613,6 +756,7 @@ class EnvironmentChecker:
             env_correct = sum(1 for var in self.results['env_vars'] if var['value_correct'])
             env_total = len(self.results['env_vars'])
 
+        print(f"PATH Directories: {path_in_path}/{path_total} in PATH ({path_exists} exist)")
         print(f"Brew Packages: {brew_installed}/{brew_total} installed")
         print(f"ASDF Tools: {asdf_installed}/{asdf_total} installed ({asdf_correct} correct versions)")
         print(f"Environment Variables: {env_set}/{env_total} set ({env_correct} correct values)")
@@ -631,6 +775,7 @@ class EnvironmentChecker:
         print(f"{Colors.BOLD}Development Environment Checker{Colors.ENDC}")
         print(f"Checking installation status of packages and tools...\n")
 
+        self.check_all_path_dirs()
         self.check_all_brew_packages()
         self.check_all_sheldon()
         self.check_all_chezmoi()
