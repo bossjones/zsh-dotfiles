@@ -1,0 +1,186 @@
+Development Environment Checker
+Checking installation status of packages and tools...
+
+======================================================================
+Checking Homebrew Packages
+======================================================================
+
+✓ duf
+✓ dust
+✓ dua-cli
+✓ ncdu
+✓ peco
+✓ pdfgrep
+✓ git-delta
+✓ broot
+✓ bat
+✓ pv
+✓ tree
+✓ figlet
+✓ graphviz
+✓ atomicparsley
+✓ cmake
+✓ coreutils
+✓ doxygen
+✓ eigen
+✓ ffmpeg
+✓ tesseract
+✓ findutils
+✓ font-fira-code
+✓ font-fira-code-nerd-font
+✓ font-fira-mono-nerd-font
+✓ font-droid-sans-mono-nerd-font
+✓ font-fontawesome
+✓ font-hack-nerd-font
+✓ font-inconsolata-nerd-font
+✓ font-jetbrains-mono-nerd-font
+✓ font-liberation
+✓ font-liberation-nerd-font
+✓ font-meslo-lg-nerd-font
+✓ font-mononoki-nerd-font
+✓ font-noto-color-emoji
+✓ font-noto-emoji
+✓ font-noto-nerd-font
+✓ font-sauce-code-pro-nerd-font
+✓ font-symbols-only-nerd-font
+✓ font-ubuntu-mono-nerd-font
+✓ font-ubuntu-nerd-font
+✓ font-victor-mono-nerd-font
+✓ gawk
+✓ gnu-getopt
+✓ gnu-sed
+✓ gnu-tar
+✓ gnutls
+✓ graphicsmagick
+✓ hdf5
+✓ jpeg
+✓ libffi
+✓ libmagic
+✓ libomp
+✓ libpng
+✓ libtiff
+✓ openblas
+✓ openexr
+✓ openmpi
+✓ openssl
+✓ pkg-config
+✓ readline
+✓ repomix
+✓ pstree
+✓ imagemagick
+✓ uv
+✓ fdupes
+✓ sqlite3
+✓ tbb
+✓ tcl-tk
+✓ wget
+✓ xz
+✓ zlib
+✓ libmediainfo
+✓ bc
+✓ autogen
+✓ bash
+✓ bzip2
+✓ cheat
+✓ python@3.10
+✓ curl
+✓ diff-so-fancy
+✓ direnv
+✓ fd
+✓ fnm
+✓ fpp
+✓ fzf
+✓ gcc
+✓ gh
+✓ git
+✓ gnu-indent
+✓ grep
+✓ gzip
+✓ hub
+✓ jq
+✓ less
+✓ lesspipe
+✓ libxml2
+✓ lsof
+✓ luarocks
+✓ luv
+✓ moreutils
+✓ neofetch
+✓ neovim
+✓ nnn
+✓ node
+✓ pyenv
+✓ pyenv-virtualenv
+✓ pyenv-virtualenvwrapper
+✓ ruby-build
+✓ rbenv
+✓ reattach-to-user-namespace
+✓ ripgrep
+✓ rsync
+✓ screen
+✓ screenfetch
+✓ shellcheck
+✓ shfmt
+✓ unzip
+✓ urlview
+✓ vim
+✓ watch
+✓ zsh
+✓ openssl@1.1
+
+Summary: 118/118 packages installed
+
+======================================================================
+Checking Sheldon
+======================================================================
+
+✓ Sheldon is installed
+  Location: /Users/bossjones/.local/bin/sheldon
+  Version: 0.6.6
+✓ Location is correct (~/.local/bin/sheldon)
+✓ Version is correct (0.6.6)
+
+======================================================================
+Checking Chezmoi
+======================================================================
+
+✓ Chezmoi is installed
+  Location: /usr/local/bin/chezmoi
+  Version: 2.47.0
+
+======================================================================
+Checking ASDF-Managed Tools
+======================================================================
+
+✓ github-cli @ 2.35.0
+✓ golang @ 1.20.5
+✓ helm-docs @ 1.13.1
+✓ helm @ 3.14.2
+✓ helmfile @ 0.162.0
+✓ k9s @ 0.32.4
+✓ kubectl @ 1.26.12
+✓ kubectx @ 0.9.5
+✓ kubetail @ 1.6.20
+✓ mkcert @ 1.4.4
+✓ neovim @ 0.11.3
+✓ opa @ 0.62.1
+✓ ruby @ 3.2.1
+✓ rye @ 0.33.0
+✓ shellcheck @ 0.10.0
+✓ shfmt @ 3.7.0
+✓ tmux @ 3.5a
+✓ yq @ 4.34.1
+
+Summary: 18/18 tools installed
+Correct versions: 18/18
+
+======================================================================
+Final Report
+======================================================================
+
+Brew Packages: 118/118 installed
+ASDF Tools: 18/18 installed (18 correct versions)
+Sheldon: ✓
+Chezmoi: ✓
+
+All checks passed!
