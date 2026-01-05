@@ -1,0 +1,10 @@
+{
+  "enabledPlugins": {
+    "docker-master@claude-plugin-marketplace": true,
+    "bash-master@claude-plugin-marketplace": true,
+    "documentation-generation@claude-code-workflows": true,
+    "hookify@lunar-claude": true,
+    "meta-claude@lunar-claude": true,
+    "python-tools@lunar-claude": true
+  }
+}

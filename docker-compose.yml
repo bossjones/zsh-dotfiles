@@ -1,0 +1,33 @@
+# Docker Compose for local smoke testing
+# Reproduces CI environment for faster iteration
+#
+# Usage:
+#   docker-compose up --build              # Run full smoke test
+#   docker-compose run --rm smoke lint     # Run lint stage only
+#   docker-compose run --rm smoke build    # Run build stage only
+#   docker-compose run --rm smoke-shell    # Interactive shell for debugging
+#
+services:
+  smoke:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dotfiles-smoke
+    environment:
+      - TERM=xterm-256color
+      - HOMEBREW_NO_AUTO_UPDATE=1
+      - HOMEBREW_NO_ANALYTICS=1
+
+  # Interactive shell for debugging failed tests
+  smoke-shell:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dotfiles-smoke-shell
+    environment:
+      - TERM=xterm-256color
+      - HOMEBREW_NO_AUTO_UPDATE=1
+      - HOMEBREW_NO_ANALYTICS=1
+    stdin_open: true
+    tty: true
+    entrypoint: /bin/zsh

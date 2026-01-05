@@ -2737,6 +2737,10 @@ ytdl_auto() {
 
 alias dl_auto='ytdl_auto'
 
+docker-tail-all() {
+    docker ps -q | xargs -L 1 -P $(docker ps | wc -l) docker logs --tail 0 -f
+}
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
