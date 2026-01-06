@@ -99,7 +99,7 @@ chezmoi doctor                            # Verify template syntax
 ## CI/CD Pipeline
 
 ### GitHub Actions Workflow
-- **Platforms**: Tests run on `macos-14` and `macos-latest` 
+- **Platforms**: Tests run on `macos-14` and `macos-latest`
 - **Python**: Uses Python 3.12 with pip caching
 - **Go**: Uses Go 1.20.5 for chezmoi operations
 - **Prerequisites**: Uses external `zsh-dotfiles-prep` installer for system setup
@@ -189,7 +189,7 @@ Key packages installed during CI:
 **CLI Tools:**
 - Search: `fd-find`, `ripgrep`, `silversearcher-ag`, `fzf`
 - File operations: `tree`, `parallel`, `file`, `jq`, `fdupes`
-- System: `curl`, `git`, `vim`, `direnv`, `awscli`, `ccze`, `linux-headers`
+- System: `curl`, `git`, `vim`, `direnv`, `ccze`, `linux-headers`
 - Development: `pkg-config`, `git-core`, `mercurial`, `graphviz`
 
 ### Kubernetes Tools (krew plugins)

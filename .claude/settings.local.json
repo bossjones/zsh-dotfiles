@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Skill(superpowers:systematic-debugging)",
+      "Bash(make smoke:*)",
+      "Bash(docker compose build:*)",
+      "Bash(pre-commit run:*)",
+      "Bash(uvx pre-commit run:*)"
     ]
   },
   "enableAllProjectMcpServers": false

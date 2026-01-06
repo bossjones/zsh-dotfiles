@@ -21,20 +21,20 @@ install-hooks:
 .PHONY: smoke smoke-lint smoke-build smoke-shell smoke-clean
 smoke:  ## Run full smoke test in Docker (reproduces CI)
 	@echo "\033[0;34mRunning smoke test in Docker...\033[0m"
-	docker-compose up --build smoke
+	docker compose up --build smoke
 
 smoke-lint:  ## Run lint stage only in Docker
 	@echo "\033[0;34mRunning lint stage in Docker...\033[0m"
-	docker-compose run --rm smoke lint
+	docker compose run --rm smoke lint
 
 smoke-build:  ## Run build stage only in Docker
 	@echo "\033[0;34mRunning build stage in Docker...\033[0m"
-	docker-compose run --rm smoke build
+	docker compose run --rm smoke build
 
 smoke-shell:  ## Start interactive shell for debugging smoke test failures
 	@echo "\033[0;34mStarting interactive smoke test shell...\033[0m"
-	docker-compose run --rm smoke-shell
+	docker compose run --rm smoke-shell
 
 smoke-clean:  ## Clean up smoke test Docker resources
 	@echo "\033[0;34mCleaning up smoke test containers...\033[0m"
-	docker-compose down --rmi local --volumes --remove-orphans
+	docker compose down --rmi local --volumes --remove-orphans

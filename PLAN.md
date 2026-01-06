@@ -92,7 +92,7 @@ This plan outlines the step-by-step process to create CentOS equivalents of the 
 ## Phase 3: Implementation Order (COMPLETED)
 ### Step 1: High Priority Scripts ✓
 1. [x] Create `run_before-00-prereq-centos.sh.tmpl`
-2. [x] Create `run_before-00-prereq-centos-pyenv.sh.tmpl`  
+2. [x] Create `run_before-00-prereq-centos-pyenv.sh.tmpl`
 3. [x] Create `run_onchange_before_01-centos-install-packages.sh.tmpl`
 
 ### Step 2: Medium Priority Tool Installation ✓
@@ -166,6 +166,6 @@ This plan outlines the step-by-step process to create CentOS equivalents of the 
 
 ### Oracle Linux Integration Notes
 - Oracle Linux Server uses the same Red Hat-based ecosystem as CentOS
-- CUDA support enabled based on system capabilities (`"cuda": true` in chezmoi data)  
+- CUDA support enabled based on system capabilities (`"cuda": true` in chezmoi data)
 - Plugin configuration now supports three major Linux distributions: Ubuntu, CentOS Linux, and Oracle Linux Server
 - Template conditions use `{{ if (or (eq .chezmoi.osRelease.name "CentOS Linux") (eq .chezmoi.osRelease.name "Oracle Linux Server")) -}}` pattern

@@ -1366,8 +1366,8 @@ generate_video_thumbnail() {
             echo "You can typically install it using your package manager:"
             echo "For Ubuntu/Debian: sudo apt-get install $1"
             echo "For macOS with Homebrew: brew install $1"
-            echo "For Ubuntu/Debian try: apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev fd-find"
-            echo "For MacOS try: brew install curl git gnupg zsh fzf perl gettext direnv vim awscli wget bash-completion ffmpeg gawk libmediainfo"
+            echo "For Ubuntu/Debian try: apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev fd-find"
+            echo "For MacOS try: brew install curl git gnupg zsh fzf perl gettext direnv vim wget bash-completion ffmpeg gawk libmediainfo"
             return 1
         fi
     }

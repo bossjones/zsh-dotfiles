@@ -242,4 +242,3 @@ fi
 convert $tmpA1 -gravity $gravity -crop ${width}x${height}+0+0 +repage "$outfile"
 
 exit 0
-

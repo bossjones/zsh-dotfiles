@@ -1,19 +1,14 @@
 {
   "mcpServers": {
     "ElevenLabs": {
-      "args": [
-        "elevenlabs-mcp"
-      ],
+      "args": ["elevenlabs-mcp"],
       "command": "uvx",
       "env": {
         "ELEVENLABS_API_KEY": "${ELEVENLABS_API_KEY}"
       }
     },
     "firecrawl-mcp": {
-      "args": [
-        "-y",
-        "firecrawl-mcp"
-      ],
+      "args": ["-y", "firecrawl-mcp"],
       "command": "npx",
       "env": {
         "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}",
@@ -24,10 +19,7 @@
       }
     },
     "perplexity-ask": {
-      "args": [
-        "-y",
-        "server-perplexity-ask"
-      ],
+      "args": ["-y", "server-perplexity-ask"],
       "command": "npx",
       "env": {
         "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"

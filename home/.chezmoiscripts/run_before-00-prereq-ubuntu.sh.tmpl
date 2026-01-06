@@ -7,42 +7,33 @@ export LANG=C.UTF-8
 
 mkdir -p $HOME/.git-template || true
 
-is_docker() {
-    [ -f /.dockerenv ] ||
-    grep -q docker /proc/1/cgroup ||
-    [ -n "$container" ] ||
-    [[ "$(hostname)" == *"docker"* ]]
-}
-
-if is_docker; then
-    apt update
-    apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
-    sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+# Use sudo if not running as root (works in Docker or outside)
+if [ "$(id -u)" -eq 0 ]; then
+    SUDO=""
 else
-    sudo apt update
-    sudo apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
-    sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+    SUDO="sudo"
 fi
+
+$SUDO apt update
+$SUDO apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
+$SUDO sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
 {{ end -}}
 {{- if (eq .chezmoi.osRelease.name "Debian") -}}
 #!/bin/sh
 export DEBIAN_FRONTEND=noninteractive
 export LANG=C.UTF-8
 
-is_docker() {
-    [ -f /.dockerenv ] ||
-    grep -q docker /proc/1/cgroup ||
-    [ -n "$container" ] ||
-    [[ "$(hostname)" == *"docker"* ]]
-}
-if is_docker; then
-    apt update
-    apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
-    sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+mkdir -p $HOME/.git-template || true
+
+# Use sudo if not running as root (works in Docker or outside)
+if [ "$(id -u)" -eq 0 ]; then
+    SUDO=""
 else
-    sudo apt update
-    sudo apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
-    sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
+    SUDO="sudo"
 fi
+
+$SUDO apt update
+$SUDO apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
+$SUDO sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
 {{ end -}}
 {{ end -}}

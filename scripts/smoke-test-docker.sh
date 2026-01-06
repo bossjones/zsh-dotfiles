@@ -98,6 +98,15 @@ run_lint() {
         return 1
     fi
 
+    # Initialize chezmoi to generate config from template
+    # This processes .chezmoi.yaml.tmpl and makes data variables available
+    log_info "Initializing chezmoi config..."
+    if chezmoi init --source=. --force 2>&1; then
+        log_success "chezmoi config initialized"
+    else
+        log_warning "chezmoi init had warnings (non-fatal)"
+    fi
+
     # Validate source directory and templates
     # Note: chezmoi verify checks destination=target, which fails before apply.
     # Instead, use chezmoi diff to validate templates parse correctly.

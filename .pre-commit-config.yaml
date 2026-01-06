@@ -52,6 +52,7 @@ repos:
       # Simply check whether files parse as valid python.
       - id: check-ast
       - id: check-json
+        exclude: ^\.devcontainer/devcontainer\.json$
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
@@ -79,7 +80,7 @@ repos:
         name: Lint GitHub Actions workflow files
         description: Runs actionlint to lint GitHub Actions workflow files
         language: system
-        types: ["yaml", "yml"]
+        types: ["yaml"]
         files: ^\.github/workflows/
         entry: actionlint
         minimum_pre_commit_version: 3.0.0

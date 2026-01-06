@@ -1,7 +1,7 @@
 ---
 # SOURCE: https://github.com/simonw/datasette/blob/main/.github/workflows/tmate.yml
 name: tmate session
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   # To enable a workflow to be triggered manually, you need to configure the workflow_dispatch event. You can manually trigger a workflow run using the GitHub API, GitHub CLI, or GitHub browser interface. For more information, see "Manually running a workflow."
   # SOURCE: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows
   # https://github.com/mxschmitt/action-tmate#manually-triggered-debug
