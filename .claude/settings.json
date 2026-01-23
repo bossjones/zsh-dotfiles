@@ -1,10 +1,33 @@
 {
+  "env": {
+    "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "true"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(uv:*)",
+      "Bash(find:*)",
+      "Bash(mv:*)",
+      "Bash(grep:*)",
+      "Bash(npm:*)",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Write",
+      "Edit",
+      "Bash(chmod:*)",
+      "Bash(touch:*)",
+      "WebFetch(domain:docs.mermaidchart.com)",
+      "Bash(tree:*)",
+      "WebFetch(domain:www.perplexity.ai)",
+      "WebFetch(domain:job-boards.greenhouse.io)"
+    ],
+    "deny": []
+  },
   "enabledPlugins": {
-    "docker-master@claude-plugin-marketplace": true,
-    "bash-master@claude-plugin-marketplace": true,
-    "documentation-generation@claude-code-workflows": true,
-    "hookify@lunar-claude": true,
     "meta-claude@lunar-claude": true,
-    "python-tools@lunar-claude": true
+    "python-tools@lunar-claude": true,
+    "hookify@lunar-claude": true,
+    "documentation-generation@claude-code-workflows": true,
+    "observability-monitoring@claude-code-workflows": true
   }
 }
