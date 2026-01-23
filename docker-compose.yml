@@ -7,11 +7,17 @@
 #   docker-compose run --rm smoke build    # Run build stage only
 #   docker-compose run --rm smoke-shell    # Interactive shell for debugging
 #
+# For faster builds with GitHub API token (avoids rate limiting):
+#   export HOMEBREW_GITHUB_API_TOKEN=ghp_your_token_here
+#   docker-compose build
+#
 services:
   smoke:
     build:
       context: .
       dockerfile: Dockerfile
+      secrets:
+        - homebrew_token
     container_name: dotfiles-smoke
     environment:
       - TERM=xterm-256color
@@ -23,6 +29,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      secrets:
+        - homebrew_token
     container_name: dotfiles-smoke-shell
     environment:
       - TERM=xterm-256color
@@ -31,3 +39,9 @@ services:
     stdin_open: true
     tty: true
     entrypoint: /bin/zsh
+
+# BuildKit secrets - reads token from environment variable
+# Token is only available during build, never persisted in image layers
+secrets:
+  homebrew_token:
+    environment: HOMEBREW_GITHUB_API_TOKEN

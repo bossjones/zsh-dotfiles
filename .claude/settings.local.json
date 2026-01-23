@@ -9,7 +9,9 @@
       "Bash(pre-commit run:*)",
       "Bash(uvx pre-commit run:*)",
       "Bash(git commit:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(shellcheck:*)",
+      "Bash(bash -n:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

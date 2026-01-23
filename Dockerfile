@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 # Smoke test container matching CI environment
 # Reproduces .github/workflows/smoke.yml locally for faster iteration
 #
@@ -44,6 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim \
     wget \
     zsh \
+    gcc-12 \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry \
     && chmod +x /usr/local/bin/retry
@@ -78,13 +80,27 @@ ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV HOMEBREW_NO_ANALYTICS=1
 
 # Verify Homebrew installation and install core tools (matching CI workflow)
-RUN /home/linuxbrew/.linuxbrew/bin/brew --version && \
+# Uses BuildKit secret mount to pass HOMEBREW_GITHUB_API_TOKEN without persisting in image
+RUN --mount=type=secret,id=homebrew_token \
+    HOMEBREW_GITHUB_API_TOKEN=$(cat /run/secrets/homebrew_token 2>/dev/null || true) \
+    /home/linuxbrew/.linuxbrew/bin/brew --version && \
     brew install chezmoi neovim mise go
 
 # Install Python, pre-commit, linting tools, and CI dependencies
 # These match packages installed in .github/workflows/tests.yml
-RUN brew install python@3.12 pre-commit actionlint && \
-    brew install openssl@3 readline libyaml gmp autoconf || true
+# Uses BuildKit secret mount to pass HOMEBREW_GITHUB_API_TOKEN without persisting in image
+RUN --mount=type=secret,id=homebrew_token \
+    HOMEBREW_GITHUB_API_TOKEN=$(cat /run/secrets/homebrew_token 2>/dev/null || true) \
+    brew install python@3.12 pre-commit actionlint && \
+    brew install openssl@3 readline libyaml gmp autoconf && \
+    brew install rust openssl readline sqlite3 xz zlib tcl-tk pkg-config autogen bash bzip2 libffi cheat python@3.10 cmake \
+    curl diff-so-fancy direnv fd gnutls findutils fnm fpp fzf gawk gcc gh git gnu-indent gnu-sed gnu-tar grep gzip \
+    hub jq less lesspipe libxml2 lsof luarocks luv moreutils neofetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper \
+    ruby-build rbenv ripgrep rsync screen screenfetch shellcheck shfmt unzip urlview vim watch wget zlib zsh openssl@1.1 git-delta \
+    tmux && \
+    brew tap rbenv/tap && \
+    brew install rbenv/tap/openssl@1.1  && \
+    brew install gnu-getopt || true
 
 # Create standard bin directories (matching CI PATH setup)
 RUN mkdir -p "$HOME/.bin" "$HOME/bin" "$HOME/.local/bin"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Smoke test script for Docker container or host environment
-# Reproduces .github/workflows/smoke.yml locally
+# Reproduces .github/workflows/tests.yml locally
 #
 # Usage:
 #   ./scripts/smoke-test-docker.sh         # Run all stages
@@ -24,6 +24,33 @@ log_success() { echo -e "${GREEN}✅ $1${RESET}"; }
 log_warning() { echo -e "${YELLOW}⚠️  $1${RESET}"; }
 log_error() { echo -e "${RED}❌ $1${RESET}"; }
 log_section() { echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"; echo -e "${BLUE}📋 $1${RESET}"; echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"; }
+
+# Setup initial environment variables (mirrors CI env vars)
+setup_initial_environment() {
+    log_section "Initial Environment Setup"
+
+    # CI-compatible environment variables
+    export ZSH_DOTFILES_PREP_CI=1
+    export ZSH_DOTFILES_PREP_DEBUG=1
+    export ZSH_DOTFILES_PREP_GITHUB_USER=bossjones
+    export ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE=1
+
+    # SHELDON configuration
+    export SHELDON_CONFIG_DIR="$HOME/.sheldon"
+    export SHELDON_DATA_DIR="$HOME/.sheldon"
+
+    # Initial PATH modifications
+    export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
+
+    log_info "ZSH_DOTFILES_PREP_CI=$ZSH_DOTFILES_PREP_CI"
+    log_info "ZSH_DOTFILES_PREP_DEBUG=$ZSH_DOTFILES_PREP_DEBUG"
+    log_info "ZSH_DOTFILES_PREP_GITHUB_USER=$ZSH_DOTFILES_PREP_GITHUB_USER"
+    log_info "ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE=$ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE"
+    log_info "SHELDON_CONFIG_DIR=$SHELDON_CONFIG_DIR"
+    log_info "SHELDON_DATA_DIR=$SHELDON_DATA_DIR"
+
+    log_success "Initial environment configured"
+}
 
 # Check and install dependencies
 ensure_dependencies() {
@@ -84,6 +111,113 @@ ensure_dependencies() {
     fi
 
     log_success "All dependencies satisfied"
+}
+
+# Setup Homebrew packages (mirrors CI brew install steps)
+setup_brew_packages() {
+    log_section "Homebrew Setup"
+
+    if ! command -v brew &> /dev/null; then
+        log_warning "Homebrew not installed, skipping brew setup"
+        return 0
+    fi
+
+    log_info "Adding brew taps..."
+    brew tap schniz/tap || true
+
+    log_info "Installing initial packages..."
+    brew install wget curl kadwanev/brew/retry go || true
+    brew install openssl@3 readline libyaml gmp autoconf tmux || true
+
+    log_info "Installing development tools..."
+    brew install openssl readline sqlite3 xz zlib tcl-tk pkg-config autogen bash bzip2 libffi cheat python@3.10 || true
+    brew install cmake || true
+    brew install curl diff-so-fancy direnv fd gnutls findutils fnm fpp fzf gawk gcc gh git gnu-indent gnu-sed gnu-tar grep gzip || true
+    brew install hub jq less lesspipe libxml2 lsof luarocks luv moreutils neofetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper || true
+    brew install ruby-build rbenv ripgrep rsync screen screenfetch shellcheck shfmt unzip urlview vim watch wget zlib zsh openssl@1.1 git-delta || true
+    brew install tmux || true
+
+    log_info "Installing OpenSSL and Ruby build dependencies..."
+    brew install openssl@3 readline libyaml gmp autoconf || true
+    brew tap rbenv/tap || true
+    brew install rbenv/tap/openssl@1.1 || true
+    brew install gnu-getopt || true
+
+    log_info "Installing rust via rustup script..."
+    curl --proto '=https' --tlsv1.2 https://sh.rustup.rs >rustup.sh
+    cat rustup.sh
+    chmod +x rustup.sh
+    ./rustup.sh -y -q --no-modify-path && rm rustup.sh
+
+    log_success "Brew packages installed"
+}
+
+# Run the zsh-dotfiles-prereq-installer (mirrors CI prereq step)
+run_prereq_installer() {
+    log_section "Prerequisites Installer"
+
+    log_info "Downloading zsh-dotfiles-prereq-installer..."
+    wget https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer
+    chmod +x zsh-dotfiles-prereq-installer
+
+    log_info "Running prereq installer with retry..."
+    if command -v retry &> /dev/null; then
+        retry -t 4 -- ./zsh-dotfiles-prereq-installer --debug
+    else
+        ./zsh-dotfiles-prereq-installer --debug
+    fi
+
+    # Cleanup
+    rm -f zsh-dotfiles-prereq-installer
+
+    log_success "Prerequisites installed"
+}
+
+# Setup ASDF and OpenSSL (called right before chezmoi)
+setup_asdf_and_openssl() {
+    log_section "ASDF and OpenSSL Setup"
+
+    # ASDF configuration (set after asdf is installed)
+    export ASDF_DIR="${HOME}/.asdf"
+    export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+
+    # Source asdf if available
+    if [[ -f "$HOME/.asdf/asdf.sh" ]]; then
+        log_info "Sourcing asdf..."
+        # shellcheck source=/dev/null
+        . "$HOME/.asdf/asdf.sh"
+    fi
+
+    # Add ASDF to PATH
+    export PATH="${HOME}/.asdf/bin:${HOME}/.asdf/shims:${PATH}"
+
+    # GNU getopt PATH (if available)
+    if command -v brew &> /dev/null; then
+        GNUGETOPT_BIN="$(brew --prefix gnu-getopt 2>/dev/null)/bin" || true
+        if [[ -d "$GNUGETOPT_BIN" ]]; then
+            export PATH="${GNUGETOPT_BIN}:${PATH}"
+            log_info "GNU getopt added to PATH: $GNUGETOPT_BIN"
+        fi
+
+        # OpenSSL 3 flags for compilation
+        OPENSSL3_PREFIX="$(brew --prefix openssl@3 2>/dev/null)" || true
+        if [[ -n "$OPENSSL3_PREFIX" ]]; then
+            export LDFLAGS="-L${OPENSSL3_PREFIX}/lib"
+            export CPPFLAGS="-I${OPENSSL3_PREFIX}/include"
+            log_info "OpenSSL 3 flags set: LDFLAGS=$LDFLAGS"
+
+            # Install Ruby with OpenSSL 3 support
+            if command -v asdf &> /dev/null; then
+                log_info "Installing Ruby 3.2.1 with OpenSSL 3..."
+                asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+            fi
+        fi
+    fi
+
+    log_info "ASDF_DIR=$ASDF_DIR"
+    log_info "ASDF_COMPLETIONS=$ASDF_COMPLETIONS"
+
+    log_success "ASDF and OpenSSL configured"
 }
 
 # Stage: Lint
@@ -150,18 +284,39 @@ run_build() {
         else
             log_warning "mise has warnings"
         fi
-    else
-        log_warning "mise not installed, skipping mise doctor"
     fi
 
-    # Apply dotfiles
-    log_info "Running chezmoi apply..."
-    # Use --source to specify current directory as source (works without chezmoi init)
-    if chezmoi apply --source=. -v; then
-        log_success "chezmoi apply succeeded"
+    # Run chezmoi init with retry (like CI does)
+    log_info "Running chezmoi init with retry..."
+    local chezmoi_bin="${HOME}/.bin/chezmoi"
+    if [[ ! -x "$chezmoi_bin" ]]; then
+        chezmoi_bin="$(command -v chezmoi)"
+    fi
+
+    local chezmoi_exit_code=0
+    if command -v retry &> /dev/null; then
+        retry -t 4 -- "$chezmoi_bin" init -R --debug -v --apply --force --source=. || chezmoi_exit_code=$?
     else
-        log_error "chezmoi apply failed"
+        "$chezmoi_bin" init -R --debug -v --apply --force --source=. || chezmoi_exit_code=$?
+    fi
+
+    if [[ $chezmoi_exit_code -eq 0 ]]; then
+        log_success "chezmoi init/apply succeeded"
+    else
+        log_error "chezmoi init/apply failed"
         return 1
+    fi
+
+    # Run post-install-chezmoi with retry
+    log_info "Running post-install-chezmoi..."
+    if command -v post-install-chezmoi &> /dev/null; then
+        if command -v retry &> /dev/null; then
+            retry -t 4 -- post-install-chezmoi || log_warning "post-install-chezmoi had warnings"
+        else
+            post-install-chezmoi || log_warning "post-install-chezmoi had warnings"
+        fi
+    else
+        log_warning "post-install-chezmoi not found, skipping"
     fi
 
     # Test zsh initialization (if zsh is available)
@@ -194,13 +349,42 @@ run_build() {
     log_success "Build stage completed"
 }
 
+# Stage: Test (run pytest)
+run_pytest() {
+    log_section "Running Tests"
+
+    log_info "Creating Python virtual environment..."
+    python3 -m venv venv
+    # shellcheck source=/dev/null
+    source ./venv/bin/activate
+
+    log_info "Installing test dependencies..."
+    pip install -U pip setuptools wheel
+    pip install -U -r requirements-test.txt
+
+    log_info "Running pytest..."
+    if pytest; then
+        log_success "Tests passed"
+    else
+        log_error "Tests failed"
+        deactivate
+        return 1
+    fi
+
+    deactivate
+    log_success "Test stage completed"
+}
+
 # Main execution
 main() {
     log_section "Smoke Test Runner"
     log_info "Stage: ${STAGE}"
     log_info "Working directory: $(pwd)"
 
-    # Ensure all required tools are available
+    # 1. Setup initial environment (ZSH_DOTFILES_PREP_*, SHELDON_*, basic PATH)
+    setup_initial_environment
+
+    # 2. Ensure basic tools (pre-commit, chezmoi)
     ensure_dependencies
 
     case "$STAGE" in
@@ -208,11 +392,24 @@ main() {
             run_lint
             ;;
         build)
+            # 3. Install brew packages
+            setup_brew_packages
+            # 4. Run prereq installer
+            run_prereq_installer
+            # 5. Setup ASDF + OpenSSL (right before chezmoi)
+            setup_asdf_and_openssl
+            # 6. Run build (chezmoi init/apply + post-install)
             run_build
+            # 7. Run tests
+            run_pytest
             ;;
         all)
             run_lint
+            setup_brew_packages
+            run_prereq_installer
+            setup_asdf_and_openssl
             run_build
+            run_pytest
             ;;
         *)
             log_error "Unknown stage: $STAGE"
