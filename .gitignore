@@ -2,3 +2,54 @@ venv
 env.before_update
 beeftop.env
 .envrc
+logs
+.claude/data
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Testing
+htmlcov/
+.coverage
+.nyc_output
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+.cache/
+tmp/
+temp/
+
+
+.mcp.json
+
+output
+outputs/
+
+extras/
+
+# Claude Code data
+.claude/data/
+
+# lets ignore this for now, but we'll use it later to create splunk queries and dashboards
+data/splunk/1759972386_103178_02D4481B-981F-4097-8DF0-9D3DDF53938F.csv
+
+# idk if we need to comment this out or not
+.cursor/mcp.json
+
+
+hack/doctor/bin/chezmoi

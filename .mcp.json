@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "ElevenLabs": {
+      "args": ["elevenlabs-mcp"],
+      "command": "uvx",
+      "env": {
+        "ELEVENLABS_API_KEY": "${ELEVENLABS_API_KEY}"
+      }
+    },
+    "firecrawl-mcp": {
+      "args": ["-y", "firecrawl-mcp"],
+      "command": "npx",
+      "env": {
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}",
+        "FIRECRAWL_RETRY_MAX_ATTEMPTS": "5",
+        "FIRECRAWL_RETRY_INITIAL_DELAY": "2000",
+        "FIRECRAWL_RETRY_MAX_DELAY": "30000",
+        "FIRECRAWL_RETRY_BACKOFF_FACTOR": "3"
+      }
+    },
+    "perplexity-ask": {
+      "args": ["-y", "server-perplexity-ask"],
+      "command": "npx",
+      "env": {
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+      }
+    }
+  }
+}

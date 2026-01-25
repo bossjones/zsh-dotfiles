@@ -20,7 +20,7 @@ dev/bossjones/oh-my-tmux:
   exact: true
   stripComponents: 1
   refreshPeriod: 168h
-  
+
 dev/bossjones/boss-cheatsheets:
   type: archive
   url: https://github.com/bossjones/boss-cheatsheets/archive/master.tar.gz
@@ -28,5 +28,3 @@ dev/bossjones/boss-cheatsheets:
   exact: true
   stripComponents: 1
   refreshPeriod: 168h
-
-

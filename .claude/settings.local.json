@@ -2,8 +2,18 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Skill(superpowers:systematic-debugging)",
+      "Bash(make smoke:*)",
+      "Bash(docker compose build:*)",
+      "Bash(pre-commit run:*)",
+      "Bash(uvx pre-commit run:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)",
+      "Bash(shellcheck:*)",
+      "Bash(bash -n:*)"
     ]
   },
-  "enableAllProjectMcpServers": false
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["ElevenLabs", "firecrawl-mcp", "perplexity-ask"]
 }

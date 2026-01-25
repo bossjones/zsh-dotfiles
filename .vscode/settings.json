@@ -18,32 +18,29 @@
       "copylocks": true
     },
     "ui.semanticTokens": true,
-    "templateExtensions": [
-      "gotmpl",
-      "tmpl"
-    ],
+    "templateExtensions": ["gotmpl", "tmpl"],
     "ui.diagnostic.staticcheck": true
   },
   "files.insertFinalNewline": true,
   "files.associations": {
-      "requirements*": "pip-requirements",
-      "*.internal": "makefile",
-      "*.sh.tmpl": "shellscript",
-      "*.yaml.tmpl": "yaml",
-      "*.yml.tmpl": "yaml",
-      "*.toml.tmpl": "toml",
-      "compat.bash.tmpl": "shellscript",
-      "compat.sh.tmpl": "shellscript",
-      "dot_bashrc.tmpl": "shellscript",
-      "dot_profile.tmpl": "shellscript",
-      "dot_zprofile.tmpl": "shellscript",
-      "dot_zshrc.local.tmpl": "shellscript",
-      "dot_zshrc.tmpl": "shellscript",
-      ".chez*tmpl": "gotmpl",
+    "requirements*": "pip-requirements",
+    "*.internal": "makefile",
+    "*.sh.tmpl": "shellscript",
+    "*.yaml.tmpl": "yaml",
+    "*.yml.tmpl": "yaml",
+    "*.toml.tmpl": "toml",
+    "compat.bash.tmpl": "shellscript",
+    "compat.sh.tmpl": "shellscript",
+    "dot_bashrc.tmpl": "shellscript",
+    "dot_profile.tmpl": "shellscript",
+    "dot_zprofile.tmpl": "shellscript",
+    "dot_zshrc.local.tmpl": "shellscript",
+    "dot_zshrc.tmpl": "shellscript",
+    ".chez*tmpl": "gotmpl"
   },
   "[go][go.mod]": {
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     }
-  },
+  }
 }

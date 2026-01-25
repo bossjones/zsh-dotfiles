@@ -1,0 +1,6 @@
+venv
+env.before_update
+beeftop.env
+.envrc
+logs
+.claude/data

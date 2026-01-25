@@ -306,7 +306,7 @@ Key packages installed during CI:
 **CLI Tools:**
 - Search: `fd-find`, `ripgrep`, `silversearcher-ag`, `fzf`
 - File operations: `tree`, `parallel`, `file`, `jq`, `fdupes`
-- System: `curl`, `git`, `vim`, `direnv`, `awscli`, `ccze`, `linux-headers`
+- System: `curl`, `git`, `vim`, `direnv`, `ccze`, `linux-headers`
 - Development: `pkg-config`, `git-core`, `mercurial`, `graphviz`
 
 ### CentOS/RHEL-Specific Packages

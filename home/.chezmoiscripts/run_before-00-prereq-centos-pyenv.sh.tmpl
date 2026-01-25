@@ -26,11 +26,7 @@ then
     sudo dnf update -y
     sudo dnf install -y make gcc-c++ openssl-devel zlib-devel bzip2-devel readline-devel sqlite-devel wget curl llvm ncurses-devel xz tk-devel libxml2-devel libffi-devel xz-devel
 
-    # eval "$(pyenv init --path)"
-    # eval "$(pyenv init -)"
-    # pyenv virtualenvwrapper_lazy
-
-    echo "3.9.9" > $HOME/python-versions.txt
+    # echo "3.9.9" > $HOME/python-versions.txt
     echo "3.9.10" >> $HOME/python-versions.txt
 
     set -x

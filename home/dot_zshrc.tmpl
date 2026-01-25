@@ -7,8 +7,10 @@
 {{ include "shell/init.zsh" }}
 
 {{  if lookPath "sheldon" -}}
-# Source sheldon plugins
-{{    output "sheldon" "source" | trim }}
+# Source sheldon plugins (with runtime config check)
+if [[ -f "$HOME/.sheldon/plugins.toml" ]]; then
+    eval "$(sheldon source)"
+fi
 {{  end -}}
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -26,8 +28,10 @@
 {{ include "shell/init.zsh" }}
 
 {{  if lookPath "sheldon" -}}
-# Source sheldon plugins
-{{    output "sheldon" "source" | trim }}
+# Source sheldon plugins (with runtime config check)
+if [[ -f "$HOME/.sheldon/plugins.toml" ]]; then
+    eval "$(sheldon source)"
+fi
 {{  end -}}
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
