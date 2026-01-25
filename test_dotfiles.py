@@ -93,7 +93,7 @@ def tmux_fake_server(
     t = libtmux.Server(socket_name="zsh_dotfiles_test%s" % next(namer))
 
     def fin() -> None:
-        t.kill_server()
+        t.kill()
 
     request.addfinalizer(fin)
 
@@ -191,7 +191,7 @@ class TestDotfiles:
         time.sleep(2)
 
         # get current window
-        attached_window = tmux_fake_session.attached_window
+        attached_window = tmux_fake_session.active_window
         pane = attached_window.attached_pane
         assert pane is not None
 
@@ -236,7 +236,7 @@ class TestDotfiles:
         # takes a couple seconds to start up
         time.sleep(2)
 
-        attached_window: libtmux.window.Window = tmux_fake_session.attached_window
+        attached_window: libtmux.window.Window = tmux_fake_session.active_window
         attached_window.select_layout("main-vertical")
 
         attached_window.set_window_option("main-pane-height", 80)
@@ -301,7 +301,7 @@ wnloads/yt-cookies.txt ${1}
         # takes a couple seconds to start up
         time.sleep(2)
 
-        attached_window: libtmux.window.Window = tmux_fake_session.attached_window
+        attached_window: libtmux.window.Window = tmux_fake_session.active_window
         attached_window.select_layout("main-vertical")
 
         attached_window.set_window_option("main-pane-height", 80)
