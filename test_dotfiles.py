@@ -247,7 +247,7 @@ class TestDotfiles:
         pane: libtmux.pane.Pane = attached_window.active_pane
         assert pane is not None
         pane.clear()
-        pane.resize_pane(height=60)
+        pane.resize(height=60)
         pane.set_height(60)
         pane.set_width(60)
 
@@ -312,7 +312,7 @@ wnloads/yt-cookies.txt ${1}
         pane: libtmux.pane.Pane = attached_window.active_pane
         assert pane is not None
         pane.clear()
-        pane.resize_pane(height=60)
+        pane.resize(height=60)
         pane.set_height(60)
         pane.set_width(60)
 
