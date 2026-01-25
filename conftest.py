@@ -25,9 +25,18 @@ pytest_plugins = ["pytester"]
 @pytest.fixture(autouse=True, scope="session")
 def setup(
     request: pytest.FixtureRequest,
-    clear_env: pytest.FixtureRequest,
     # config_file: pathlib.Path,
 ) -> None:
     if USING_ZSH:
         # request.getfixturevalue("zshrc")
         pass
+
+
+@pytest.fixture(autouse=True, scope="function")
+def setup_function(clear_env: pytest.FixtureRequest) -> None:
+    """Ensure clean environment for each test function.
+
+    This fixture automatically runs before each test to clear environment
+    variables via the clear_env fixture from libtmux.
+    """
+    pass
