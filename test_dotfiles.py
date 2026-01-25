@@ -192,7 +192,7 @@ class TestDotfiles:
 
         # get current window
         attached_window = tmux_fake_session.active_window
-        pane = attached_window.attached_pane
+        pane = attached_window.active_pane
         assert pane is not None
 
         # Set the prompt manually
@@ -239,12 +239,12 @@ class TestDotfiles:
         attached_window: libtmux.window.Window = tmux_fake_session.active_window
         attached_window.select_layout("main-vertical")
 
-        attached_window.set_window_option("main-pane-height", 80)
-        assert attached_window.show_window_option("main-pane-height") == 80
+        attached_window.set_option("main-pane-height", 80)
+        assert attached_window.show_option("main-pane-height") == 80
 
 
         # get current window
-        pane: libtmux.pane.Pane = attached_window.attached_pane
+        pane: libtmux.pane.Pane = attached_window.active_pane
         assert pane is not None
         pane.clear()
         pane.resize_pane(height=60)
@@ -304,12 +304,12 @@ wnloads/yt-cookies.txt ${1}
         attached_window: libtmux.window.Window = tmux_fake_session.active_window
         attached_window.select_layout("main-vertical")
 
-        attached_window.set_window_option("main-pane-height", 80)
-        assert attached_window.show_window_option("main-pane-height") == 80
+        attached_window.set_option("main-pane-height", 80)
+        assert attached_window.show_option("main-pane-height") == 80
 
 
         # get current window
-        pane: libtmux.pane.Pane = attached_window.attached_pane
+        pane: libtmux.pane.Pane = attached_window.active_pane
         assert pane is not None
         pane.clear()
         pane.resize_pane(height=60)
