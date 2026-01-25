@@ -23,9 +23,9 @@ pytest_plugins = ["pytester"]
 
 
 @pytest.fixture(autouse=True, scope="session")
-@pytest.mark.usefixtures("clear_env")
 def setup(
     request: pytest.FixtureRequest,
+    clear_env: pytest.FixtureRequest,
     # config_file: pathlib.Path,
 ) -> None:
     if USING_ZSH:

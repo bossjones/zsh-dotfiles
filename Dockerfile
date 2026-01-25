@@ -46,6 +46,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     zsh \
     gcc-12 \
+    gcc \
+    g++ \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry \
     && chmod +x /usr/local/bin/retry
