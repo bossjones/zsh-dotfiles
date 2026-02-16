@@ -6,9 +6,8 @@ Verifies that all required packages and tools are properly installed.
 
 import subprocess
 import sys
-import json
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 import re
 
 
@@ -25,9 +24,11 @@ class Colors:
 class EnvironmentChecker:
     def __init__(self):
         self.results = {
+            'env_and_path': None,
             'brew_packages': [],
             'sheldon': None,
             'chezmoi': None,
+            'uv': None,
             'asdf_tools': []
         }
         self.failed_checks = []
@@ -149,6 +150,154 @@ class EnvironmentChecker:
 
         return result
 
+    @staticmethod
+    def _version_gte(actual: str, minimum: str) -> bool:
+        """Return True if actual version >= minimum version (semver-style comparison)."""
+        def _parts(v: str) -> List[int]:
+            return [int(x) for x in re.split(r'[.\-]', v) if x.isdigit()]
+        return _parts(actual) >= _parts(minimum)
+
+    def check_uv(self) -> Dict:
+        """Check uv installation and version (>= minimum)"""
+        min_version = "0.9.21"
+        result = {
+            'installed': False,
+            'location': None,
+            'version': None,
+            'version_acceptable': False,
+            'min_version': min_version
+        }
+
+        success, stdout, _ = self.run_command(['which', 'uv'])
+        if success:
+            result['installed'] = True
+            result['location'] = stdout.strip()
+
+            success, stdout, _ = self.run_command(['uv', '--version'])
+            if success:
+                # Parse version from output like "uv 0.9.21 (0dc9556ad 2025-12-30)"
+                match = re.search(r'(\d+\.\d+\.\d+)', stdout)
+                if match:
+                    result['version'] = match.group(1)
+                    result['version_acceptable'] = self._version_gte(result['version'], min_version)
+
+        return result
+
+    def check_all_uv(self):
+        """Check uv installation"""
+        self.print_header("Checking uv")
+
+        result = self.check_uv()
+        self.results['uv'] = result
+
+        if result['installed']:
+            self.print_success("uv is installed")
+            print(f"  Location: {result['location']}")
+            print(f"  Version: {result['version']}")
+
+            if result['version_acceptable']:
+                self.print_success(f"Version is acceptable (>= {result['min_version']})")
+            else:
+                self.print_warning(f"Version {result['version']} is below minimum {result['min_version']}")
+        else:
+            self.print_failure("uv is NOT installed")
+            print(f"\n  Install with:")
+            print(f"  curl -LsSf https://astral.sh/uv/install.sh | sh")
+
+    def check_env_and_path(self) -> Dict:
+        """Check CI environment variables and PATH precedence from setup_initial_environment."""
+        import os
+
+        home = str(Path.home())
+        result = {
+            'env_vars': {},
+            'path_dirs': {},
+            'path_precedence_ok': False,
+        }
+
+        # Expected env vars from setup_initial_environment
+        env_checks = {
+            'ZSH_DOTFILES_PREP_CI': '1',
+            'ZSH_DOTFILES_PREP_DEBUG': '1',
+            'ZSH_DOTFILES_PREP_GITHUB_USER': 'bossjones',
+            'ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE': '1',
+            'SHELDON_CONFIG_DIR': os.path.join(home, '.sheldon'),
+            'SHELDON_DATA_DIR': os.path.join(home, '.sheldon'),
+        }
+
+        for var, expected in env_checks.items():
+            actual = os.environ.get(var)
+            result['env_vars'][var] = {
+                'expected': expected,
+                'actual': actual,
+                'ok': actual == expected if actual else False,
+                'set': actual is not None,
+            }
+
+        # Check that key directories exist on PATH and appear before system dirs
+        priority_dirs = [
+            os.path.join(home, '.bin'),
+            os.path.join(home, 'bin'),
+            os.path.join(home, '.local', 'bin'),
+        ]
+
+        path_entries = os.environ.get('PATH', '').split(':')
+
+        # Find index of /usr/bin as a reference "system" baseline
+        system_idx = None
+        for i, p in enumerate(path_entries):
+            if p in ('/usr/bin', '/bin'):
+                system_idx = i
+                break
+
+        all_precedence_ok = True
+        for d in priority_dirs:
+            present = d in path_entries
+            idx = path_entries.index(d) if present else None
+            before_system = (idx is not None and system_idx is not None and idx < system_idx) if present else False
+            if not before_system:
+                all_precedence_ok = False
+            result['path_dirs'][d] = {
+                'present': present,
+                'index': idx,
+                'before_system': before_system,
+            }
+
+        result['path_precedence_ok'] = all_precedence_ok
+        return result
+
+    def check_all_env_and_path(self):
+        """Check environment variables and PATH precedence."""
+        self.print_header("Checking Environment & PATH Precedence")
+
+        result = self.check_env_and_path()
+        self.results['env_and_path'] = result
+
+        # Environment variables
+        for var, info in result['env_vars'].items():
+            if not info['set']:
+                self.print_warning(f"${var} is not set (expected: {info['expected']})")
+            elif info['ok']:
+                self.print_success(f"${var} = {info['actual']}")
+            else:
+                self.print_warning(f"${var} = {info['actual']} (expected: {info['expected']})")
+
+        # PATH directories
+        print()
+        for d, info in result['path_dirs'].items():
+            short = d.replace(str(Path.home()), '~')
+            if info['present'] and info['before_system']:
+                self.print_success(f"{short} is on PATH (index {info['index']}, before system dirs)")
+            elif info['present']:
+                self.print_warning(f"{short} is on PATH (index {info['index']}) but AFTER system dirs")
+            else:
+                self.print_failure(f"{short} is NOT on PATH")
+
+        if result['path_precedence_ok']:
+            self.print_success("PATH precedence is correct (user dirs before system dirs)")
+        else:
+            self.print_warning("PATH precedence: some user dirs are missing or after system dirs")
+
     def check_asdf_tool(self, tool: str, expected_version: str) -> Dict:
         """Check if an asdf-managed tool is installed with correct version"""
         result = {
@@ -199,11 +348,11 @@ class EnvironmentChecker:
             'gawk', 'gnu-getopt', 'gnu-sed', 'gnu-tar', 'gnutls',
             'graphicsmagick', 'hdf5', 'jpeg', 'libffi', 'libmagic',
             'libomp', 'libpng', 'libtiff', 'openblas', 'openexr',
-            'openmpi', 'openssl', 'pkg-config', 'readline',
+            'open-mpi', 'openssl@3', 'pkgconf', 'readline',
 
             # Additional utilities
             'repomix', 'pstree', 'imagemagick', 'uv', 'fdupes',
-            'sqlite3', 'tbb', 'tcl-tk', 'wget', 'xz', 'zlib',
+            'sqlite', 'tbb', 'tcl-tk', 'wget', 'xz', 'zlib',
             'libmediainfo', 'bc',
 
             # Development tools
@@ -304,7 +453,6 @@ class EnvironmentChecker:
             'neovim': '0.11.3',
             'opa': '0.62.1',
             'ruby': '3.2.1',
-            'rye': '0.33.0',
             'shellcheck': '0.10.0',
             'shfmt': '3.7.0',
             'tmux': '3.5a',
@@ -344,10 +492,13 @@ class EnvironmentChecker:
         asdf_correct = sum(1 for tool in self.results['asdf_tools'] if tool['version_correct'])
         asdf_total = len(self.results['asdf_tools'])
 
+        env_path = self.results.get('env_and_path', {})
+        print(f"PATH Precedence: {'✓' if env_path.get('path_precedence_ok') else '✗'}")
         print(f"Brew Packages: {brew_installed}/{brew_total} installed")
         print(f"ASDF Tools: {asdf_installed}/{asdf_total} installed ({asdf_correct} correct versions)")
         print(f"Sheldon: {'✓' if self.results['sheldon'].get('installed') else '✗'}")
         print(f"Chezmoi: {'✓' if self.results['chezmoi'].get('installed') else '✗'}")
+        print(f"uv: {'✓' if self.results['uv'].get('installed') else '✗'}")
 
         if self.failed_checks:
             print(f"\n{Colors.RED}{Colors.BOLD}Issues Found: {len(self.failed_checks)}{Colors.ENDC}")
@@ -361,9 +512,11 @@ class EnvironmentChecker:
         print(f"{Colors.BOLD}Development Environment Checker{Colors.ENDC}")
         print(f"Checking installation status of packages and tools...\n")
 
+        self.check_all_env_and_path()
         self.check_all_brew_packages()
         self.check_all_sheldon()
         self.check_all_chezmoi()
+        self.check_all_uv()
         self.check_all_asdf_tools()
 
         return self.generate_report()

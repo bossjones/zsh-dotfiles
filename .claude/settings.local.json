@@ -11,9 +11,17 @@
       "Bash(git commit:*)",
       "Bash(git add:*)",
       "Bash(shellcheck:*)",
-      "Bash(bash -n:*)"
+      "Bash(bash -n:*)",
+      "mcp__firecrawl-mcp__firecrawl_scrape",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(python3:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": ["ElevenLabs", "firecrawl-mcp", "perplexity-ask"]
+  "enabledMcpjsonServers": [
+    "ElevenLabs",
+    "firecrawl-mcp",
+    "perplexity-ask"
+  ]
 }

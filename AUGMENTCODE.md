@@ -249,7 +249,7 @@ Key packages installed during CI:
 ### Package Managers & Environment Tools
 - **asdf**: Multi-language runtime version manager
 - **sheldon**: ZSH plugin manager (compiled from source on arm64 macOS)
-- **rye**: Python project & dependency management tool with uv backend
+- **uv**: Python package and project manager (Astral)
 - **fnm**: Fast Node.js version manager
 - **pyenv**: Python version management (Ubuntu)
 

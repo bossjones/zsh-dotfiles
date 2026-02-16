@@ -39,8 +39,6 @@ asdf plugin-add mkcert https://github.com/salasrod/asdf-mkcert.git || true
 asdf plugin add opa https://github.com/tochukwuvictor/asdf-opa.git || true
 asdf plugin-add helm-docs https://github.com/sudermanjr/asdf-helm-docs.git || true
 asdf plugin-add kubetail https://github.com/janpieper/asdf-kubetail.git || true
-asdf plugin add rye https://github.com/Azuki-bar/asdf-rye.git || true
-
 {{ $plugins := dict
   "ruby"    (.myAsdfRubyVersion)
   "golang"    (.myAsdfGolangVersion)
@@ -59,7 +57,6 @@ asdf plugin add rye https://github.com/Azuki-bar/asdf-rye.git || true
   "opa" (.myAsdfOpaVersion)
   "kubectl" (.myAsdfKubectlVersion)
   "kubetail" (.myAsdfKubetailVersion)
-  "rye" (.myAsdfRyeVersion)
 }}
 
 # Add plugins & install versions

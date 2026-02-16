@@ -18,6 +18,7 @@ from libtmux import exc
 from libtmux.test.constants import TEST_SESSION_PREFIX
 from libtmux.test.random import get_test_session_name, get_test_window_name, namer
 from libtmux.session import Session
+import subprocess
 
 
 
@@ -64,6 +65,59 @@ class RandomStrSequence:
         return "".join(random.sample(self.characters, k=8))
 
 # namer = RandomStrSequence()
+
+@pytest.fixture
+def zsh_output_subprocess():
+    """Run a command in a subprocess and return the output. Note this subprocess is slow"""
+    def _run(cmd: str) -> str:
+        """Run a command in a subprocess and return the output"""
+        result = subprocess.run(
+            ["zsh", "-i", "-c", cmd],
+            capture_output=True, text=True, timeout=5,
+        )
+        return result.stdout.strip()
+    return _run
+
+@pytest.mark.flaky()
+@pytest.mark.skip(reason="These tests are meant to only run locally on laptop prior to porting it over to new system")
+def test_alias_defined(zsh_output_subprocess):
+    output = zsh_output_subprocess("alias ll")
+    assert "ls -lh" in output
+
+@pytest.mark.flaky()
+@pytest.mark.skip(reason="These tests are meant to only run locally on laptop prior to porting it over to new system")
+def test_all_alias_defined(zsh_output_subprocess):
+    """Run 'alias' once and verify all expected aliases are present."""
+    output = zsh_output_subprocess("alias")
+
+    expected_aliases = [
+        "cn=cursor-nightly",
+        "dl-thumb=yt-dl-thumb",
+        "dl-thumb-fork=yt-dl-thumb-fork",
+        "dl_auto=ytdl_auto",
+        "dlc=dl_using_chrome",
+        "dlh=dl_helldivers",
+        "dlsf=dl-safe-fork",
+        "dlt=dl-twitter",
+        "dsf=dl-safe-fork",
+        "dto=dl_thumb_only",
+        "fixvideo='sudo killall VDCAssistant'",
+        "gcd=git_clone_d",
+        "k=kubectl",
+        "mkdir_cd=mcd",
+        "prepare_all=prepare_dir_all",
+        "prepare_all_n=prepare_dir_all_n",
+        "prepare_all_small=prepare_dir_small",
+        "rd=rmdir",
+        "rdi=reddit_dl_improved",
+        "red_dl=yt-red",
+        "reddit_dl=yt-best-fork",
+        "show_all=show_dir_all",
+        "trw='tmux rename-window'",
+    ]
+
+    missing = [alias for alias in expected_aliases if alias not in output]
+    assert not missing, f"Missing aliases in output:\n" + "\n".join(missing)
 
 @pytest.fixture(scope="module")
 def tmux_client() -> libtmux.server.Server:

@@ -1,8 +1,17 @@
+sync:
+	uv sync
+
 test:
 	py.test --tb=short --no-header --showlocals --reruns 6 test_dotfiles.py
 
 test-pdb:
 	py.test --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py
+
+uv-test:
+	uv run pytest -vvvv --tb=short --no-header --showlocals --reruns 6 --durations-min=0.05 --durations=10 test_dotfiles.py
+
+uv-test-pdb:
+	uv run pytest --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py
 
 .PHONY: update-cursor-rules
 update-cursor-rules:  ## Update cursor rules from prompts/drafts/cursor_rules

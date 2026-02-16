@@ -57,7 +57,7 @@ Configured plugins include:
 - GitHub CLI
 - Kubernetes tools (kubectl, helm, k9s, kubectx)
 - Development tools (shellcheck, shfmt, yq)
-- Rye (Python package manager)
+- uv (Python package and project manager)
 
 ### 4. ZSH Configuration
 
