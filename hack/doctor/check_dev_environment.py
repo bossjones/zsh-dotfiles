@@ -217,6 +217,10 @@ class EnvironmentChecker:
 
         # Expected env vars from setup_initial_environment
         env_checks = {
+            'ZSH_DOTFILES_PREP_CI': '1',
+            'ZSH_DOTFILES_PREP_DEBUG': '1',
+            'ZSH_DOTFILES_PREP_GITHUB_USER': 'bossjones',
+            'ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE': '1',
             'SHELDON_CONFIG_DIR': os.path.join(home, '.sheldon'),
             'SHELDON_DATA_DIR': os.path.join(home, '.sheldon'),
         }
