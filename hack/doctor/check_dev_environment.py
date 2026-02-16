@@ -6,9 +6,8 @@ Verifies that all required packages and tools are properly installed.
 
 import subprocess
 import sys
-import json
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 import re
 
 
@@ -28,6 +27,7 @@ class EnvironmentChecker:
             'brew_packages': [],
             'sheldon': None,
             'chezmoi': None,
+            'uv': None,
             'asdf_tools': []
         }
         self.failed_checks = []
@@ -149,6 +149,60 @@ class EnvironmentChecker:
 
         return result
 
+    @staticmethod
+    def _version_gte(actual: str, minimum: str) -> bool:
+        """Return True if actual version >= minimum version (semver-style comparison)."""
+        def _parts(v: str) -> List[int]:
+            return [int(x) for x in re.split(r'[.\-]', v) if x.isdigit()]
+        return _parts(actual) >= _parts(minimum)
+
+    def check_uv(self) -> Dict:
+        """Check uv installation and version (>= minimum)"""
+        min_version = "0.9.21"
+        result = {
+            'installed': False,
+            'location': None,
+            'version': None,
+            'version_acceptable': False,
+            'min_version': min_version
+        }
+
+        success, stdout, _ = self.run_command(['which', 'uv'])
+        if success:
+            result['installed'] = True
+            result['location'] = stdout.strip()
+
+            success, stdout, _ = self.run_command(['uv', '--version'])
+            if success:
+                # Parse version from output like "uv 0.9.21 (0dc9556ad 2025-12-30)"
+                match = re.search(r'(\d+\.\d+\.\d+)', stdout)
+                if match:
+                    result['version'] = match.group(1)
+                    result['version_acceptable'] = self._version_gte(result['version'], min_version)
+
+        return result
+
+    def check_all_uv(self):
+        """Check uv installation"""
+        self.print_header("Checking uv")
+
+        result = self.check_uv()
+        self.results['uv'] = result
+
+        if result['installed']:
+            self.print_success("uv is installed")
+            print(f"  Location: {result['location']}")
+            print(f"  Version: {result['version']}")
+
+            if result['version_acceptable']:
+                self.print_success(f"Version is acceptable (>= {result['min_version']})")
+            else:
+                self.print_warning(f"Version {result['version']} is below minimum {result['min_version']}")
+        else:
+            self.print_failure("uv is NOT installed")
+            print(f"\n  Install with:")
+            print(f"  curl -LsSf https://astral.sh/uv/install.sh | sh")
+
     def check_asdf_tool(self, tool: str, expected_version: str) -> Dict:
         """Check if an asdf-managed tool is installed with correct version"""
         result = {
@@ -199,11 +253,11 @@ class EnvironmentChecker:
             'gawk', 'gnu-getopt', 'gnu-sed', 'gnu-tar', 'gnutls',
             'graphicsmagick', 'hdf5', 'jpeg', 'libffi', 'libmagic',
             'libomp', 'libpng', 'libtiff', 'openblas', 'openexr',
-            'openmpi', 'openssl', 'pkg-config', 'readline',
+            'open-mpi', 'openssl@3', 'pkgconf', 'readline',
 
             # Additional utilities
             'repomix', 'pstree', 'imagemagick', 'uv', 'fdupes',
-            'sqlite3', 'tbb', 'tcl-tk', 'wget', 'xz', 'zlib',
+            'sqlite', 'tbb', 'tcl-tk', 'wget', 'xz', 'zlib',
             'libmediainfo', 'bc',
 
             # Development tools
@@ -304,7 +358,6 @@ class EnvironmentChecker:
             'neovim': '0.11.3',
             'opa': '0.62.1',
             'ruby': '3.2.1',
-            'rye': '0.33.0',
             'shellcheck': '0.10.0',
             'shfmt': '3.7.0',
             'tmux': '3.5a',
@@ -348,6 +401,7 @@ class EnvironmentChecker:
         print(f"ASDF Tools: {asdf_installed}/{asdf_total} installed ({asdf_correct} correct versions)")
         print(f"Sheldon: {'✓' if self.results['sheldon'].get('installed') else '✗'}")
         print(f"Chezmoi: {'✓' if self.results['chezmoi'].get('installed') else '✗'}")
+        print(f"uv: {'✓' if self.results['uv'].get('installed') else '✗'}")
 
         if self.failed_checks:
             print(f"\n{Colors.RED}{Colors.BOLD}Issues Found: {len(self.failed_checks)}{Colors.ENDC}")
@@ -364,6 +418,7 @@ class EnvironmentChecker:
         self.check_all_brew_packages()
         self.check_all_sheldon()
         self.check_all_chezmoi()
+        self.check_all_uv()
         self.check_all_asdf_tools()
 
         return self.generate_report()

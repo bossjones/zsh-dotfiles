@@ -34,7 +34,6 @@ fi
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "`fnm env`"
-[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 
 # sheldon version {{- .mySheldonVersion}}
@@ -134,6 +133,5 @@ fi
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "`fnm env`"
-[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 {{ end -}}

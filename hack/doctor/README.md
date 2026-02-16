@@ -88,7 +88,6 @@ Verifies the following tools and their versions:
 | neovim | 0.11.3 |
 | opa | 0.62.1 |
 | ruby | 3.2.1 |
-| rye | 0.33.0 |
 | shellcheck | 0.10.0 |
 | shfmt | 3.7.0 |
 | tmux | 3.5a |

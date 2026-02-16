@@ -165,13 +165,12 @@ Checking ASDF-Managed Tools
 ✓ neovim @ 0.11.3
 ✓ opa @ 0.62.1
 ✓ ruby @ 3.2.1
-✓ rye @ 0.33.0
 ✓ shellcheck @ 0.10.0
 ✓ shfmt @ 3.7.0
 ✓ tmux @ 3.5a
 ✓ yq @ 4.34.1
 
-Summary: 18/18 tools installed
+Summary: 17/17 tools installed
 Correct versions: 18/18
 
 ======================================================================

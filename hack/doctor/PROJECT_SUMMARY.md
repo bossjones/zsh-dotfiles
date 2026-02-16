@@ -100,7 +100,7 @@ make test
 | kubetail | 1.6.20 | Kubernetes log viewer |
 | mkcert | 1.4.4 | Local certificate generator |
 | opa | 0.62.1 | Policy engine |
-| rye | 0.33.0 | Python package manager |
+| uv | latest | Python package and project manager |
 
 ## 🎯 Usage Examples
 
