@@ -12,7 +12,9 @@
       "Bash(git add:*)",
       "Bash(shellcheck:*)",
       "Bash(bash -n:*)",
-      "mcp__firecrawl-mcp__firecrawl_scrape"
+      "mcp__firecrawl-mcp__firecrawl_scrape",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
