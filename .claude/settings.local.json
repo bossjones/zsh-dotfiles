@@ -15,7 +15,8 @@
       "mcp__firecrawl-mcp__firecrawl_scrape",
       "Bash(git push:*)",
       "Bash(gh pr create:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(actionlint:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

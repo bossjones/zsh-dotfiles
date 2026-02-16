@@ -26,37 +26,41 @@ jobs:
   tests:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: ["macos-14", "macos-latest"]
+        os: ["macos-14", "macos-15", "macos-26", "macos-latest"]
         python-version: ["3.12"]
+    continue-on-error: ${{ matrix.os == 'macos-26' || matrix.os == 'macos-latest' }}
 
     steps:
-      - name: Set up Git repository on ${{ matrix.os }}
+      - name: Checkout repository [${{ matrix.os }}, py${{ matrix.python-version }}]
         uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+      - name: Set up Python ${{ matrix.python-version }} [${{ matrix.os }}]
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: "requirements-test.txt"
 
-      - uses: actions/setup-go@v6
+      - name: Set up Go 1.20.5 [${{ matrix.os }}, py${{ matrix.python-version }}]
+        uses: actions/setup-go@v6
         with:
           go-version: "1.20.5" # The Go version to download (if necessary) and use.
-      - run: go version
+      - name: Verify Go installation [${{ matrix.os }}]
+        run: go version
 
-      - name: brew taps on ${{ matrix.os }}
+      - name: Configure Homebrew taps [${{ matrix.os }}, py${{ matrix.python-version }}]
         run: |
           brew tap schniz/tap || true
 
-      - name: brew install actionlint ${{ matrix.os }}
+      - name: Install actionlint via Homebrew [${{ matrix.os }}, py${{ matrix.python-version }}]
         run: |
           brew install actionlint || true
 
-      - name: Run zsh-dotfiles-prep on ${{ matrix.os }}
+      - name: Install prerequisites (zsh-dotfiles-prep) [${{ matrix.os }}, py${{ matrix.python-version }}]
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -79,7 +83,7 @@ jobs:
           chmod +x zsh-dotfiles-prereq-installer
           retry -t 4  -- ./zsh-dotfiles-prereq-installer --debug
 
-      - name: Rerun zsh-dotfiles-prep on ${{ matrix.os }}
+      - name: Rerun prerequisites (zsh-dotfiles-prep) [${{ matrix.os }}, py${{ matrix.python-version }}]
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -100,7 +104,7 @@ jobs:
           chmod +x zsh-dotfiles-prereq-installer
           retry -t 4  -- ./zsh-dotfiles-prereq-installer --debug
 
-      - name: full chezmoi install on ${{ matrix.os }}
+      - name: Full chezmoi init + apply + LunarVim [${{ matrix.os }}, py${{ matrix.python-version }}]
         env:
           ZSH_DOTFILES_PREP_CI: 1
           ZSH_DOTFILES_PREP_DEBUG: 1
@@ -120,7 +124,7 @@ jobs:
           export LV_BRANCH="release-1.3/neovim-0.9"
           curl -s "https://raw.githubusercontent.com/LunarVim/LunarVim/${LV_BRANCH}/utils/installer/install.sh" | bash -s -- --install-dependencies -y
 
-      - name: macos-15 requires a custom tap for openssl@1.1
+      - name: Install OpenSSL taps (macos-latest only) [${{ matrix.os }}, py${{ matrix.python-version }}]
         if: matrix.os == 'macos-latest'
         run: |
           brew install openssl@3 readline libyaml gmp autoconf tmux || true
@@ -128,7 +132,7 @@ jobs:
           brew info gnu-getopt || true
 
       # Allow debugging with tmate
-      - name: Setup tmate session
+      - name: Setup tmate debug session [${{ matrix.os }}, py${{ matrix.python-version }}]
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled }}
         with:
@@ -136,7 +140,7 @@ jobs:
           # If you have registered one or more public SSH keys with your GitHub profile, tmate will be started such that only those keys are authorized to connect, otherwise anybody can connect to the tmate session. If you want to require a public SSH key to be installed with the tmate session, no matter whether the user who started the workflow has registered any in their GitHub profile, you will need to configure the setting limit-access-to-actor to true, like so:
           limit-access-to-actor: true
 
-      - name: macos-15 needs you to explicitly add an argument for openssl 3 on ${{ matrix.os }}
+      - name: Install full toolchain + Ruby with OpenSSL 3 (macos-latest only) [${{ matrix.os }}, py${{ matrix.python-version }}]
         if: matrix.os == 'macos-latest'
         env:
           ZSH_DOTFILES_PREP_CI: 1
@@ -198,7 +202,7 @@ jobs:
 
           retry -t 4  -- post-install-chezmoi
 
-      - name: pytest on ${{ matrix.os }}
+      - name: Run pytest suite [${{ matrix.os }}, py${{ matrix.python-version }}]
         run: |
           # Removed 'exec zsh' to prevent script termination
           zsh -c '
