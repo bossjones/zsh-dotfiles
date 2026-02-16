@@ -78,10 +78,14 @@ def zsh_output_subprocess():
         return result.stdout.strip()
     return _run
 
+@pytest.mark.flaky()
+@pytest.mark.skip(reason="These tests are meant to only run locally on laptop prior to porting it over to new system")
 def test_alias_defined(zsh_output_subprocess):
     output = zsh_output_subprocess("alias ll")
     assert "ls -lh" in output
 
+@pytest.mark.flaky()
+@pytest.mark.skip(reason="These tests are meant to only run locally on laptop prior to porting it over to new system")
 def test_all_alias_defined(zsh_output_subprocess):
     """Run 'alias' once and verify all expected aliases are present."""
     output = zsh_output_subprocess("alias")
