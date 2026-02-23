@@ -7,7 +7,11 @@ export PATH=/usr/local/cuda/bin:${PATH}
 export PATH=/usr/local/cuda-11.8/bin${PATH:+:${PATH}}
 export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
-[ -f ~/.fzf.bash ] && . ~/.fzf.bash
+if [ -n "$ZSH_VERSION" ]; then
+    [ -f ~/.fzf.zsh ] && . ~/.fzf.zsh
+elif [ -n "$BASH_VERSION" ]; then
+    [ -f ~/.fzf.bash ] && . ~/.fzf.bash
+fi
 
 . "$HOME/.cargo/env"
 
@@ -64,9 +68,10 @@ fi
 export PATH="$HOMEBREW_PREFIX/bin:$PATH"
 export PATH="${HOME}/bin:${HOME}/.bin:${HOME}/.local/bin:$PATH"
 
-if [ -f "$HOME/.fzf.bash" ]
-then
-  . ~/.fzf.bash
+if [ -n "$ZSH_VERSION" ]; then
+  [ -f "$HOME/.fzf.zsh" ] && . "$HOME/.fzf.zsh"
+elif [ -n "$BASH_VERSION" ]; then
+  [ -f "$HOME/.fzf.bash" ] && . "$HOME/.fzf.bash"
 fi
 
 if [ -f "$HOME/.cargo/env" ]
