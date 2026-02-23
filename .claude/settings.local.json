@@ -16,7 +16,9 @@
       "Bash(git push:*)",
       "Bash(gh pr create:*)",
       "Bash(python3:*)",
-      "Bash(actionlint:*)"
+      "Bash(actionlint:*)",
+      "WebFetch(domain:www.chezmoi.io)",
+      "Bash(git:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

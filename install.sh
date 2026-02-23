@@ -59,6 +59,9 @@ ZSH_DOTFILES_PREP_GITHUB_USER=${ZSH_DOTFILES_PREP_GITHUB_USER:-"bossjones"}
 ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE=${ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE:-1}
 ZSH_DOTFILES_SKIP_LUNARVIM=${ZSH_DOTFILES_SKIP_LUNARVIM:-0}
 ZSH_DOTFILES_SKIP_TESTS=${ZSH_DOTFILES_SKIP_TESTS:-0}
+SHELDON_VERSION=${SHELDON_VERSION:-"0.6.6"}
+SHELDON_CONFIG_DIR="${SHELDON_CONFIG_DIR:-$HOME/.sheldon}"
+SHELDON_DATA_DIR="${SHELDON_DATA_DIR:-$HOME/.sheldon}"
 
 # Check if running in CI environment
 if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
@@ -84,6 +87,9 @@ export ZSH_DOTFILES_PREP_CI
 export ZSH_DOTFILES_NONINTERACTIVE
 export ZSH_DOTFILES_SKIP_LUNARVIM
 export ZSH_DOTFILES_SKIP_TESTS
+export SHELDON_VERSION
+export SHELDON_CONFIG_DIR
+export SHELDON_DATA_DIR
 
 # Display configuration
 echo "Configuration:"
@@ -94,6 +100,7 @@ echo "- CI Mode: $ZSH_DOTFILES_PREP_CI"
 echo "- Non-interactive Mode: $ZSH_DOTFILES_NONINTERACTIVE"
 echo "- Skip LunarVim: $ZSH_DOTFILES_SKIP_LUNARVIM"
 echo "- Skip Tests: $ZSH_DOTFILES_SKIP_TESTS"
+echo "- Sheldon Version: $SHELDON_VERSION"
 
 # Create a temporary directory for downloads
 setup_temp_dir() {
@@ -107,6 +114,92 @@ setup_temp_dir() {
     trap 'rm -rf "$TEMP_DIR"' EXIT
 
     echo "Created temporary directory: $TEMP_DIR"
+}
+
+# Install chezmoi if not already available
+install_chezmoi() {
+    if command -v chezmoi >/dev/null 2>&1; then
+        echo "chezmoi already installed: $(chezmoi --version)"
+        return 0
+    fi
+
+    echo "Installing chezmoi..."
+    if command -v brew >/dev/null 2>&1; then
+        echo "Installing chezmoi via brew..."
+        brew install chezmoi
+    else
+        echo "Installing chezmoi via official installer..."
+        sh -c "$(curl -fsSL https://www.chezmoi.io/get)" -- -b "$HOME/.bin"
+    fi
+
+    if command -v chezmoi >/dev/null 2>&1; then
+        echo "chezmoi installed successfully: $(chezmoi --version)"
+    else
+        echo "Error: chezmoi installation failed"
+        exit 1
+    fi
+}
+
+# Install sheldon plugin manager if not already available
+install_sheldon() {
+    if command -v sheldon >/dev/null 2>&1; then
+        echo "sheldon already installed: $(sheldon --version)"
+        return 0
+    fi
+
+    echo "Installing sheldon $SHELDON_VERSION..."
+    mkdir -p "$HOME/.local/bin"
+
+    ARCH=$(uname -m)
+    case "$ARCH" in
+        arm64|aarch64)
+            echo "arm64 detected, building sheldon from source..."
+            OS=$(uname -s)
+            if [ "$OS" = "Linux" ]; then
+                CROSS_TARGET="aarch64-unknown-linux-musl"
+            else
+                CROSS_TARGET="aarch64-apple-darwin"
+            fi
+            # Install Rust if needed
+            if [ ! -f "$HOME/.cargo/env" ]; then
+                echo "Installing Rust toolchain..."
+                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            fi
+            # shellcheck disable=SC1091
+            . "$HOME/.cargo/env"
+
+            # Install cross if needed
+            if ! command -v cross >/dev/null 2>&1; then
+                cargo install cross
+            fi
+
+            mkdir -p "$HOME/.local/src"
+            if [ -d "$HOME/.local/src/sheldon" ]; then
+                rm -rf "$HOME/.local/src/sheldon"
+            fi
+            git clone https://github.com/rossmacarthur/sheldon.git "$HOME/.local/src/sheldon"
+            cd "$HOME/.local/src/sheldon"
+            git checkout "$SHELDON_VERSION"
+            cross build --locked --release --target "$CROSS_TARGET"
+            cp -a "./target/$CROSS_TARGET/release/sheldon" "$HOME/.local/bin/sheldon"
+            cd -
+            ;;
+        x86_64)
+            echo "x86_64 detected, installing sheldon via curl..."
+            curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh | bash -s -- --repo rossmacarthur/sheldon --to "$HOME/.local/bin" --tag "$SHELDON_VERSION"
+            ;;
+        *)
+            echo "Warning: Unsupported architecture $ARCH for sheldon installation"
+            return 1
+            ;;
+    esac
+
+    if command -v sheldon >/dev/null 2>&1; then
+        echo "sheldon installed successfully: $(sheldon --version)"
+    else
+        echo "Error: sheldon installation failed"
+        exit 1
+    fi
 }
 
 # Check if brew is installed
@@ -124,7 +217,7 @@ brew install curl || true
 brew install kadwanev/brew/retry || true
 brew install go || true
 brew install trash || true
-
+brew install gnu-getopt || true
 
 # Set up PATH to include user bin directories
 echo "Setting up PATH..."
@@ -132,13 +225,26 @@ mkdir -p "$HOME/bin" "$HOME/.bin" "$HOME/.local/bin"
 PATH="$HOME/.bin:$HOME/bin:$HOME/.local/bin:$PATH"
 export PATH
 
+# GNU getopt PATH (Homebrew doesn't link it by default)
+GNUGETOPT_BIN="$(brew --prefix gnu-getopt 2>/dev/null)/bin" || true
+if [ -d "$GNUGETOPT_BIN" ]; then
+    PATH="${GNUGETOPT_BIN}:${PATH}"
+    export PATH
+    echo "GNU getopt added to PATH: $GNUGETOPT_BIN"
+fi
+
 echo "PATH is now: $PATH"
+
+# Install chezmoi and sheldon early so they're available for the rest of the script
+install_chezmoi
+install_sheldon
 
 # Create temp directory for downloads
 setup_temp_dir
 
 # Download and run zsh-dotfiles-prereq-installer
 echo "Downloading and running zsh-dotfiles-prereq-installer..."
+ORIG_DIR="$(pwd)"
 cd "$TEMP_DIR"
 wget https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer
 chmod +x zsh-dotfiles-prereq-installer
@@ -180,28 +286,43 @@ if [ "$ZSH_DOTFILES_NONINTERACTIVE" -eq 1 ]; then
     fi
     DOTFILES_SOURCE="$REPO_DIR"
 else
-    # In local execution, assume we're already in the repository
-    DOTFILES_SOURCE="."
+    # In local execution, restore original directory (before cd to TEMP_DIR)
+    cd "$ORIG_DIR"
+    DOTFILES_SOURCE="$ORIG_DIR"
+fi
+
+# Verify the source directory contains .chezmoiroot
+if [ ! -f "$DOTFILES_SOURCE/.chezmoiroot" ]; then
+    echo "Error: $DOTFILES_SOURCE does not contain .chezmoiroot"
+    echo "chezmoi source directory is incorrect. Current directory: $(pwd)"
+    exit 1
+fi
+
+# Ensure sheldon is discoverable for chezmoi template rendering
+if ! command -v sheldon >/dev/null 2>&1; then
+    echo "Warning: sheldon not found on PATH. Adding $HOME/.local/bin to PATH."
+    PATH="$HOME/.local/bin:$PATH"
+    export PATH
 fi
 
 # Run chezmoi init and apply
 echo "Running chezmoi init and apply..."
-if [ ! -f "$HOME/.bin/chezmoi" ]; then
-    echo "Error: chezmoi not found at $HOME/.bin/chezmoi"
-    echo "The zsh-dotfiles-prereq-installer may have failed to install chezmoi."
+if ! command -v chezmoi >/dev/null 2>&1; then
+    echo "Error: chezmoi not found on PATH"
+    echo "The install_chezmoi step may have failed."
     exit 1
 fi
 
 # Run with retry for reliability
 if command -v retry >/dev/null 2>&1; then
-    retry -t 4 -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --source="$DOTFILES_SOURCE"
+    retry -t 4 -- chezmoi init -R --debug -v --apply --force --source="$DOTFILES_SOURCE"
 else
     # Simple retry function if retry command is not available
     max_attempts=4
     attempt=1
     while [ $attempt -le $max_attempts ]; do
         echo "Attempt $attempt of $max_attempts"
-        if "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --source="$DOTFILES_SOURCE"; then
+        if chezmoi init -R --debug -v --apply --force --source="$DOTFILES_SOURCE"; then
             break
         else
             if [ $attempt -eq $max_attempts ]; then

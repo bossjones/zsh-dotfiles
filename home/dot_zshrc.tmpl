@@ -6,9 +6,10 @@
 
 {{ include "shell/init.zsh" }}
 
-{{  if lookPath "sheldon" -}}
+{{  if or (lookPath "sheldon") (stat (joinPath .chezmoi.homeDir ".local" "bin" "sheldon")) -}}
 # Source sheldon plugins (with runtime config check)
 if [[ -f "$HOME/.sheldon/plugins.toml" ]]; then
+    export PATH="$HOME/.local/bin:$PATH"
     eval "$(sheldon source)"
 fi
 {{  end -}}
@@ -26,9 +27,10 @@ fi
 
 {{ include "shell/init.zsh" }}
 
-{{  if lookPath "sheldon" -}}
+{{  if or (lookPath "sheldon") (stat (joinPath .chezmoi.homeDir ".local" "bin" "sheldon")) -}}
 # Source sheldon plugins (with runtime config check)
 if [[ -f "$HOME/.sheldon/plugins.toml" ]]; then
+    export PATH="$HOME/.local/bin:$PATH"
     eval "$(sheldon source)"
 fi
 {{  end -}}

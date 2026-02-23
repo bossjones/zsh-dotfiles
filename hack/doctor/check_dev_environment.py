@@ -264,6 +264,15 @@ class EnvironmentChecker:
             }
 
         result['path_precedence_ok'] = all_precedence_ok
+
+        # Check if gnu-getopt bin dir is on PATH
+        gnu_getopt_on_path = False
+        success, stdout, _ = self.run_command(['brew', '--prefix', 'gnu-getopt'])
+        if success and stdout.strip():
+            gnu_getopt_bin = os.path.join(stdout.strip(), 'bin')
+            gnu_getopt_on_path = gnu_getopt_bin in path_entries
+        result['gnu_getopt_on_path'] = gnu_getopt_on_path
+
         return result
 
     def check_all_env_and_path(self):
@@ -297,6 +306,16 @@ class EnvironmentChecker:
             self.print_success("PATH precedence is correct (user dirs before system dirs)")
         else:
             self.print_warning("PATH precedence: some user dirs are missing or after system dirs")
+
+        # GNU getopt PATH check
+        print()
+        if result.get('gnu_getopt_on_path'):
+            self.print_success("GNU getopt bin dir is on PATH")
+        else:
+            self.print_warning(
+                "GNU getopt bin dir is NOT on PATH. "
+                "Add $(brew --prefix gnu-getopt)/bin to PATH for scripts requiring GNU getopt."
+            )
 
     def check_asdf_tool(self, tool: str, expected_version: str) -> Dict:
         """Check if an asdf-managed tool is installed with correct version"""
