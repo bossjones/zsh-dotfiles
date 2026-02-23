@@ -244,6 +244,7 @@ setup_temp_dir
 
 # Download and run zsh-dotfiles-prereq-installer
 echo "Downloading and running zsh-dotfiles-prereq-installer..."
+ORIG_DIR="$(pwd)"
 cd "$TEMP_DIR"
 wget https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer
 chmod +x zsh-dotfiles-prereq-installer
@@ -285,8 +286,23 @@ if [ "$ZSH_DOTFILES_NONINTERACTIVE" -eq 1 ]; then
     fi
     DOTFILES_SOURCE="$REPO_DIR"
 else
-    # In local execution, assume we're already in the repository
-    DOTFILES_SOURCE="."
+    # In local execution, restore original directory (before cd to TEMP_DIR)
+    cd "$ORIG_DIR"
+    DOTFILES_SOURCE="$ORIG_DIR"
+fi
+
+# Verify the source directory contains .chezmoiroot
+if [ ! -f "$DOTFILES_SOURCE/.chezmoiroot" ]; then
+    echo "Error: $DOTFILES_SOURCE does not contain .chezmoiroot"
+    echo "chezmoi source directory is incorrect. Current directory: $(pwd)"
+    exit 1
+fi
+
+# Ensure sheldon is discoverable for chezmoi template rendering
+if ! command -v sheldon >/dev/null 2>&1; then
+    echo "Warning: sheldon not found on PATH. Adding $HOME/.local/bin to PATH."
+    PATH="$HOME/.local/bin:$PATH"
+    export PATH
 fi
 
 # Run chezmoi init and apply
