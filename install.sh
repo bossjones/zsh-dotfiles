@@ -152,8 +152,14 @@ install_sheldon() {
 
     ARCH=$(uname -m)
     case "$ARCH" in
-        arm64)
+        arm64|aarch64)
             echo "arm64 detected, building sheldon from source..."
+            OS=$(uname -s)
+            if [ "$OS" = "Linux" ]; then
+                CROSS_TARGET="aarch64-unknown-linux-musl"
+            else
+                CROSS_TARGET="aarch64-apple-darwin"
+            fi
             # Install Rust if needed
             if [ ! -f "$HOME/.cargo/env" ]; then
                 echo "Installing Rust toolchain..."
@@ -174,8 +180,8 @@ install_sheldon() {
             git clone https://github.com/rossmacarthur/sheldon.git "$HOME/.local/src/sheldon"
             cd "$HOME/.local/src/sheldon"
             git checkout "$SHELDON_VERSION"
-            cross build --locked --release --target aarch64-apple-darwin
-            cp -a ./target/aarch64-apple-darwin/release/sheldon "$HOME/.local/bin/sheldon"
+            cross build --locked --release --target "$CROSS_TARGET"
+            cp -a "./target/$CROSS_TARGET/release/sheldon" "$HOME/.local/bin/sheldon"
             cd -
             ;;
         x86_64)
