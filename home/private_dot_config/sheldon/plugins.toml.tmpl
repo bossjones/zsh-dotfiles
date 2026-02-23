@@ -137,11 +137,12 @@ apply = ["defer"]
 
 {{if (eq .chezmoi.os "darwin") -}}
 [plugins.asdf]
-{{if (eq .chezmoi.hostname "Mac-mini") -}}
-local = "{{ output "zsh" "-c" "echo $(brew --prefix asdf@0.11.2)/libexec" | trim }}"
-{{ else }}
-local = "{{ output "zsh" "-c" "echo $(brew --prefix asdf)/libexec" | trim }}"
-{{ end }}
+{{ $brewPrefix := output "brew" "--prefix" | trim -}}
+{{ if stat (joinPath $brewPrefix "opt" "asdf@0.11.2" "libexec") -}}
+local = "{{ joinPath $brewPrefix "opt" "asdf@0.11.2" "libexec" }}"
+{{ else -}}
+local = "{{ joinPath $brewPrefix "opt" "asdf" "libexec" }}"
+{{ end -}}
 use = ["{{- "{{ name }}.sh" -}}"]
 apply = ["defer"]
 {{ end }}
