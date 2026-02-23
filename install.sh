@@ -217,12 +217,21 @@ brew install curl || true
 brew install kadwanev/brew/retry || true
 brew install go || true
 brew install trash || true
+brew install gnu-getopt || true
 
 # Set up PATH to include user bin directories
 echo "Setting up PATH..."
 mkdir -p "$HOME/bin" "$HOME/.bin" "$HOME/.local/bin"
 PATH="$HOME/.bin:$HOME/bin:$HOME/.local/bin:$PATH"
 export PATH
+
+# GNU getopt PATH (Homebrew doesn't link it by default)
+GNUGETOPT_BIN="$(brew --prefix gnu-getopt 2>/dev/null)/bin" || true
+if [ -d "$GNUGETOPT_BIN" ]; then
+    PATH="${GNUGETOPT_BIN}:${PATH}"
+    export PATH
+    echo "GNU getopt added to PATH: $GNUGETOPT_BIN"
+fi
 
 echo "PATH is now: $PATH"
 
