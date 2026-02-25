@@ -1,11 +1,5 @@
 
-if [[ "$OSTYPE" == darwin* ]]
+if [ -f "${HOME}/.cargo/env" ]
 then
-    _ARCH=$(uname -m)
-    # PASS FOR NOW
-else
-    if [ -d "${HOME}/.cargo" ]
-    then
-        . "$HOME/.cargo/env"
-    fi
+    . "$HOME/.cargo/env"
 fi
