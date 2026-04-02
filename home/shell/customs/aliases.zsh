@@ -62,6 +62,9 @@ mcd () { mkdir -p "$1" && cd "$1"; }        # mcd:          Makes new Dir and ju
 alias killf="kill \$(ps aux | fzf -m | awk '{print \$2}')"
 alias mkdir_cd="mcd"
 
+# opens documentation through fzf (eg: git,zsh etc.)
+alias fman="compgen -c | fzf | xargs man"
+
 prepare_story() {
     pyenv activate ffmpeg-tools399 || true
     # gallery-dl --clear-cache instagram

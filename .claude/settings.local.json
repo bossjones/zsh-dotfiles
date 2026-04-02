@@ -18,7 +18,9 @@
       "Bash(python3:*)",
       "Bash(actionlint:*)",
       "WebFetch(domain:www.chezmoi.io)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "WebFetch(domain:docs.deno.com)",
+      "Bash(chezmoi execute-template:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
