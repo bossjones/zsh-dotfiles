@@ -91,6 +91,11 @@ if [ -n "$(command which k3d 2>/dev/null)" ]; then
     k3d completion zsh > ~/.zsh/completion/_k3d
 fi
 
+if [ -n "$(command which bun 2>/dev/null)" ]; then
+    bun completions > ~/.zsh/completion/_bun 2>/dev/null || true
+    bun completions > ~/.zsh/completions/_bun 2>/dev/null || true
+fi
+
 # K3D_BIN="$(which k3d)"
 
 # if [ -x "$K3D_BIN" ]; then
