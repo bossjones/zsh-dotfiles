@@ -1,0 +1,21 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+
+#!/bin/sh
+
+# Install deno on macOS via official curl installer
+
+if [ ! -d "${HOME}/.deno" ]; then
+    (
+        set -x; printf "${yellow}[11 - deno does not exist, downloading] ${reset}" &&
+        curl -fsSL https://deno.land/install.sh | sh
+    )
+fi
+
+export DENO_INSTALL="$HOME/.deno"
+export PATH="$DENO_INSTALL/bin:$PATH"
+
+if [ -n "$(command -v deno 2>/dev/null)" ]; then
+    deno --version
+fi
+
+{{ end -}}
