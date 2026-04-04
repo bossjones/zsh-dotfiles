@@ -15,7 +15,7 @@ else
 fi
 
 $SUDO apt update
-$SUDO apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
+$SUDO apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev bison
 $SUDO sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
 {{ end -}}
 {{- if (eq .chezmoi.osRelease.name "Debian") -}}
@@ -33,7 +33,7 @@ else
 fi
 
 $SUDO apt update
-$SUDO apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
+$SUDO apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev bison
 $SUDO sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
 {{ end -}}
 {{ end -}}
