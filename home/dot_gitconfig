@@ -234,7 +234,7 @@
 
 # ── Tag behavior ──────────────────────────────────────────────────────────────
 [tag]
-	sort = version:refname          # Sort tags using version semantics (v1.9 < v1.10, not lexicographic)
+  sort = version:refname          # Sort tags using version semantics (v1.9 < v1.10, not lexicographic)
 
 # ── Branch behavior ───────────────────────────────────────────────────────────
 [branch]
@@ -243,3 +243,7 @@
 # ── Column display ────────────────────────────────────────────────────────────
 [column]
 	ui = auto                       # Display output in columns (like `git branch`) when the terminal is wide enough
+
+# ── ghq (repository manager) ──────────────────────────────────────────────────
+[ghq]
+	root = ~/code                # Root directory where `ghq get` clones repositories
