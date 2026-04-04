@@ -9,7 +9,7 @@
 if [ ! -d "${HOME}/.deno" ]; then
     (
         set -x; printf "${yellow}[11 - deno does not exist, downloading] ${reset}" &&
-        curl -fsSL https://deno.land/install.sh | sh
+        curl -fsSL https://deno.land/install.sh | sh -s -- --no-modify-path
     )
 fi
 
