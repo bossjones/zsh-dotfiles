@@ -164,19 +164,56 @@ setup_brew_packages() {
     log_success "Brew packages installed"
 }
 
+# Ensure SUDO_ASKPASS is set and the askpass script exists before invoking
+# zsh-dotfiles-prereq-installer. The Dockerfile creates it primarily; this is a
+# safety net for the moment of need + a diagnostic so we can tell whether the
+# file is missing or NOPASSWD just isn't applying.
+ensure_sudo_askpass() {
+    local askpass="${SUDO_ASKPASS:-$HOME/.sudo_askpass}"
+
+    log_info "id: $(id)"
+    log_info "SUDO_ASKPASS=$askpass"
+    if [[ -e "$askpass" ]]; then
+        log_info "askpass present: $(ls -la "$askpass")"
+    else
+        log_warning "askpass MISSING at $askpass — recreating"
+    fi
+
+    printf '#!/bin/sh\necho ""\n' > "$askpass"
+    chmod 700 "$askpass"
+    export SUDO_ASKPASS="$askpass"
+
+    local sudo_rules
+    sudo_rules="$(sudo -n -ln 2>&1 || true)"
+    log_info "sudo -ln: ${sudo_rules}"
+    if ! grep -q "NOPASSWD: ALL" <<<"$sudo_rules"; then
+        log_warning "NOPASSWD: ALL not present in sudo -ln output — prereq-installer may hang or fail"
+    fi
+}
+
 # Run the zsh-dotfiles-prereq-installer (mirrors CI prereq step)
 run_prereq_installer() {
     log_section "Prerequisites Installer"
+
+    ensure_sudo_askpass
 
     log_info "Downloading zsh-dotfiles-prereq-installer..."
     wget https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer
     chmod +x zsh-dotfiles-prereq-installer
 
     log_info "Running prereq installer with retry..."
+    # The installer's `sudo_refresh` calls `sudo --askpass --validate` whenever
+    # SUDO_ASKPASS is set; our askpass returns "" so sudo logs "3 incorrect
+    # password attempts" and exits. The installer's EXIT trap then runs
+    # `sudo_askpass rm -rf "$SUDO_ASKPASS" "$SUDO_ASKPASS_DIR"` which deletes
+    # our /home/tester/.sudo_askpass, breaking every retry. Unset SUDO_ASKPASS
+    # for just this invocation so `sudo_refresh` falls through to `sudo_init`,
+    # which returns immediately in non-interactive mode (no tty under
+    # `docker compose up`). Subsequent sudo calls succeed via NOPASSWD: ALL.
     if command -v retry &> /dev/null; then
-        retry -t 4 -- ./zsh-dotfiles-prereq-installer --debug
+        env -u SUDO_ASKPASS retry -t 4 -- ./zsh-dotfiles-prereq-installer --debug
     else
-        ./zsh-dotfiles-prereq-installer --debug
+        env -u SUDO_ASKPASS ./zsh-dotfiles-prereq-installer --debug
     fi
 
     # Cleanup
