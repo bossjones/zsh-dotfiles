@@ -16,7 +16,7 @@ asdf v0.11.x is a bash-script implementation that's been superseded by the Go-ba
 1. Single string variable `version_manager` in `home/.chezmoi.yaml.tmpl`, defaulted to `"asdf"`, settable non-interactively via `chezmoi init … --promptString version_manager=mise`.
 2. Convert `home/.chezmoiignore` → `home/.chezmoiignore.tmpl` and emit ignore patterns for the *unused* path (asdf scripts when mise selected, mise scripts when asdf selected). Cleanest gate — chezmoi never even renders the ignored scripts.
 3. Add three new `run_onchange_before_02-*-install-mise.sh.tmpl` scripts (macOS via brew, Ubuntu/CentOS via `https://mise.run`), plus a single `run_onchange_after_50-mise-install-tools.sh.tmpl` (mise reuses the same `myAsdf*Version` data — mise treats those identifiers as plugin names natively).
-4. Make the shell sourcing files (`compat.bash.tmpl`, `compat.sh.tmpl`, `dot_sheldon/plugins.toml.tmpl`, `private_dot_config/sheldon/plugins.toml.tmpl`, the `home/shell/asdf/*.zsh` files referenced by init) branch on `.version_manager`.
+4. Make the shell sourcing files (`compat.bash.tmpl`, `compat.sh.tmpl`, `dot_sheldon/plugins.toml.tmpl`, `private_dot_config/sheldon/plugins.toml.tmpl`) branch on `.version_manager`. `home/shell/asdf/*.zsh` stays as-is (env vars only — environmentally inert when asdf isn't installed). The new mise activation point lives at `home/shell/mise/{env,path}.zsh`, auto-sourced by sheldon's existing `**/env.zsh` and `**/path.zsh` globs (no per-tool sheldon plugin entry needed).
 5. Extend `.github/workflows/tests.yml` with a `version_manager` matrix axis and a conditional asdf-vs-mise activation block in the pytest step.
 
 ## Relevant Files
@@ -30,9 +30,9 @@ Files to modify:
 - `home/.chezmoiscripts/run_onchange_after_50-centos-install-asdf-plugins.sh.tmpl` — same
 - `home/compat.bash.tmpl` — branch lines 29–33 and 124–127 between asdf source vs. `eval "$(mise activate bash)"`
 - `home/compat.sh.tmpl` — branch lines 32–36 and 124–127 the same way
-- `home/dot_sheldon/plugins.toml.tmpl` — wrap the `[plugins.asdf]` blocks (lines 125–141) in `{{ if eq .version_manager "asdf" }}`
-- `home/private_dot_config/sheldon/plugins.toml.tmpl` — same
-- `home/shell/asdf/env.zsh` — leave intact (sourced only when asdf selected; the `shell/` dir is in `.chezmoiignore` so it stays as-is in the repo)
+- `home/dot_sheldon/plugins.toml.tmpl` — keep `[plugins.asdf]` gated on `{{ if eq .version_manager "asdf" }}…{{ end }}` (no `else` branch). Remove any inline `[plugins.mise]` block — mise activation moves to `home/shell/mise/path.zsh`, picked up by the existing `[plugins.env]` / `[plugins.path]` globs (lines 30–36).
+- `home/private_dot_config/sheldon/plugins.toml.tmpl` — same edit (this file duplicates the dot_sheldon variant)
+- `home/shell/asdf/env.zsh` and `home/shell/asdf/path.zsh` — leave intact (only export `ASDF_DIR` and prepend completions to `fpath`; harmless when asdf isn't installed)
 - `home/shell/customs/aliases.zsh` lines 206–207, 810–829 — `enable_asdf` + kubectl helpers should detect mise (`enable_mise()` sibling; `mise current kubectl` instead of `asdf current kubectl`)
 - `.github/workflows/tests.yml` — add matrix axis (line 33–34 area), pass `--promptString version_manager=${{ matrix.version_manager }}` to both `chezmoi init` calls (lines 119, 201), gate asdf-source vs mise-activate steps (lines 155–162, 192–203, 217–222)
 
@@ -41,8 +41,14 @@ Files to modify:
 - `home/.chezmoiscripts/run_onchange_before_02-ubuntu-install-mise.sh.tmpl` — `curl https://mise.run | sh`
 - `home/.chezmoiscripts/run_onchange_before_02-centos-install-mise.sh.tmpl` — same as ubuntu
 - `home/.chezmoiscripts/run_onchange_after_50-mise-install-tools.sh.tmpl` — `mise use -g <tool>@<version>` for each entry in the existing `myAsdf*Version` set; reuses macOS arm64 OpenSSL exports (lines 4–16 of the macOS asdf script)
-- `home/shell/mise/env.zsh` — set `MISE_DIR` if needed (mise mostly self-bootstraps via activate)
-- `home/shell/mise/path.zsh` — `eval "$(mise activate zsh)"` (consider deferral via sheldon as asdf currently is)
+- `home/shell/mise/env.zsh` — plain `.zsh` (NOT a chezmoi template). Set any mise-specific env vars (e.g., `MISE_DATA_DIR`) — likely empty for now since mise self-bootstraps via `activate`.
+- `home/shell/mise/path.zsh` — plain `.zsh` (NOT a chezmoi template). Body:
+  ```sh
+  if command -v mise >/dev/null 2>&1; then
+      eval "$(mise activate zsh)"
+  fi
+  ```
+  Self-guarding pattern matches `home/shell/wtp/env.zsh`. No deferral needed; mise's activate output is just exports plus a precmd hook. Auto-sourced by sheldon's `[plugins.env]` / `[plugins.path]` globs (lines 30–36 of `dot_sheldon/plugins.toml.tmpl`) — no per-tool sheldon entry required.
 
 ## Implementation Phases
 
@@ -121,8 +127,9 @@ IMPORTANT: Execute every step in order, top to bottom.
 ### 6. Branch shell sourcing on `version_manager`
 - `home/compat.bash.tmpl` (lines 29–33, 124–127): wrap existing asdf source block in `{{ if eq .version_manager "asdf" }}…{{ else }}eval "$(mise activate bash)"{{ end }}`.
 - `home/compat.sh.tmpl` (lines 32–36, 124–127): same with `mise activate sh`.
-- `home/dot_sheldon/plugins.toml.tmpl` (lines 125–141): wrap the `[plugins.asdf]` blocks in `{{ if eq .version_manager "asdf" }}…{{ end }}`. mise activates inline; no sheldon plugin needed for the mise path.
+- `home/dot_sheldon/plugins.toml.tmpl` (lines 124–146): keep the `[plugins.asdf]` blocks gated on `{{ if eq .version_manager "asdf" }}…{{ end }}` and **delete** the `{{ else }}[plugins.mise]\ninline = '...'\n{{ end }}` branch entirely. Mise activation moves to `home/shell/mise/path.zsh`, which sheldon auto-sources via the existing `[plugins.env]` and `[plugins.path]` globs (lines 30–36).
 - `home/private_dot_config/sheldon/plugins.toml.tmpl`: same edit (it duplicates the dot_sheldon file).
+- Create `home/shell/mise/env.zsh` and `home/shell/mise/path.zsh` (plain `.zsh`, self-guarded — see "New Files" above).
 
 ### 7. Update aliases.zsh
 - `home/shell/customs/aliases.zsh` lines 206–207: rename `enable_asdf()` to a generic `enable_version_manager()` that detects which is installed (`command -v mise && eval "$(mise activate zsh)" || . "$HOME/.asdf/asdf.sh"`), or add a parallel `enable_mise()` and leave `enable_asdf()` for backward compat.
@@ -139,12 +146,25 @@ IMPORTANT: Execute every step in order, top to bottom.
   - The asdf-source block (lines 155–162, 192–203, 217–222) needs `if: matrix.version_manager == 'asdf'` and a parallel mise block with `if: matrix.version_manager == 'mise'` that runs `eval "$(mise activate bash)"` and `mise install ruby@3.2.1` (or `mise use -g ruby@3.2.1`) instead of `asdf install ruby 3.2.1`.
   - The `OPENSSL3_PREFIX` exports for arm64 ruby compilation apply identically — keep them outside the conditional.
 
-### 9. Verification — Local
-- Run `chezmoi data --format=json | jq .version_manager` to confirm the default.
-- Run `chezmoi init --promptString version_manager=mise --apply=false --force --source=.` against a scratch destination and inspect `chezmoi diff`.
-- Run `chezmoi execute-template < home/.chezmoiignore.tmpl` for both values to confirm correct ignore lists.
-- Run `chezmoi cat ~/.config/sheldon/plugins.toml` to ensure no asdf block leaks into the mise rendering.
-- Run `chezmoi verify` to confirm all templates parse.
+### 9. Verification — Local (dry-run only on primary workstation)
+**Constraint:** never run `chezmoi apply` or `chezmoi init --apply` (with or without a scratch `--destination`) on the user's primary workstation. Stick to render-only / dry-run commands. Real `apply` validation belongs in CI or on a throwaway VM/container.
+
+- Render the ignore template against an in-memory data set:
+  ```sh
+  chezmoi execute-template --init --promptString version_manager=asdf < home/.chezmoiignore.tmpl
+  chezmoi execute-template --init --promptString version_manager=mise < home/.chezmoiignore.tmpl
+  ```
+  (Note: chezmoi 2.x `execute-template --init` does not auto-process `.chezmoi.yaml.tmpl`; provide `.version_manager` via a small wrapper. If `--init --promptString` doesn't surface the value, prepend the data with `--data` JSON, e.g. `printf '%s' "$(cat home/.chezmoiignore.tmpl)" | chezmoi execute-template --init --promptString version_manager=mise` and verify by piping with explicit data: `echo '{{ .version_manager }}' | chezmoi execute-template --init --promptString version_manager=mise`.)
+- Render compat & sheldon files the same way:
+  ```sh
+  chezmoi execute-template --init --promptString version_manager=mise < home/compat.bash.tmpl | grep -E 'asdf|mise'
+  chezmoi execute-template --init --promptString version_manager=asdf < home/dot_sheldon/plugins.toml.tmpl | grep -E 'asdf|mise'
+  ```
+- `chezmoi diff --dry-run` against the *current* home directory — should show only the diffs introduced by this change with `version_manager` set to whatever is in the current config.
+- `chezmoi verify` to syntax-check the entire source state.
+- `chezmoi data --format=json | jq .version_manager` to confirm the persisted value.
+
+**Do NOT run** any of the following on the primary workstation: `chezmoi apply`, `chezmoi init --apply`, `chezmoi init --force` against any destination (`$HOME` or scratch). Even with `--apply=false`, `init` writes config files and may pull plugin sources.
 
 ### 10. Verification — CI
 - Push branch, confirm both `version_manager=asdf` and `version_manager=mise` matrix legs pass on `macos-14` and `macos-latest`.
@@ -164,26 +184,29 @@ IMPORTANT: Execute every step in order, top to bottom.
 - No `asdf` references remain on the rendered output when `version_manager=mise` (verify with `chezmoi cat <file> | grep -i asdf` returning empty for `compat.bash`, `compat.sh`, sheldon `plugins.toml`).
 
 ## Validation Commands
+**All commands below are read-only / render-only — safe to run on the primary workstation.** Do NOT add `chezmoi apply` or `chezmoi init --apply` to this list.
+
 - `chezmoi data --format=json | jq .version_manager` — confirm variable resolves
-- `chezmoi execute-template < home/.chezmoiignore.tmpl` — render the ignore file (do once per `version_manager` value via `chezmoi execute-template --init` with promptString)
-- `chezmoi execute-template < home/compat.bash.tmpl | grep -E 'asdf|mise'` — confirm correct sourcing
-- `chezmoi diff` — see all changes against current home dir
-- `chezmoi cat ~/.config/sheldon/plugins.toml` — render single file end-to-end
+- `chezmoi execute-template --init --promptString version_manager=mise < home/.chezmoiignore.tmpl` — render the ignore file (run once per value)
+- `chezmoi execute-template --init --promptString version_manager=mise < home/compat.bash.tmpl | grep -E 'asdf|mise'` — confirm correct sourcing
+- `chezmoi diff --dry-run` — preview changes against current home dir
 - `chezmoi verify` — syntax-check entire source state
 - `chezmoi doctor` — sanity check
-- `make test` — run pytest suite locally
+- `make test` — pytest suite (uses libtmux; doesn't apply chezmoi)
 
-For the tightest feedback loop while iterating:
+For the tightest feedback loop while iterating (all read-only):
 ```bash
 chezmoi data --format=json | jq .version_manager
-chezmoi execute-template < home/compat.bash.tmpl
-chezmoi diff
+chezmoi execute-template --init --promptString version_manager=mise < home/compat.bash.tmpl
+chezmoi diff --dry-run
 ```
+
+For real `chezmoi apply` validation, push the branch and rely on the CI matrix (both `asdf` and `mise` legs run on every push). Or use a throwaway VM / Docker container — never the primary workstation.
 
 ## Notes
 - **Defaults**: keep `version_manager: "asdf"` for now. Once CI is green for both legs and you've rolled mise on at least one personal machine, flip the default in a follow-up PR.
 - **External installer**: `zsh-dotfiles-prereq-installer` (run from `tests.yml` lines 82–84) likely installs asdf today as part of its setup. Confirm whether it does — if yes, the mise CI leg will end up with both managers on PATH. That's harmless (mise's PATH order wins via shim dir) but worth noting; consider adding `ZSH_DOTFILES_PREP_SKIP_ASDF=1` if that env var exists in the prep installer.
 - **Version variable naming**: leave `myAsdf*Version` keys alone for now — renaming is a no-op refactor and these names are just identifiers. A follow-up PR can rename to `myTool*Version` once asdf is removed entirely.
 - **Custom plugin URLs**: the asdf scripts register 8 custom plugin repos (kubectl, helm, k9s, kubectx, mkcert, opa, helm-docs, kubetail). mise's registry has all of these built in — verify per-tool with `mise registry | grep <tool>` before deleting the custom-repo handling in the mise port.
-- **Sheldon**: mise activates via `eval` inline; no sheldon plugin needed. Keep the asdf sheldon plugin entry behind the `version_manager == "asdf"` conditional — don't delete it.
+- **Sheldon**: mise activation lives in `home/shell/mise/path.zsh` (plain `.zsh`, self-guarded with `command -v mise`); sheldon's `[plugins.env]` / `[plugins.path]` blocks (lines 30–36 of `dot_sheldon/plugins.toml.tmpl`) auto-source it. Keep `[plugins.asdf]` gated on `version_manager == "asdf"`, but delete any inline `[plugins.mise]` entry — it's superseded by the shell module.
 - **No new pip/uv deps required** for this change.
