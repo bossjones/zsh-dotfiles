@@ -12,6 +12,20 @@ Introduce a `version_manager` template variable, conditionally skip the asdf ins
 ## Problem Statement
 asdf v0.11.x is a bash-script implementation that's been superseded by the Go-based asdf v0.16+ and by mise (drop-in replacement, faster, native shim management, reads the same `.tool-versions`). The current repo pins asdf `v0.11.2`. We want a controlled migration that keeps asdf working for existing checkouts (default = `asdf`) while exercising the mise path in CI on every push.
 
+## Mutual Exclusion Invariant
+**Strict invariant:** when `version_manager=mise`, NOTHING in the rendered shell environment may `eval`, source, or otherwise activate asdf — even if `asdf` happens to be on `$PATH` (e.g., system-installed, prior checkout, or pulled in by `zsh-dotfiles-prereq-installer`). Conversely, when `version_manager=asdf`, NOTHING may `eval` or activate mise — even if `mise` is on `$PATH`. Setting `ASDF_DIR` / `MISE_*` env vars when the corresponding tool isn't selected is also forbidden, since downstream code may assume those vars imply the tool is the active manager.
+
+To enforce this at runtime (where chezmoi templating is unavailable — `home/shell/` is in `.chezmoiignore`, so files under it are read by sheldon directly from the source dir as plain `.zsh`):
+
+1. `home/dot_zshrc.tmpl` exports `ZSH_DOTFILES_VERSION_MANAGER={{ .version_manager | quote }}` immediately after `{{ include "shell/init.zsh" }}` — before sheldon sources any plugin. This makes the value visible to every `home/shell/**/{env,path}.zsh` module.
+2. Every shell-module file that activates a version manager OR sets manager-specific env vars MUST guard on `[ "${ZSH_DOTFILES_VERSION_MANAGER:-}" = "<manager>" ]` as the **first** check, before any `command -v` probe. Specifically:
+   - `home/shell/mise/path.zsh` runs `eval "$(mise activate zsh)"` only when `ZSH_DOTFILES_VERSION_MANAGER == "mise"` AND `command -v mise` succeeds.
+   - `home/shell/asdf/env.zsh` and `home/shell/asdf/path.zsh` set `ASDF_DIR` / completions only when `ZSH_DOTFILES_VERSION_MANAGER == "asdf"`.
+3. `home/compat.bash.tmpl` and `home/compat.sh.tmpl` already gate at template-render time via `{{ if eq .version_manager … }}`. That covers bash/sh. Belt-and-suspenders: still export `ZSH_DOTFILES_VERSION_MANAGER` from those files for any sub-shell that re-sources them.
+4. `home/shell/customs/aliases.zsh` helpers (`enable_asdf`, kubectl `mise current` / `asdf current`) MUST also guard on `ZSH_DOTFILES_VERSION_MANAGER` — never call `asdf` or `mise` based on `command -v` alone.
+
+**Acceptance for the invariant:** on a host with both `asdf` and `mise` binaries on `$PATH` (simulate via `brew install mise` on an asdf-mode workstation, or vice versa), opening a fresh `zsh` MUST NOT eval the inactive manager. Verify with `typeset -f mise` (should be undefined under asdf mode) and `typeset -f asdf` (should be undefined under mise mode).
+
 ## Solution Approach
 1. Single string variable `version_manager` in `home/.chezmoi.yaml.tmpl`, defaulted to `"asdf"`, settable non-interactively via `chezmoi init … --promptString version_manager=mise`.
 2. Convert `home/.chezmoiignore` → `home/.chezmoiignore.tmpl` and emit ignore patterns for the *unused* path (asdf scripts when mise selected, mise scripts when asdf selected). Cleanest gate — chezmoi never even renders the ignored scripts.
@@ -32,7 +46,8 @@ Files to modify:
 - `home/compat.sh.tmpl` — branch lines 32–36 and 124–127 the same way
 - `home/dot_sheldon/plugins.toml.tmpl` — keep `[plugins.asdf]` gated on `{{ if eq .version_manager "asdf" }}…{{ end }}` (no `else` branch). Remove any inline `[plugins.mise]` block — mise activation moves to `home/shell/mise/path.zsh`, picked up by the existing `[plugins.env]` / `[plugins.path]` globs (lines 30–36).
 - `home/private_dot_config/sheldon/plugins.toml.tmpl` — same edit (this file duplicates the dot_sheldon variant)
-- `home/shell/asdf/env.zsh` and `home/shell/asdf/path.zsh` — leave intact (only export `ASDF_DIR` and prepend completions to `fpath`; harmless when asdf isn't installed)
+- `home/shell/asdf/env.zsh` and `home/shell/asdf/path.zsh` — gate every existing block on `[ "${ZSH_DOTFILES_VERSION_MANAGER:-}" = "asdf" ]` as the FIRST check (per the Mutual Exclusion Invariant). Setting `ASDF_DIR` / fpath when mise is the active manager is forbidden.
+- `home/dot_zshrc.tmpl` — add `export ZSH_DOTFILES_VERSION_MANAGER={{ .version_manager | quote }}` immediately after the `{{ include "shell/init.zsh" }}` line in BOTH the `darwin` and `linux` branches, before sheldon sources plugins.
 - `home/shell/customs/aliases.zsh` lines 206–207, 810–829 — `enable_asdf` + kubectl helpers should detect mise (`enable_mise()` sibling; `mise current kubectl` instead of `asdf current kubectl`)
 - `.github/workflows/tests.yml` — add matrix axis (line 33–34 area), pass `--promptString version_manager=${{ matrix.version_manager }}` to both `chezmoi init` calls (lines 119, 201), gate asdf-source vs mise-activate steps (lines 155–162, 192–203, 217–222)
 
@@ -42,13 +57,13 @@ Files to modify:
 - `home/.chezmoiscripts/run_onchange_before_02-centos-install-mise.sh.tmpl` — same as ubuntu
 - `home/.chezmoiscripts/run_onchange_after_50-mise-install-tools.sh.tmpl` — `mise use -g <tool>@<version>` for each entry in the existing `myAsdf*Version` set; reuses macOS arm64 OpenSSL exports (lines 4–16 of the macOS asdf script)
 - `home/shell/mise/env.zsh` — plain `.zsh` (NOT a chezmoi template). Set any mise-specific env vars (e.g., `MISE_DATA_DIR`) — likely empty for now since mise self-bootstraps via `activate`.
-- `home/shell/mise/path.zsh` — plain `.zsh` (NOT a chezmoi template). Body:
+- `home/shell/mise/path.zsh` — plain `.zsh` (NOT a chezmoi template). Body MUST gate on `ZSH_DOTFILES_VERSION_MANAGER` to satisfy the Mutual Exclusion Invariant — never `eval mise activate` based on `command -v mise` alone:
   ```sh
-  if command -v mise >/dev/null 2>&1; then
+  if [ "${ZSH_DOTFILES_VERSION_MANAGER:-}" = "mise" ] && command -v mise >/dev/null 2>&1; then
       eval "$(mise activate zsh)"
   fi
   ```
-  Self-guarding pattern matches `home/shell/wtp/env.zsh`. No deferral needed; mise's activate output is just exports plus a precmd hook. Auto-sourced by sheldon's `[plugins.env]` / `[plugins.path]` globs (lines 30–36 of `dot_sheldon/plugins.toml.tmpl`) — no per-tool sheldon entry required.
+  Auto-sourced by sheldon's `[plugins.env]` / `[plugins.path]` globs (lines 30–36 of `dot_sheldon/plugins.toml.tmpl`) — no per-tool sheldon entry required. The env-var check is set by `dot_zshrc.tmpl` before sheldon runs.
 
 ## Implementation Phases
 
