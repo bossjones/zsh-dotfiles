@@ -140,9 +140,6 @@ local = "{{ joinPath $brewPrefix "opt" "asdf" "libexec" }}"
 use = ["{{- "{{ name }}.sh" -}}"]
 apply = ["defer"]
 {{ end }}
-{{ else -}}
-[plugins.mise]
-inline = 'command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"'
 {{ end }}
 
 

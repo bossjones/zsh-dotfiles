@@ -204,22 +204,33 @@ ffmpeg_info() {
 alias imgdupes="docker run --rm -it -v $PWD:/app knjcode/imgdupes"
 
 enable_asdf() {
+    if [ "${ZSH_DOTFILES_VERSION_MANAGER:-}" != "asdf" ]; then
+        echo "[enable_asdf] refusing — ZSH_DOTFILES_VERSION_MANAGER=${ZSH_DOTFILES_VERSION_MANAGER:-unset} (need asdf)" >&2
+        return 1
+    fi
     . "$HOME"/.asdf/asdf.sh
 }
 
 enable_mise() {
+    if [ "${ZSH_DOTFILES_VERSION_MANAGER:-}" != "mise" ]; then
+        echo "[enable_mise] refusing — ZSH_DOTFILES_VERSION_MANAGER=${ZSH_DOTFILES_VERSION_MANAGER:-unset} (need mise)" >&2
+        return 1
+    fi
     export PATH="$HOME/.local/bin:$PATH"
     command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 }
 
-# Activate whichever version manager is installed on this host. mise wins
-# if both are present (its shims supersede asdf's on PATH).
+# Activate the version manager declared by chezmoi (ZSH_DOTFILES_VERSION_MANAGER).
+# Strict — never falls through to the inactive manager based on PATH presence.
 enable_version_manager() {
-    if command -v mise >/dev/null 2>&1; then
-        enable_mise
-    elif [ -f "$HOME/.asdf/asdf.sh" ]; then
-        enable_asdf
-    fi
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) enable_mise ;;
+        asdf) enable_asdf ;;
+        *)
+            echo "[enable_version_manager] ZSH_DOTFILES_VERSION_MANAGER unset or unknown: '${ZSH_DOTFILES_VERSION_MANAGER:-}'" >&2
+            return 1
+            ;;
+    esac
 }
 
 alias imgdupes="docker run -it -v $PWD:/app knjcode/imgdupes"
@@ -822,17 +833,16 @@ kubectl_get_logs_of_previous_container() {
 kubectl_use_ethos51_stage_va6(){
     local _VERSION=1.18.6
     echo "[kubectl_use_ethos51_stage_va6] switching to correct version kubectl=${_VERSION}"
-    if command -v mise >/dev/null 2>&1; then
-        mise use -g kubectl@${_VERSION}
-    else
-        asdf global kubectl ${_VERSION}
-    fi
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) mise use -g kubectl@${_VERSION} ;;
+        asdf) asdf global kubectl ${_VERSION} ;;
+        *) echo "[kubectl_use_ethos51_stage_va6] ZSH_DOTFILES_VERSION_MANAGER unset; cannot pin kubectl" >&2; return 1 ;;
+    esac
     echo "[kubectl_use_ethos51_stage_va6] confirming kubectl=${_VERSION}"
-    if command -v mise >/dev/null 2>&1; then
-        mise current
-    else
-        asdf current
-    fi
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) mise current ;;
+        asdf) asdf current ;;
+    esac
 
     echo "[kubectl_use_ethos51_stage_va6] setting up KUBECONFIG to ethos now"
     ethos_kubeconfig
@@ -847,17 +857,16 @@ kubectl_use_ethos51_stage_va6(){
 kubectl_use_ethos51_prod_va6(){
     local _VERSION=1.18.6
     echo "[kubectl_use_ethos51_prod_va6] switching to correct version kubectl=${_VERSION}"
-    if command -v mise >/dev/null 2>&1; then
-        mise use -g kubectl@${_VERSION}
-    else
-        asdf global kubectl ${_VERSION}
-    fi
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) mise use -g kubectl@${_VERSION} ;;
+        asdf) asdf global kubectl ${_VERSION} ;;
+        *) echo "[kubectl_use_ethos51_prod_va6] ZSH_DOTFILES_VERSION_MANAGER unset; cannot pin kubectl" >&2; return 1 ;;
+    esac
     echo "[kubectl_use_ethos51_prod_va6] confirming kubectl=${_VERSION}"
-    if command -v mise >/dev/null 2>&1; then
-        mise current
-    else
-        asdf current
-    fi
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) mise current ;;
+        asdf) asdf current ;;
+    esac
 
     echo "[kubectl_use_ethos51_prod_va6] setting up KUBECONFIG to ethos now"
     ethos_kubeconfig
