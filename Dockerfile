@@ -84,6 +84,23 @@ RUN useradd -m -s /bin/zsh -G sudo tester && \
 # With NOPASSWD:ALL, sudo never actually calls the askpass script.
 ENV SUDO_ASKPASS=/home/tester/.sudo_askpass
 
+# MOTD shown on every interactive zsh session in smoke-shell
+RUN printf '%s\n' \
+    '' \
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' \
+    '  Smoke Test Container' \
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' \
+    '' \
+    '  To test provisioning, run ONE of:' \
+    '' \
+    '    VERSION_MANAGER=mise ./scripts/smoke-test-docker.sh build' \
+    '    VERSION_MANAGER=asdf ./scripts/smoke-test-docker.sh build' \
+    '' \
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' \
+    '' \
+    > /etc/motd && \
+    printf 'cat /etc/motd\n' >> /etc/zsh/zshrc
+
 # Switch to test user for Homebrew installation
 USER tester
 ENV HOME=/home/tester
