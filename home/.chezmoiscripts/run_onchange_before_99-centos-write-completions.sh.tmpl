@@ -10,5 +10,15 @@ elif [ -f ~/bin/chezmoi ]; then
 fi
 fpath+="$HOME/.zsh/completion"
 
+if [ -n "$(command which bun 2>/dev/null)" ]; then
+    bun completions > ~/.zsh/completion/_bun 2>/dev/null || true
+    bun completions > ~/.zsh/completions/_bun 2>/dev/null || true
+fi
+
+if [ -n "$(command which deno 2>/dev/null)" ]; then
+    deno completions zsh > ~/.zsh/completion/_deno 2>/dev/null || true
+    deno completions zsh > ~/.zsh/completions/_deno 2>/dev/null || true
+fi
+
 {{ end -}}
 {{ end -}}

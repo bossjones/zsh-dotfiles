@@ -14,17 +14,9 @@
 #   refreshPeriod: 168h
 
 dev/bossjones/oh-my-tmux:
-  type: archive
-  url: https://github.com/bossjones/.tmux/archive/master.tar.gz
-  # Related issues https://github.com/twpayne/chezmoi/issues/1614#issuecomment-966524408
-  exact: true
-  stripComponents: 1
-  refreshPeriod: 168h
+  type: git-repo
+  url: https://github.com/bossjones/.tmux.git
 
 dev/bossjones/boss-cheatsheets:
-  type: archive
-  url: https://github.com/bossjones/boss-cheatsheets/archive/master.tar.gz
-  # Related issues https://github.com/twpayne/chezmoi/issues/1614#issuecomment-966524408
-  exact: true
-  stripComponents: 1
-  refreshPeriod: 168h
+  type: git-repo
+  url: https://github.com/bossjones/boss-cheatsheets.git

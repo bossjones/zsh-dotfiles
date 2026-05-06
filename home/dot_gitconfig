@@ -1,144 +1,249 @@
+# ── Identity ──────────────────────────────────────────────────────────────────
 [user]
   name = Malcolm Jones
-  email = bossjones@theblacktonystark.com
+  email = bossjones@theblacktonystark.com    # Author identity stamped on every commit
 
+# ── Hub (GitHub CLI wrapper) ──────────────────────────────────────────────────
 [hub]
-	host = git.corp.adobe.com
+  host = git.corp.adobe.com                  # Point the `hub` CLI at Adobe's internal GitHub Enterprise instance
+                                             # instead of github.com (used by aliases like `pr` below)
 
+# ── GitHub identity ───────────────────────────────────────────────────────────
 [github]
-  user = bossjones
+  user = bossjones                           # GitHub username, consumed by `hub` and other GitHub-aware tools
 
+# ── Includes ──────────────────────────────────────────────────────────────────
 [include]
-  path = .gitconfig.token
-  path = .gitconfig.hub
+  path = .gitconfig.token                    # Pulls in auth tokens (kept in a separate file so it's easier to .gitignore)
+  path = .gitconfig.hub                      # hub-specific overrides/credentials, also kept out of the main config
 
+# ── Core behavior ─────────────────────────────────────────────────────────────
 [core]
-  excludesfile = ~/.gitignore_global
-  editor = nano
-  filemode = false
-  trustctime = false
-  autocrlf = input
-  # pager = diff-so-fancy | less --tabs=4 -RFX
-  pager = delta
+  excludesfile = ~/.gitignore_global         # Global gitignore that applies to every repo (DS_Store, *.swp, etc.)
+  editor = vim                               # Editor opened for commit messages, rebase todos, etc.
+  filemode = false                           # Ignore executable-bit changes (useful on cross-platform teams or when
+                                             # checking out on Windows-mounted volumes)
+  trustctime = false                         # Don't trust ctime for change detection — ctime can change without the
+                                             # file content changing (e.g. backups, rsync, macOS Spotlight)
+  autocrlf = input                           # Normalize CRLF → LF on commit; never convert on checkout
+                                             # (correct setting for macOS/Linux devs on cross-platform repos)
+  # pager = diff-so-fancy | less --tabs=4 -RFX   # (commented out) Previous pager before switching to delta
+  pager = delta                              # Use `delta` as the pager for all diff/log output
 
+# ── Delta (interactive diffs) ─────────────────────────────────────────────────
 [interactive]
-    diffFilter = delta --color-only --features=interactive
+  diffFilter = delta --color-only --features=interactive
+                                             # Use delta to colorize `git add -p` / `git add -i` hunks;
+                                             # --color-only avoids reformatting so line selection still works
 
 [delta]
-    features = decorations
+  features = decorations                     # Enable the "decorations" feature block defined below
 
 [delta "interactive"]
-    keep-plus-minus-markers = false
+  keep-plus-minus-markers = false            # Hide the raw +/- markers in interactive mode for a cleaner look
 
 [delta "decorations"]
-    commit-decoration-style = blue ol
-    commit-style = raw
-    file-style = omit
-    hunk-header-decoration-style = blue box
-    hunk-header-file-style = red
-    hunk-header-line-number-style = "#067a00"
-    hunk-header-style = file line-number syntax
+  # Visual styling for delta's diff output ──────────────────────────────────
+  commit-decoration-style = blue ol          # Draw a blue overline under the commit hash header
+  commit-style = raw                         # Show the commit line exactly as git formats it (no delta reformatting)
+  file-style = omit                          # Don't show a separate file-name line (file is shown in the hunk header instead)
+  hunk-header-decoration-style = blue box    # Draw a blue box around the hunk header
+  hunk-header-file-style = red              # Color the filename in the hunk header red
+  hunk-header-line-number-style = "#067a00" # Color the line numbers dark green (hex)
+  hunk-header-style = file line-number syntax
+                                             # Hunk header shows: filename + line number + syntax-highlighted context line
 
+# ── Aliases ───────────────────────────────────────────────────────────────────
 [alias]
   amend = commit --amend --reuse-message=HEAD
+                                             # Amend the last commit without reopening the editor (keeps the same message)
+
   br = branch --sort=-committerdate --format='%(if)%(HEAD)%(then)* %(color:red bold)%(refname:short)%(color:reset)%(else)  %(refname:short)%(end) - %(color:yellow)%(objectname:short)%(color:reset) %(color:green)(%(committerdate:relative))%(color:reset) %(contents:subject) %(color:blue)'
-  ci = commit
-  co = checkout
-  contrib = shortlog --summary --numbered
-  cr = clone --recursive
-  df = diff --word-diff
-  g = grep --break --heading --line-number
+                                             # Fancy branch list: sorted by most recently committed, current branch
+                                             # highlighted in bold red, with short SHA, relative date, and subject line
+
+  ci = commit                               # `git ci` → commit
+  co = checkout                             # `git co` → checkout
+
+  contrib = shortlog --summary --numbered   # Ranked summary of each author's commit count (good for attribution)
+
+  cr = clone --recursive                    # Clone and immediately init all submodules
+
+  df = diff --word-diff                     # Word-level diff instead of line-level (great for prose/docs)
+
+  g = grep --break --heading --line-number  # Grep with results grouped by file, with line numbers
+
   l = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+                                             # Pretty graph log: short hash | refs | subject | relative date | author
+
   ld = "!sh -c \"git log --since '${1:-1} days ago' --oneline --author $(git config user.email)\" -"
-  lg = log -p
+                                             # Your commits from the last N days (default: 1). Usage: `git ld 3`
+
+  lg = log -p                               # Full log with patch (diff) for every commit
+
   ll = log --pretty=oneline --graph --abbrev-commit
-  lm = log --pretty=format:'* %s (%h)'
-  patch = !git --no-pager diff --no-color
-  p = push
-  pf = push --force
+                                             # Compact one-line graph log
+
+  lm = log --pretty=format:'* %s (%h)'     # Changelog-style log: `* Subject line (abc1234)` — paste into release notes
+
+  patch = !git --no-pager diff --no-color   # Plain-text patch output with no pager and no color (pipe-friendly)
+
+  p = push                                  # `git p` → push
+  pf = push --force                         # `git pf` → force push (use with care — prefer --force-with-lease in practice)
+
   show-ignored = "! git clean -ndX | perl -pe 's/Would remove/Ignored:/'"
-  st = status
-  stl = ls-files -m -o --exclude-standard
-  sts = status -sb
-  unstage = reset --hard HEAD
+                                             # List all files git would ignore/clean, relabeled as "Ignored:" for clarity
+
+  st = status                               # `git st` → status
+  stl = ls-files -m -o --exclude-standard   # List modified and untracked files (excluding .gitignored ones)
+  sts = status -sb                          # Short status with branch info (`-s` = short, `-b` = branch header)
+
+  unstage = reset --hard HEAD               # Nuke all staged AND unstaged changes back to HEAD
+                                             # ⚠️  Destructive — discards working tree changes too
+
   pr = "!git push origin HEAD && hub pull-request -b"
-  ; pr = "!f() { \
-  ;       BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD); \
-  ;       git push -u origin $BRANCH_NAME; \
-  ;       hub pull-request; \
-  ;   };f "
+                                             # Push current branch and open a PR via `hub` against the default base branch
+  ; pr = "!f() { ... };f "                 # (commented out) Previous multi-step version of the same workflow
+
   new = "!sh -c 'git pull --rebase  && git checkout -b feature-$1 origin/master' -"
+                                             # Sync with master then cut a new feature branch. Usage: `git new my-feature`
+
   hotfix = "!sh -c 'git pull --rebase  && git checkout -b hotfix-$1 origin/production' -"
-  pu = push -u
+                                             # Same as `new` but branches off origin/production. Usage: `git hotfix my-fix`
+
+  pu = push -u                              # Push and set upstream tracking in one step
+
   set-upstream = !git branch --set-upstream-to=origin/`git symbolic-ref --short HEAD`
-	add-commit = !git add -A && git commit
+                                             # Wire the current branch to its same-named remote tracking branch
+                                             # (handy when you forgot -u on the initial push)
 
+  add-commit = !git add -A && git commit    # Stage everything and open the commit editor in one command
+
+# ── Colors ────────────────────────────────────────────────────────────────────
 [color]
-  ui = auto
+  ui = auto                                 # Enable color when output is a terminal, disable when piped
+
 [color "branch"]
-  current = yellow reverse
-  local = yellow
-  remote = green
+  current = yellow reverse                  # Active branch: yellow text on reversed background (stands out)
+  local = yellow                            # Local branches: yellow
+  remote = green                            # Remote-tracking branches: green
+
 [color "diff"]
-  meta = yellow bold
-  frag = magenta bold
-  old = red bold
-  new = green bold
+  meta = yellow bold                        # File header lines (--- / +++) in bold yellow
+  frag = magenta bold                       # Hunk headers (@@ -x,y +x,y @@) in bold magenta
+  old = red bold                            # Removed lines in bold red
+  new = green bold                          # Added lines in bold green
+
 [color "status"]
-  added = yellow
-  changed = green
-  untracked = cyan
+  added = yellow                            # Staged (added) files: yellow
+  changed = green                           # Modified-but-unstaged files: green
+  untracked = cyan                          # Untracked files: cyan
+
 [color "diff-highlight"]
-  oldNormal = red bold
-  oldHighlight = red bold 52
-  newNormal = green bold
-  newHighlight = green bold 22
+  # diff-highlight (and delta) can highlight the changed words within a line
+  oldNormal = red bold                      # Unchanged part of a removed line
+  oldHighlight = red bold 52               # Changed word on a removed line (bg: dark red, color 52)
+  newNormal = green bold                    # Unchanged part of an added line
+  newHighlight = green bold 22             # Changed word on an added line (bg: dark green, color 22)
 
+# ── Credentials ───────────────────────────────────────────────────────────────
 [credential]
-  helper = osxkeychain
+  helper = osxkeychain                      # Store/retrieve credentials from macOS Keychain (no plaintext passwords)
 
+# ── Grep ──────────────────────────────────────────────────────────────────────
 [grep]
-  lineNumber = true
+  lineNumber = true                         # Always show line numbers in `git grep` output
 
+# ── Help ──────────────────────────────────────────────────────────────────────
 [help]
-  autocorrect = 1
+  autocorrect = 1                           # Auto-run the closest matching command after a 0.1s delay
+                                            # (1 = 100ms; unlike `prompt` in the other config, this runs without asking)
 
+# ── Diff/Merge tool prompting ─────────────────────────────────────────────────
 [difftool]
-  prompt = false
+  prompt = false                            # Don't ask "Launch 'X'? [Y/n]" before opening the diff tool
 
 [mergetool]
-  prompt = false
+  prompt = false                            # Same suppression for the merge tool
 
+# ── Push behavior ─────────────────────────────────────────────────────────────
 [push]
-  default = current
+  default = current                         # Push the current branch to a remote branch of the same name
+                                            # (creates it on the remote if it doesn't exist — slightly more permissive than `simple`)
+  autoSetupRemote = true                    # Automatically create the upstream tracking branch on first push (no need for --set-upstream)
+	followTags = true                         # Push annotated tags that point to commits being pushed
 
+# ── Fetch behavior ────────────────────────────────────────────────────────────
 [fetch]
-  prune = true
+  prune = true                              # Auto-delete local remote-tracking branches that no longer exist on the remote
+  pruneTags = true                          # Same as above, but for tags
 
+# ── Diff behavior ─────────────────────────────────────────────────────────────
 [diff]
-  renames = copies
-  indentHeuristic = true
-  tool = Kaleidoscope
+  renames = copies                          # Detect both renames AND copies (more thorough than just `true`)
+  indentHeuristic = true                    # Shift hunk boundaries to start at more logically natural points
+                                            # (e.g. before a function def rather than mid-block)
+  tool = Kaleidoscope                       # Default GUI diff tool
+
 [difftool "Kaleidoscope"]
   cmd = /usr/local/bin/ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
-[difftool "sourcetree"]
-	cmd = /usr/local/bin/ksdiff -w \"$LOCAL\" \"$REMOTE\"
-	path =
+                                            # Launch Kaleidoscope for two-way diffs via `git difftool`
 
+[difftool "sourcetree"]
+  cmd = /usr/local/bin/ksdiff -w \"$LOCAL\" \"$REMOTE\"
+                                            # SourceTree's registered difftool entry (also routes through ksdiff)
+  path =
+
+# ── Merge behavior ────────────────────────────────────────────────────────────
 [merge]
-  tool = Kaleidoscope
-  conflictstyle = diff3
-  defaultToUpstream = true
+  tool = Kaleidoscope                       # Default GUI merge tool
+  conflictstyle = diff3                     # Show conflict markers with the common ancestor (BASE) in addition to
+                                            # LOCAL and REMOTE — makes the intent of each side much clearer
+  defaultToUpstream = true                  # `git merge` with no args merges the upstream tracking branch
+
 [mergetool "Kaleidoscope"]
   cmd = /usr/local/bin/ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
-  trustExitCode = true
+                                            # Three-way merge in Kaleidoscope: BASE as ancestor, LOCAL vs REMOTE,
+                                            # writes result to MERGED
+  trustExitCode = true                      # Use ksdiff's exit code to determine if the merge was successful
+                                            # (exit 0 = resolved, non-zero = aborted)
+
 [mergetool "sourcetree"]
-	cmd = /usr/local/bin/ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
-	trustExitCode = true
+  cmd = /usr/local/bin/ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+                                            # Same ksdiff command registered under the SourceTree tool name
+  trustExitCode = true
+
+# ── Init ──────────────────────────────────────────────────────────────────────
 [init]
-	templateDir = ~/.git-template
+  templateDir = ~/.git-template             # Copy files from this directory into .git/ on every `git init` or `git clone`
+                                            # (common use: pre-install hooks like commit-msg, pre-commit)
+
+# ── Git LFS (Large File Storage) ──────────────────────────────────────────────
 [filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
+  clean = git-lfs clean -- %f               # Intercept `git add` to replace large files with LFS pointer files
+  smudge = git-lfs smudge -- %f            # Intercept `git checkout` to hydrate pointers back to real file content
+  process = git-lfs filter-process          # Long-running filter process for better performance (replaces per-file clean/smudge calls)
+  required = true                           # Hard-fail if LFS is not installed — prevents accidentally committing
+                                            # raw binary blobs instead of pointers
+
+# ── Rebase behavior ───────────────────────────────────────────────────────────
+[rebase]
+	autosquash = true               # Auto-apply fixup!/squash! commit prefixes when rebasing (works with `commit --fixup`)
+	autoStash = true                # Stash dirty working tree before rebase and pop it after (no need to stash manually)
+	updateRefs = true               # Automatically update any stacked branches that point to rebased commits (great for stacked PRs)
+
+# ── Tag behavior ──────────────────────────────────────────────────────────────
+[tag]
+  sort = version:refname          # Sort tags using version semantics (v1.9 < v1.10, not lexicographic)
+
+# ── Branch behavior ───────────────────────────────────────────────────────────
+[branch]
+	sort = -committerdate           # Sort branches by most recently committed (newest first)
+
+# ── Column display ────────────────────────────────────────────────────────────
+[column]
+	ui = auto                       # Display output in columns (like `git branch`) when the terminal is wide enough
+
+# ── ghq (repository manager) ──────────────────────────────────────────────────
+[ghq]
+	root = ~/code                # Root directory where `ghq get` clones repositories

@@ -1,0 +1,18 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+
+#!/bin/sh
+
+# Install wtp (Worktree Plus) on macOS via Homebrew
+
+if [ -z "$(command -v wtp 2>/dev/null)" ]; then
+    (
+        set -x; printf ">>> wtp not found, installing via Homebrew\n" &&
+        brew install satococoa/tap/wtp
+    )
+fi
+
+if [ -n "$(command -v wtp 2>/dev/null)" ]; then
+    wtp --version
+fi
+
+{{ end -}}
