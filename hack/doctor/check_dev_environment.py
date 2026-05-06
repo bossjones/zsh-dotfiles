@@ -379,7 +379,7 @@ class EnvironmentChecker:
             'curl', 'diff-so-fancy', 'direnv', 'fd', 'fnm', 'fpp', 'fzf',
             'gcc', 'gh', 'git', 'gnu-indent', 'grep', 'gzip',
             'hub', 'jq', 'less', 'lesspipe', 'libxml2', 'lsof',
-            'luarocks', 'luv', 'moreutils', 'neofetch', 'neovim', 'nnn', 'node',
+            'luarocks', 'luv', 'moreutils', 'fastfetch', 'neovim', 'nnn', 'node',
             'pyenv', 'pyenv-virtualenv', 'pyenv-virtualenvwrapper',
             'ruby-build', 'rbenv', 'reattach-to-user-namespace',
             'ripgrep', 'rsync', 'screen', 'screenfetch', 'shellcheck',

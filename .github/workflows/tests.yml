@@ -184,7 +184,7 @@ jobs:
 
           brew install curl diff-so-fancy direnv fd gnutls findutils fnm fpp fzf gawk gcc gh git gnu-indent gnu-sed gnu-tar grep gzip || true
 
-          brew install hub jq less lesspipe libxml2 lsof luarocks luv moreutils neofetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper || true
+          brew install hub jq less lesspipe libxml2 lsof luarocks luv moreutils fastfetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper || true
 
           brew install ruby-build rbenv reattach-to-user-namespace ripgrep rsync screen screenfetch shellcheck shfmt unzip urlview vim watch wget zlib zsh openssl@1.1 git-delta || true
           brew install kadwanev/brew/retry || true

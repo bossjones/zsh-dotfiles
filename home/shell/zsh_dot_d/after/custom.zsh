@@ -204,7 +204,7 @@ cd_to_to_schedule_on_meme_account_staging_today() {
 }
 
 # SOURCE: https://github.com/zaklaus/dotfiles/blob/1e957bd3c43ca30d8a274940a54aa86d9e15a89a/.zshrc
-alias cn='clear; neofetch'			    # cn:	    Clear and display neofetch
+alias cn='clear; fastfetch'			    # cn:	    Clear and display fastfetch
 mcd () { mkdir -p "$1" && cd "$1"; }        # mcd:          Makes new Dir and jumps inside
 # SOURCE: https://github.com/lazmond3/dotfiles-public-mac/blob/81fd93f99582d71206243c16095aecaf456d2c5e/config/aliases.bash
 alias killf="kill \$(ps aux | fzf -m | awk '{print \$2}')"

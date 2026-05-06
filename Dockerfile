@@ -98,7 +98,7 @@ RUN --mount=type=secret,id=homebrew_token \
     brew install openssl@3 readline libyaml gmp autoconf && \
     brew install rust openssl readline sqlite3 xz zlib tcl-tk pkg-config autogen bash bzip2 libffi cheat python@3.10 cmake \
     curl diff-so-fancy direnv fd gnutls findutils fnm fpp fzf gawk gcc gh git gnu-indent gnu-sed gnu-tar grep gzip \
-    hub jq less lesspipe libxml2 lsof luarocks luv moreutils neofetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper \
+    hub jq less lesspipe libxml2 lsof luarocks luv moreutils fastfetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper \
     ruby-build rbenv ripgrep rsync screen screenfetch shellcheck shfmt unzip urlview vim watch wget zlib zsh openssl@1.1 git-delta \
     tmux && \
     brew tap rbenv/tap && \

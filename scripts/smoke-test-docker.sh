@@ -133,7 +133,7 @@ setup_brew_packages() {
     brew install openssl readline sqlite3 xz zlib tcl-tk pkg-config autogen bash bzip2 libffi cheat python@3.10 || true
     brew install cmake || true
     brew install curl diff-so-fancy direnv fd gnutls findutils fnm fpp fzf gawk gcc gh git gnu-indent gnu-sed gnu-tar grep gzip || true
-    brew install hub jq less lesspipe libxml2 lsof luarocks luv moreutils neofetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper || true
+    brew install hub jq less lesspipe libxml2 lsof luarocks luv moreutils fastfetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper || true
     brew install ruby-build rbenv ripgrep rsync screen screenfetch shellcheck shfmt unzip urlview vim watch wget zlib zsh openssl@1.1 git-delta || true
     brew install tmux || true
 
