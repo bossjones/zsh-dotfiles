@@ -2,10 +2,11 @@
 # Reproduces CI environment for faster iteration
 #
 # Usage:
-#   docker-compose up --build              # Run full smoke test
-#   docker-compose run --rm smoke lint     # Run lint stage only
-#   docker-compose run --rm smoke build    # Run build stage only
-#   docker-compose run --rm smoke-shell    # Interactive shell for debugging
+#   docker-compose up --build                              # Run full smoke test (asdf default)
+#   docker-compose run --rm smoke lint                     # Run lint stage only
+#   docker-compose run --rm smoke build                    # Run build stage only
+#   docker-compose run --rm smoke-shell                    # Interactive shell for debugging
+#   VERSION_MANAGER=mise docker compose up --build smoke   # Test mise lane
 #
 # For faster builds with GitHub API token (avoids rate limiting):
 #   export HOMEBREW_GITHUB_API_TOKEN=ghp_your_token_here
@@ -16,6 +17,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VERSION_MANAGER: ${VERSION_MANAGER:-asdf}
       secrets:
         - homebrew_token
     container_name: dotfiles-smoke
@@ -23,12 +26,15 @@ services:
       - TERM=xterm-256color
       - HOMEBREW_NO_AUTO_UPDATE=1
       - HOMEBREW_NO_ANALYTICS=1
+      - VERSION_MANAGER=${VERSION_MANAGER:-asdf}
 
   # Interactive shell for debugging failed tests
   smoke-shell:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VERSION_MANAGER: ${VERSION_MANAGER:-asdf}
       secrets:
         - homebrew_token
     container_name: dotfiles-smoke-shell
@@ -36,6 +42,7 @@ services:
       - TERM=xterm-256color
       - HOMEBREW_NO_AUTO_UPDATE=1
       - HOMEBREW_NO_ANALYTICS=1
+      - VERSION_MANAGER=${VERSION_MANAGER:-asdf}
     stdin_open: true
     tty: true
     entrypoint: /bin/zsh

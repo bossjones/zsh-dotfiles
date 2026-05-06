@@ -3,9 +3,11 @@
 # Reproduces .github/workflows/tests.yml locally
 #
 # Usage:
-#   ./scripts/smoke-test-docker.sh         # Run all stages
-#   ./scripts/smoke-test-docker.sh lint    # Run lint stage only
-#   ./scripts/smoke-test-docker.sh build   # Run build stage only
+#   ./scripts/smoke-test-docker.sh                       # Run all stages (asdf default)
+#   ./scripts/smoke-test-docker.sh lint                  # Run lint stage only
+#   ./scripts/smoke-test-docker.sh build                 # Run build stage only
+#   VERSION_MANAGER=mise ./scripts/smoke-test-docker.sh build   # Build with mise
+#   ./scripts/smoke-test-docker.sh build mise            # Same, via positional arg
 #
 set -euo pipefail
 
@@ -18,6 +20,15 @@ RESET='\033[0m'
 
 # Parse command line arguments
 STAGE="${1:-all}"
+VERSION_MANAGER="${2:-${VERSION_MANAGER:-asdf}}"
+case "$VERSION_MANAGER" in
+    asdf|mise) ;;
+    *)
+        echo "❌ VERSION_MANAGER must be 'asdf' or 'mise', got: $VERSION_MANAGER" >&2
+        exit 1
+        ;;
+esac
+export VERSION_MANAGER
 
 log_info() { echo -e "${BLUE}ℹ️  $1${RESET}"; }
 log_success() { echo -e "${GREEN}✅ $1${RESET}"; }
@@ -48,6 +59,7 @@ setup_initial_environment() {
     log_info "ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE=$ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE"
     log_info "SHELDON_CONFIG_DIR=$SHELDON_CONFIG_DIR"
     log_info "SHELDON_DATA_DIR=$SHELDON_DATA_DIR"
+    log_info "VERSION_MANAGER=$VERSION_MANAGER"
 
     log_success "Initial environment configured"
 }
@@ -173,25 +185,14 @@ run_prereq_installer() {
     log_success "Prerequisites installed"
 }
 
-# Setup ASDF and OpenSSL (called right before chezmoi)
-setup_asdf_and_openssl() {
-    log_section "ASDF and OpenSSL Setup"
+# Setup version manager (asdf or mise) and OpenSSL (called right before chezmoi).
+# Mutual Exclusion Invariant (specs/migrate-asdf-to-mise.md lines 15-27): when
+# VERSION_MANAGER=mise, NEVER source asdf.sh or set ASDF_DIR; symmetrically for asdf.
+setup_version_manager() {
+    log_section "Version Manager Setup ($VERSION_MANAGER)"
 
-    # ASDF configuration (set after asdf is installed)
-    export ASDF_DIR="${HOME}/.asdf"
-    export ASDF_COMPLETIONS="$ASDF_DIR/completions"
-
-    # Source asdf if available
-    if [[ -f "$HOME/.asdf/asdf.sh" ]]; then
-        log_info "Sourcing asdf..."
-        # shellcheck source=/dev/null
-        . "$HOME/.asdf/asdf.sh"
-    fi
-
-    # Add ASDF to PATH
-    export PATH="${HOME}/.asdf/bin:${HOME}/.asdf/shims:${PATH}"
-
-    # GNU getopt PATH (if available)
+    # Shared: GNU getopt + OpenSSL 3 flags for Ruby compilation (apply to both managers)
+    OPENSSL3_PREFIX=""
     if command -v brew &> /dev/null; then
         GNUGETOPT_BIN="$(brew --prefix gnu-getopt 2>/dev/null)/bin" || true
         if [[ -d "$GNUGETOPT_BIN" ]]; then
@@ -199,25 +200,52 @@ setup_asdf_and_openssl() {
             log_info "GNU getopt added to PATH: $GNUGETOPT_BIN"
         fi
 
-        # OpenSSL 3 flags for compilation
         OPENSSL3_PREFIX="$(brew --prefix openssl@3 2>/dev/null)" || true
         if [[ -n "$OPENSSL3_PREFIX" ]]; then
             export LDFLAGS="-L${OPENSSL3_PREFIX}/lib"
             export CPPFLAGS="-I${OPENSSL3_PREFIX}/include"
             log_info "OpenSSL 3 flags set: LDFLAGS=$LDFLAGS"
-
-            # Install Ruby with OpenSSL 3 support
-            if command -v asdf &> /dev/null; then
-                log_info "Installing Ruby 3.2.1 with OpenSSL 3..."
-                asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
-            fi
         fi
     fi
 
-    log_info "ASDF_DIR=$ASDF_DIR"
-    log_info "ASDF_COMPLETIONS=$ASDF_COMPLETIONS"
+    if [[ "$VERSION_MANAGER" == "asdf" ]]; then
+        export ASDF_DIR="${HOME}/.asdf"
+        export ASDF_COMPLETIONS="$ASDF_DIR/completions"
 
-    log_success "ASDF and OpenSSL configured"
+        if [[ -f "$HOME/.asdf/asdf.sh" ]]; then
+            log_info "Sourcing asdf..."
+            # shellcheck source=/dev/null
+            . "$HOME/.asdf/asdf.sh"
+        fi
+
+        export PATH="${HOME}/.asdf/bin:${HOME}/.asdf/shims:${PATH}"
+
+        if command -v asdf &> /dev/null && [[ -n "$OPENSSL3_PREFIX" ]]; then
+            log_info "Installing Ruby 3.2.1 via asdf with OpenSSL 3..."
+            asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+        fi
+
+        log_info "ASDF_DIR=$ASDF_DIR"
+        log_info "ASDF_COMPLETIONS=$ASDF_COMPLETIONS"
+    else
+        # mise lane — never source asdf.sh, never set ASDF_DIR (Mutual Exclusion Invariant)
+        if command -v mise &> /dev/null; then
+            log_info "Activating mise..."
+            eval "$(mise activate bash)"
+
+            log_info "Installing Ruby 3.2.1 via mise..."
+            if [[ -n "$OPENSSL3_PREFIX" ]]; then
+                RUBY_CONFIGURE_OPTS="--with-openssl-dir=${OPENSSL3_PREFIX}" \
+                    mise use -g ruby@3.2.1 || true
+            else
+                mise use -g ruby@3.2.1 || true
+            fi
+        else
+            log_warning "mise not found on PATH — skipping ruby install"
+        fi
+    fi
+
+    log_success "Version manager configured: $VERSION_MANAGER"
 }
 
 # Stage: Lint
@@ -234,8 +262,9 @@ run_lint() {
 
     # Initialize chezmoi to generate config from template
     # This processes .chezmoi.yaml.tmpl and makes data variables available
-    log_info "Initializing chezmoi config..."
-    if chezmoi init --source=. --force 2>&1; then
+    log_info "Initializing chezmoi config (version_manager=$VERSION_MANAGER)..."
+    if chezmoi init --source=. --force \
+        --promptString version_manager="$VERSION_MANAGER" 2>&1; then
         log_success "chezmoi config initialized"
     else
         log_warning "chezmoi init had warnings (non-fatal)"
@@ -295,9 +324,11 @@ run_build() {
 
     local chezmoi_exit_code=0
     if command -v retry &> /dev/null; then
-        retry -t 4 -- "$chezmoi_bin" init -R --debug -v --apply --force --source=. || chezmoi_exit_code=$?
+        retry -t 4 -- "$chezmoi_bin" init -R --debug -v --apply --force \
+            --promptString version_manager="$VERSION_MANAGER" --source=. || chezmoi_exit_code=$?
     else
-        "$chezmoi_bin" init -R --debug -v --apply --force --source=. || chezmoi_exit_code=$?
+        "$chezmoi_bin" init -R --debug -v --apply --force \
+            --promptString version_manager="$VERSION_MANAGER" --source=. || chezmoi_exit_code=$?
     fi
 
     if [[ $chezmoi_exit_code -eq 0 ]]; then
@@ -379,6 +410,7 @@ run_pytest() {
 main() {
     log_section "Smoke Test Runner"
     log_info "Stage: ${STAGE}"
+    log_info "Version manager: ${VERSION_MANAGER}"
     log_info "Working directory: $(pwd)"
 
     # 1. Setup initial environment (ZSH_DOTFILES_PREP_*, SHELDON_*, basic PATH)
@@ -396,8 +428,8 @@ main() {
             setup_brew_packages
             # 4. Run prereq installer
             run_prereq_installer
-            # 5. Setup ASDF + OpenSSL (right before chezmoi)
-            setup_asdf_and_openssl
+            # 5. Setup version manager + OpenSSL (right before chezmoi)
+            setup_version_manager
             # 6. Run build (chezmoi init/apply + post-install)
             run_build
             # 7. Run tests
@@ -407,7 +439,7 @@ main() {
             run_lint
             setup_brew_packages
             run_prereq_installer
-            setup_asdf_and_openssl
+            setup_version_manager
             run_build
             run_pytest
             ;;

@@ -1,5 +1,9 @@
 sync:
-	uv sync
+	@uv sync --all-extras
+	uv run pre-commit install
+
+pre-commit:
+	uv run pre-commit run -a
 
 test:
 	py.test --tb=short --no-header --showlocals --reruns 6 test_dotfiles.py
@@ -27,9 +31,9 @@ install-hooks:
 	uv venv --python 3.12
 	uv run pre-commit install
 
-.PHONY: smoke smoke-lint smoke-build smoke-shell smoke-clean
-smoke:  ## Run full smoke test in Docker (reproduces CI)
-	@echo "\033[0;34mRunning smoke test in Docker...\033[0m"
+.PHONY: smoke smoke-lint smoke-build smoke-shell smoke-clean smoke-asdf smoke-mise smoke-asdf-shell smoke-mise-shell
+smoke:  ## Run full smoke test in Docker (reproduces CI; uses VERSION_MANAGER env var, default asdf)
+	@echo "\033[0;34mRunning smoke test in Docker (VERSION_MANAGER=$${VERSION_MANAGER:-asdf})...\033[0m"
 	docker compose up --build smoke
 
 smoke-lint:  ## Run lint stage only in Docker
@@ -47,3 +51,19 @@ smoke-shell:  ## Start interactive shell for debugging smoke test failures
 smoke-clean:  ## Clean up smoke test Docker resources
 	@echo "\033[0;34mCleaning up smoke test containers...\033[0m"
 	docker compose down --rmi local --volumes --remove-orphans
+
+smoke-asdf:  ## Run smoke test with version_manager=asdf (current default)
+	@echo "\033[0;34mRunning smoke test with VERSION_MANAGER=asdf...\033[0m"
+	VERSION_MANAGER=asdf docker compose up --build smoke
+
+smoke-mise:  ## Run smoke test with version_manager=mise
+	@echo "\033[0;34mRunning smoke test with VERSION_MANAGER=mise...\033[0m"
+	VERSION_MANAGER=mise docker compose up --build smoke
+
+smoke-asdf-shell:  ## Interactive shell with VERSION_MANAGER=asdf for manual verification
+	@echo "\033[0;34mStarting interactive shell with VERSION_MANAGER=asdf...\033[0m"
+	VERSION_MANAGER=asdf docker compose run --rm smoke-shell
+
+smoke-mise-shell:  ## Interactive shell with VERSION_MANAGER=mise for manual verification
+	@echo "\033[0;34mStarting interactive shell with VERSION_MANAGER=mise...\033[0m"
+	VERSION_MANAGER=mise docker compose run --rm smoke-shell

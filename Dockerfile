@@ -3,15 +3,23 @@
 # Reproduces .github/workflows/smoke.yml locally for faster iteration
 #
 # Usage:
-#   make smoke-build   # Build and run full smoke test
-#   make smoke-lint    # Run linting only
-#   make smoke-shell   # Interactive shell for debugging
+#   make smoke-build                                       # Build and run full smoke test (asdf default)
+#   make smoke-lint                                        # Run linting only
+#   make smoke-shell                                       # Interactive shell for debugging
+#   VERSION_MANAGER=mise make smoke                        # Test mise lane
+#   docker build --build-arg VERSION_MANAGER=mise -t … .   # Direct build with mise
 #
 FROM ubuntu:24.04
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TERM=xterm-256color
+
+# Version manager selector (asdf | mise) — propagated from docker-compose.yml or
+# `docker build --build-arg VERSION_MANAGER=mise`. Read by scripts/smoke-test-docker.sh
+# at runtime; passed to chezmoi as --promptString version_manager=<value>.
+ARG VERSION_MANAGER=asdf
+ENV VERSION_MANAGER=${VERSION_MANAGER}
 
 # Install base dependencies (includes packages from before-00-prereq-ubuntu.sh to avoid permission issues)
 RUN apt-get update && apt-get install -y --no-install-recommends \

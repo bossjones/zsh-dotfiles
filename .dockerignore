@@ -4,3 +4,25 @@ beeftop.env
 .envrc
 logs
 .claude/data
+.env
+.venv
+.mcp.json
+
+output
+outputs/
+
+extras/
+
+# Claude Code data
+.claude/data/
+
+# lets ignore this for now, but we'll use it later to create splunk queries and dashboards
+data/splunk/1759972386_103178_02D4481B-981F-4097-8DF0-9D3DDF53938F.csv
+
+# idk if we need to comment this out or not
+.cursor/mcp.json
+
+
+hack/doctor/bin/chezmoi
+.claude/settings.local.json
+.env

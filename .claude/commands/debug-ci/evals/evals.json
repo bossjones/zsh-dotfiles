@@ -7,9 +7,7 @@
       "echo 'local unused_var = 1' >> lua/user/plugins.lua",
       "echo 'print(undefined_global_var)' >> lua/user/plugins.lua"
     ],
-    "teardown": [
-      "git checkout -- lua/user/plugins.lua"
-    ],
+    "teardown": ["git checkout -- lua/user/plugins.lua"],
     "expected_behaviors": [
       {
         "description": "Identifies the luacheck failure category",
@@ -41,12 +39,8 @@
     "name": "stylua_formatting_drift",
     "description": "Diagnose and fix a stylua formatting CI failure",
     "prompt": "/debug-ci",
-    "setup": [
-      "sed -i '' 's/^local /    local /' lua/user/keybindings.lua"
-    ],
-    "teardown": [
-      "git checkout -- lua/user/keybindings.lua"
-    ],
+    "setup": ["sed -i '' 's/^local /    local /' lua/user/keybindings.lua"],
+    "teardown": ["git checkout -- lua/user/keybindings.lua"],
     "expected_behaviors": [
       {
         "description": "Identifies the stylua failure category",
