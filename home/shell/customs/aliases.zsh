@@ -207,6 +207,21 @@ enable_asdf() {
     . "$HOME"/.asdf/asdf.sh
 }
 
+enable_mise() {
+    export PATH="$HOME/.local/bin:$PATH"
+    command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
+}
+
+# Activate whichever version manager is installed on this host. mise wins
+# if both are present (its shims supersede asdf's on PATH).
+enable_version_manager() {
+    if command -v mise >/dev/null 2>&1; then
+        enable_mise
+    elif [ -f "$HOME/.asdf/asdf.sh" ]; then
+        enable_asdf
+    fi
+}
+
 alias imgdupes="docker run -it -v $PWD:/app knjcode/imgdupes"
 
 
@@ -807,9 +822,17 @@ kubectl_get_logs_of_previous_container() {
 kubectl_use_ethos51_stage_va6(){
     local _VERSION=1.18.6
     echo "[kubectl_use_ethos51_stage_va6] switching to correct version kubectl=${_VERSION}"
-    asdf global kubectl ${_VERSION}
+    if command -v mise >/dev/null 2>&1; then
+        mise use -g kubectl@${_VERSION}
+    else
+        asdf global kubectl ${_VERSION}
+    fi
     echo "[kubectl_use_ethos51_stage_va6] confirming kubectl=${_VERSION}"
-    asdf current
+    if command -v mise >/dev/null 2>&1; then
+        mise current
+    else
+        asdf current
+    fi
 
     echo "[kubectl_use_ethos51_stage_va6] setting up KUBECONFIG to ethos now"
     ethos_kubeconfig
@@ -824,9 +847,17 @@ kubectl_use_ethos51_stage_va6(){
 kubectl_use_ethos51_prod_va6(){
     local _VERSION=1.18.6
     echo "[kubectl_use_ethos51_prod_va6] switching to correct version kubectl=${_VERSION}"
-    asdf global kubectl ${_VERSION}
+    if command -v mise >/dev/null 2>&1; then
+        mise use -g kubectl@${_VERSION}
+    else
+        asdf global kubectl ${_VERSION}
+    fi
     echo "[kubectl_use_ethos51_prod_va6] confirming kubectl=${_VERSION}"
-    asdf current
+    if command -v mise >/dev/null 2>&1; then
+        mise current
+    else
+        asdf current
+    fi
 
     echo "[kubectl_use_ethos51_prod_va6] setting up KUBECONFIG to ethos now"
     ethos_kubeconfig

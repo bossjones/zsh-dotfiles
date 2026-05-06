@@ -30,6 +30,7 @@ jobs:
       matrix:
         os: ["macos-14", "macos-15", "macos-26", "macos-latest"]
         python-version: ["3.12"]
+        version_manager: ["asdf", "mise"]
     continue-on-error: ${{ matrix.os == 'macos-26' || matrix.os == 'macos-latest' }}
 
     steps:
@@ -116,7 +117,7 @@ jobs:
           export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
 
 
-          retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --source=.
+          retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --promptString version_manager=${{ matrix.version_manager }} --source=.
 
           retry -t 4  -- post-install-chezmoi
 
@@ -152,14 +153,19 @@ jobs:
           { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
           export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
 
-          export ASDF_DIR="${HOME}/.asdf"
-          export ASDF_COMPLETIONS="$ASDF_DIR/completions"
-          . "$HOME/.asdf/asdf.sh"
+          if [ "${{ matrix.version_manager }}" = "asdf" ]; then
+            export ASDF_DIR="${HOME}/.asdf"
+            export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+            . "$HOME/.asdf/asdf.sh"
+            echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+            echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+          else
+            export PATH="$HOME/.local/bin:$PATH"
+            echo "$HOME/.local/bin" >> "${GITHUB_PATH}"
+            command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+          fi
 
           set -x
-
-          echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
-          echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
 
           GNUGETOPT_BIN="$(brew --prefix gnu-getopt)/bin"
           echo "$GNUGETOPT_BIN" >> "${GITHUB_PATH}"
@@ -189,20 +195,28 @@ jobs:
 
           brew install openssl@3 readline libyaml gmp autoconf || true
 
-          export ASDF_DIR="${HOME}/.asdf"
-          export ASDF_COMPLETIONS="$ASDF_DIR/completions"
-          . "$HOME/.asdf/asdf.sh"
+          if [ "${{ matrix.version_manager }}" = "asdf" ]; then
+            export ASDF_DIR="${HOME}/.asdf"
+            export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+            . "$HOME/.asdf/asdf.sh"
 
-          echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
-          echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
-          # ruby-build 3.2.1 ~/.asdf/installs/ruby/3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
-          asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+            echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+            echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+            # ruby-build 3.2.1 ~/.asdf/installs/ruby/3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+            asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+          else
+            export PATH="$HOME/.local/bin:$PATH"
+            echo "$HOME/.local/bin" >> "${GITHUB_PATH}"
+            command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+            # mise compiles ruby with the same openssl flags via env vars
+            mise use -g ruby@3.2.1 || true
+          fi
 
-          retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --source=.
+          retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --promptString version_manager=${{ matrix.version_manager }} --source=.
 
           retry -t 4  -- post-install-chezmoi
 
-      - name: Run pytest suite [${{ matrix.os }}, py${{ matrix.python-version }}]
+      - name: Run pytest suite [${{ matrix.os }}, py${{ matrix.python-version }}, ${{ matrix.version_manager }}]
         run: |
           # Removed 'exec zsh' to prevent script termination
           zsh -c '
@@ -214,12 +228,17 @@ jobs:
           source ./venv/bin/activate
           pip install -U pip setuptools wheel
           pip install -U -r requirements-test.txt
-          export ASDF_DIR="${HOME}/.asdf"
-          export ASDF_COMPLETIONS="$ASDF_DIR/completions"
-          . "$HOME/.asdf/asdf.sh"
-
-          echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
-          echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+          if [ "${{ matrix.version_manager }}" = "asdf" ]; then
+            export ASDF_DIR="${HOME}/.asdf"
+            export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+            . "$HOME/.asdf/asdf.sh"
+            echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+            echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+          else
+            export PATH="$HOME/.local/bin:$PATH"
+            echo "$HOME/.local/bin" >> "${GITHUB_PATH}"
+            command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
+          fi
 
           make test
           '

@@ -1,0 +1,11 @@
+{{- if and (eq .chezmoi.os "darwin") (eq .version_manager "mise") -}}
+#!/bin/bash
+
+# Install mise via Homebrew on macOS
+
+printf "${green}[02 - macos] ${reset}"
+echo "Install mise"
+
+command -v mise >/dev/null 2>&1 || brew install mise || true
+
+{{ end -}}

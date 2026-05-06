@@ -121,6 +121,7 @@ use = ["{{- "{{ name }}.zsh" }}"]
 github = "zsh-hooks/zsh-hooks"
 use = ["{{- "{{ name }}.plugin.zsh" }}"]
 
+{{ if eq .version_manager "asdf" -}}
 {{if (eq .chezmoi.os "linux") -}}
 [plugins.asdf]
 local = "~/.asdf"
@@ -138,6 +139,10 @@ local = "{{ joinPath $brewPrefix "opt" "asdf" "libexec" }}"
 {{ end -}}
 use = ["{{- "{{ name }}.sh" -}}"]
 apply = ["defer"]
+{{ end }}
+{{ else -}}
+[plugins.mise]
+inline = 'command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"'
 {{ end }}
 
 
