@@ -44,7 +44,7 @@ eval "$(mise activate bash)"
 {{ $tools := dict
   "ruby"       (.myAsdfRubyVersion)
   "golang"     (.myAsdfGolangVersion)
-  "tmux"       (.myAsdfTmuxVersion)
+  "asdf:mise-plugins/mise-tmux" (.myAsdfTmuxVersion)
   "neovim"     (.myAsdfNeovimVersion)
   "github-cli" (.myAsdfGithubCliVersion)
   "mkcert"     (.myAsdfMkcertVersion)
