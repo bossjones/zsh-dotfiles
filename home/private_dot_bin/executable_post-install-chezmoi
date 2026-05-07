@@ -132,19 +132,34 @@ fi
 mkdir -p ~/.local/src || true
 if [ "$(uname -m)" = "aarch64" ]; then
   set +e
-  CURRENT_VERSION_NEOVIM=$(asdf current neovim | awk '{print $2}')
-  asdf uninstall neovim "${CURRENT_VERSION_NEOVIM}" || true
+  if [ "${VERSION_MANAGER:-asdf}" = "asdf" ]; then
+    CURRENT_VERSION_NEOVIM=$(asdf current neovim | awk '{print $2}')
+    asdf uninstall neovim "${CURRENT_VERSION_NEOVIM}" || true
+  else
+    # mise: resolve the actual installed version from the install path;
+    # fall back to latest GitHub release tag so git clone gets a real tag.
+    CURRENT_VERSION_NEOVIM=$(basename "$(mise where neovim 2>/dev/null)" 2>/dev/null || true)
+    if [ -z "${CURRENT_VERSION_NEOVIM}" ] || [ "${CURRENT_VERSION_NEOVIM}" = "latest" ]; then
+      CURRENT_VERSION_NEOVIM=$(curl -s "https://api.github.com/repos/neovim/neovim/releases/latest" \
+        | grep '"tag_name"' | sed 's/.*"tag_name": "v\(.*\)".*/\1/' 2>/dev/null || echo "0.11.0")
+    fi
+    mise uninstall neovim 2>/dev/null || true
+  fi
   git clone -b "v${CURRENT_VERSION_NEOVIM}" https://github.com/neovim/neovim ~/.local/src/neovim || true
   cd ~/.local/src/neovim || exit
   rm -rf build || true
   export MANPREFIX=$HOME/.local
   make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=~/.local CMAKE_INSTALL_MANDIR="$HOME"/.local
   make install
-  asdf global neovim system
+  if [ "${VERSION_MANAGER:-asdf}" = "asdf" ]; then
+    asdf global neovim system
+  else
+    mise use -g neovim@system 2>/dev/null || true
+  fi
   nvim --version
   set -e
 else
-  echo "not centos or aarch64. skipping"
+  echo "not aarch64. skipping"
 fi
 
 # FIXME: Note, neovim for asdf doesn't work on arm machines yet.
