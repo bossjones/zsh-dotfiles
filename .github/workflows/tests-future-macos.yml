@@ -1,15 +1,8 @@
-name: GitHub Actions CI
+name: GitHub Actions CI (future macOS)
 on:
-  push:
-    branches:
-      - main
-      - master
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - ready_for_review
+  schedule:
+    # 07:00 UTC daily
+    - cron: "0 7 * * *"
   workflow_dispatch:
     inputs:
       debug_enabled:
@@ -17,16 +10,17 @@ on:
         required: false
         default: "false"
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number|| github.sha }}
+  group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
-    # timeout-minutes: 35
+    timeout-minutes: 60
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        os: ["macos-14", "macos-15"]
+        os: ["macos-26", "macos-latest"]
         python-version: ["3.12"]
         version_manager: ["asdf", "mise"]
 
@@ -65,7 +59,7 @@ jobs:
           path: |
             ~/Library/Caches/Homebrew/downloads
             ~/Library/Caches/Homebrew/api
-          key: brew-${{ matrix.os }}-${{ hashFiles('.github/workflows/tests.yml', 'home/dot_Brewfile*') }}
+          key: brew-${{ matrix.os }}-${{ hashFiles('.github/workflows/tests-future-macos.yml', 'home/dot_Brewfile*') }}
           restore-keys: |
             brew-${{ matrix.os }}-
 
@@ -76,7 +70,7 @@ jobs:
             ~/.cargo/bin
             ~/.cargo/registry
             ~/.cargo/git
-          key: cargo-${{ matrix.os }}-${{ hashFiles('.github/workflows/tests.yml') }}
+          key: cargo-${{ matrix.os }}-${{ hashFiles('.github/workflows/tests-future-macos.yml') }}
           restore-keys: |
             cargo-${{ matrix.os }}-
 
@@ -106,15 +100,15 @@ jobs:
           restore-keys: |
             lvim-${{ matrix.os }}-
 
-      - name: Configure Homebrew taps [${{ matrix.os }}, py${{ matrix.python-version }}]
+      - name: Configure Homebrew taps [${{ matrix.os }}]
         run: |
           brew tap schniz/tap || true
 
-      - name: Install actionlint via Homebrew [${{ matrix.os }}, py${{ matrix.python-version }}]
+      - name: Install actionlint via Homebrew [${{ matrix.os }}]
         run: |
           brew install actionlint || true
 
-      - name: Install prerequisites (zsh-dotfiles-prep) [${{ matrix.os }}, py${{ matrix.python-version }}]
+      - name: Install prerequisites (zsh-dotfiles-prep) [${{ matrix.os }}]
         run: |
           brew tap schniz/tap || true
           brew install wget || true
@@ -132,10 +126,36 @@ jobs:
           chmod +x zsh-dotfiles-prereq-installer
           retry -t 4  -- ./zsh-dotfiles-prereq-installer --debug
 
-      - name: Full chezmoi init + apply [${{ matrix.os }}, py${{ matrix.python-version }}, ${{ matrix.version_manager }}]
+      - name: Install Ruby/OpenSSL3 build deps (future macOS) [${{ matrix.os }}]
+        run: |
+          brew install rbenv/tap/openssl@1.1 || true
+          # Compile-time deps for asdf/mise Ruby 3.2.1 build with OpenSSL 3
+          brew install rust gnu-getopt pkg-config cmake libffi bzip2 xz zlib sqlite3 readline libyaml gmp autoconf || true
+
+      - name: Full chezmoi init + apply [${{ matrix.os }}, ${{ matrix.version_manager }}]
         run: |
           { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
           export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
+
+          GNUGETOPT_BIN="$(brew --prefix gnu-getopt)/bin"
+          echo "$GNUGETOPT_BIN" >> "${GITHUB_PATH}"
+          export PATH="${GNUGETOPT_BIN}:${PATH}"
+
+          OPENSSL3_PREFIX="$(brew --prefix openssl@3)"
+          export LDFLAGS="-L${OPENSSL3_PREFIX}/lib"
+          export CPPFLAGS="-I${OPENSSL3_PREFIX}/include"
+
+          if [ "${{ matrix.version_manager }}" = "asdf" ]; then
+            export ASDF_DIR="${HOME}/.asdf"
+            export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+            [ -f "$HOME/.asdf/asdf.sh" ] && . "$HOME/.asdf/asdf.sh"
+            echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+            echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+          else
+            export PATH="$HOME/.local/bin:$PATH"
+            echo "$HOME/.local/bin" >> "${GITHUB_PATH}"
+            command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+          fi
 
           retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --promptString version_manager=${{ matrix.version_manager }} --source=.
 
@@ -151,13 +171,13 @@ jobs:
           curl -s "https://raw.githubusercontent.com/LunarVim/LunarVim/${LV_BRANCH}/utils/installer/install.sh" | bash -s -- --install-dependencies -y
 
       # Allow debugging with tmate
-      - name: Setup tmate debug session [${{ matrix.os }}, py${{ matrix.python-version }}]
+      - name: Setup tmate debug session [${{ matrix.os }}]
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled }}
         with:
           limit-access-to-actor: true
 
-      - name: Run pytest suite [${{ matrix.os }}, py${{ matrix.python-version }}, ${{ matrix.version_manager }}]
+      - name: Run pytest suite [${{ matrix.os }}, ${{ matrix.version_manager }}]
         run: |
           zsh -c '
           { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
