@@ -72,6 +72,7 @@ ENV LC_ALL=en_US.UTF-8
 # Create test user with sudo access (matches CI runner user setup)
 # Use sudoers.d drop-in file for cleaner configuration
 RUN useradd -m -s /bin/zsh -G sudo tester && \
+    echo 'tester:tester' | chpasswd && \
     { \
         echo "Defaults:tester !authenticate"; \
         echo "tester ALL=(ALL) NOPASSWD:ALL"; \
@@ -99,6 +100,8 @@ RUN printf '%s\n' \
     '' \
     '    VERSION_MANAGER=mise ./scripts/smoke-test-docker.sh build' \
     '    VERSION_MANAGER=asdf ./scripts/smoke-test-docker.sh build' \
+    '' \
+    '  If prompted "Enter your password (for sudo access):" type: tester' \
     '' \
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' \
     '' \
