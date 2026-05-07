@@ -202,18 +202,14 @@ run_prereq_installer() {
     chmod +x zsh-dotfiles-prereq-installer
 
     log_info "Running prereq installer with retry..."
-    # The installer's `sudo_refresh` calls `sudo --askpass --validate` whenever
-    # SUDO_ASKPASS is set; our askpass returns "" so sudo logs "3 incorrect
-    # password attempts" and exits. The installer's EXIT trap then runs
-    # `sudo_askpass rm -rf "$SUDO_ASKPASS" "$SUDO_ASKPASS_DIR"` which deletes
-    # our /home/tester/.sudo_askpass, breaking every retry. Unset SUDO_ASKPASS
-    # for just this invocation so `sudo_refresh` falls through to `sudo_init`,
-    # which returns immediately in non-interactive mode (no tty under
-    # `docker compose up`). Subsequent sudo calls succeed via NOPASSWD: ALL.
+    # `Defaults:tester !authenticate` in /etc/sudoers.d/tester makes
+    # `sudo --askpass --validate` succeed without invoking the askpass helper,
+    # so the installer's sudo_refresh works whether or not SUDO_ASKPASS is set
+    # and whether or not a TTY is attached.
     if command -v retry &> /dev/null; then
-        env -u SUDO_ASKPASS retry -t 4 -- ./zsh-dotfiles-prereq-installer --debug
+        retry -t 4 -- ./zsh-dotfiles-prereq-installer --debug
     else
-        env -u SUDO_ASKPASS ./zsh-dotfiles-prereq-installer --debug
+        ./zsh-dotfiles-prereq-installer --debug
     fi
 
     # Cleanup

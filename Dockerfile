@@ -72,16 +72,20 @@ ENV LC_ALL=en_US.UTF-8
 # Create test user with sudo access (matches CI runner user setup)
 # Use sudoers.d drop-in file for cleaner configuration
 RUN useradd -m -s /bin/zsh -G sudo tester && \
-    echo "tester ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/tester && \
+    { \
+        echo "Defaults:tester !authenticate"; \
+        echo "tester ALL=(ALL) NOPASSWD:ALL"; \
+    } > /etc/sudoers.d/tester && \
     chmod 0440 /etc/sudoers.d/tester && \
     visudo -c && \
     printf '#!/bin/sh\necho ""\n' > /home/tester/.sudo_askpass && \
     chmod 700 /home/tester/.sudo_askpass && \
     chown tester:tester /home/tester/.sudo_askpass
 
-# SUDO_ASKPASS makes the prereq-installer use `sudo --askpass --validate`
-# instead of its interactive sudo_init (read -rsp) path.
-# With NOPASSWD:ALL, sudo never actually calls the askpass script.
+# `Defaults:tester !authenticate` skips PAM auth entirely so `sudo --askpass
+# --validate` (called by the prereq-installer's sudo_refresh) succeeds without
+# invoking the askpass helper. SUDO_ASKPASS is still exported as a fallback
+# for any code that branches on its presence.
 ENV SUDO_ASKPASS=/home/tester/.sudo_askpass
 
 # MOTD shown on every interactive zsh session in smoke-shell
