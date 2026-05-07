@@ -97,11 +97,13 @@
 {{-     $opencv = promptBool "opencv" -}}
 {{-   end -}}
 
-{{-   if hasKey . "version_manager" -}}
-{{-     $version_manager = .version_manager -}}
-{{-   else -}}
-{{-     $version_manager = promptString "Version manager (asdf or mise)" $version_manager -}}
-{{-   end -}}
+{{- end -}}
+
+{{- /* version_manager: prompt key MUST be "version_manager" so non-TTY `--promptString version_manager=…` (Docker smoke) matches. Must stay outside `if $interactive`; in non-TTY runs `promptString` returns the --promptString value or the default. */ -}}
+{{- if hasKey . "version_manager" -}}
+{{-   $version_manager = .version_manager -}}
+{{- else -}}
+{{-   $version_manager = promptString "version_manager" $version_manager -}}
 {{- end -}}
 
 {{- if $interactive -}}
