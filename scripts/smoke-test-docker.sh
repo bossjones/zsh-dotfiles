@@ -6,6 +6,7 @@
 #   ./scripts/smoke-test-docker.sh                       # Run all stages (asdf default)
 #   ./scripts/smoke-test-docker.sh lint                  # Run lint stage only
 #   ./scripts/smoke-test-docker.sh build                 # Run build stage only
+#   ./scripts/smoke-test-docker.sh provision             # Build w/o pytest (used by Dockerfile.full)
 #   VERSION_MANAGER=mise ./scripts/smoke-test-docker.sh build   # Build with mise
 #   ./scripts/smoke-test-docker.sh build mise            # Same, via positional arg
 #
@@ -468,6 +469,14 @@ main() {
             # 7. Run tests
             run_pytest
             ;;
+        provision)
+            # Same as `build` but skips run_pytest. Used by Dockerfile.full
+            # to bake chezmoi-applied home + post-install state into a layer.
+            setup_brew_packages
+            run_prereq_installer
+            setup_version_manager
+            run_build
+            ;;
         all)
             run_lint
             setup_brew_packages
@@ -478,7 +487,7 @@ main() {
             ;;
         *)
             log_error "Unknown stage: $STAGE"
-            log_info "Usage: $0 [lint|build|all]"
+            log_info "Usage: $0 [lint|build|provision|all]"
             exit 1
             ;;
     esac

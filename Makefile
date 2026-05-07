@@ -67,3 +67,36 @@ smoke-asdf-shell:  ## Interactive shell with VERSION_MANAGER=asdf for manual ver
 smoke-mise-shell:  ## Interactive shell with VERSION_MANAGER=mise for manual verification
 	@echo "\033[0;34mStarting interactive shell with VERSION_MANAGER=mise...\033[0m"
 	VERSION_MANAGER=mise docker compose run --rm smoke-shell
+
+.PHONY: smoke-full smoke-full-asdf smoke-full-mise \
+        smoke-full-run-asdf smoke-full-run-mise smoke-full-clean
+
+smoke-full: smoke-full-asdf smoke-full-mise  ## Bake pre-provisioned images for both VERSION_MANAGER lanes
+
+smoke-full-asdf:  ## Bake pre-provisioned smoke image (asdf lane); requires DOCKER_BUILDKIT=1
+	@echo "\033[0;34mBaking pre-provisioned smoke image (asdf)...\033[0m"
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile -t zsh-dotfiles-smoke:asdf \
+		--build-arg VERSION_MANAGER=asdf \
+		--secret id=homebrew_token,env=HOMEBREW_GITHUB_API_TOKEN .
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile.full -t zsh-dotfiles-smoke-full:asdf \
+		--build-arg VERSION_MANAGER=asdf \
+		--build-arg BASE_IMAGE=zsh-dotfiles-smoke:asdf .
+
+smoke-full-mise:  ## Bake pre-provisioned smoke image (mise lane); requires DOCKER_BUILDKIT=1
+	@echo "\033[0;34mBaking pre-provisioned smoke image (mise)...\033[0m"
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile -t zsh-dotfiles-smoke:mise \
+		--build-arg VERSION_MANAGER=mise \
+		--secret id=homebrew_token,env=HOMEBREW_GITHUB_API_TOKEN .
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile.full -t zsh-dotfiles-smoke-full:mise \
+		--build-arg VERSION_MANAGER=mise \
+		--build-arg BASE_IMAGE=zsh-dotfiles-smoke:mise .
+
+smoke-full-run-asdf:  ## Run baked asdf image (interactive zsh)
+	docker run --rm -it zsh-dotfiles-smoke-full:asdf
+
+smoke-full-run-mise:  ## Run baked mise image (interactive zsh)
+	docker run --rm -it zsh-dotfiles-smoke-full:mise
+
+smoke-full-clean:  ## Remove baked smoke images
+	-docker rmi zsh-dotfiles-smoke-full:asdf zsh-dotfiles-smoke-full:mise \
+	            zsh-dotfiles-smoke:asdf      zsh-dotfiles-smoke:mise 2>/dev/null || true
