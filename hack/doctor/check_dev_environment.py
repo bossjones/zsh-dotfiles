@@ -4,10 +4,11 @@ Development Environment Checker
 Verifies that all required packages and tools are properly installed.
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 import re
 
 
@@ -21,6 +22,21 @@ class Colors:
     BOLD = '\033[1m'
 
 
+# CLI binary name for a managed tool, when it differs from the tool key. Used by
+# the PATH/brew fallback (e.g. the github-cli plugin provides the `gh` binary).
+BINARY_NAMES = {
+    'github-cli': 'gh',
+    'golang': 'go',
+    'neovim': 'nvim',
+}
+
+# mise registry name for a tool, when it differs from the asdf plugin name.
+# (tmux/kubetail need plugin namespaces under mise and may fall back to PATH.)
+MISE_TOOL_NAMES = {
+    'golang': 'go',
+}
+
+
 class EnvironmentChecker:
     def __init__(self):
         self.results = {
@@ -29,7 +45,8 @@ class EnvironmentChecker:
             'sheldon': None,
             'chezmoi': None,
             'uv': None,
-            'asdf_tools': []
+            'fzf': None,
+            'managed_tools': []
         }
         self.failed_checks = []
 
@@ -204,6 +221,58 @@ class EnvironmentChecker:
             print(f"\n  Install with:")
             print(f"  curl -LsSf https://astral.sh/uv/install.sh | sh")
 
+    def check_fzf(self) -> Dict:
+        """Check fzf installation and version (>= minimum).
+
+        fzf is not asdf/mise-managed in this setup (brew on macOS, git clone on
+        Linux), so it gets a minimum-version check like uv rather than an exact
+        match -- brew/git fzf is frequently newer than the pin.
+        """
+        min_version = "0.73.1"
+        result = {
+            'installed': False,
+            'location': None,
+            'version': None,
+            'version_acceptable': False,
+            'min_version': min_version
+        }
+
+        success, stdout, _ = self.run_command(['which', 'fzf'])
+        if success:
+            result['installed'] = True
+            result['location'] = stdout.strip()
+
+            success, stdout, _ = self.run_command(['fzf', '--version'])
+            if success:
+                # Parse version from output like "0.73.1 (brew)"
+                match = re.search(r'(\d+\.\d+\.\d+)', stdout)
+                if match:
+                    result['version'] = match.group(1)
+                    result['version_acceptable'] = self._version_gte(result['version'], min_version)
+
+        return result
+
+    def check_all_fzf(self):
+        """Check fzf installation"""
+        self.print_header("Checking fzf")
+
+        result = self.check_fzf()
+        self.results['fzf'] = result
+
+        if result['installed']:
+            self.print_success("fzf is installed")
+            print(f"  Location: {result['location']}")
+            print(f"  Version: {result['version']}")
+
+            if result['version_acceptable']:
+                self.print_success(f"Version is acceptable (>= {result['min_version']})")
+            else:
+                self.print_warning(f"Version {result['version']} is below minimum {result['min_version']}")
+        else:
+            self.print_failure("fzf is NOT installed")
+            print("\n  Install with:")
+            print("  brew install fzf")
+
     def check_env_and_path(self) -> Dict:
         """Check CI environment variables and PATH precedence from setup_initial_environment."""
         import os
@@ -317,25 +386,86 @@ class EnvironmentChecker:
                 "Add $(brew --prefix gnu-getopt)/bin to PATH for scripts requiring GNU getopt."
             )
 
-    def check_asdf_tool(self, tool: str, expected_version: str) -> Dict:
-        """Check if an asdf-managed tool is installed with correct version"""
+    def _detect_version_manager(self) -> Optional[str]:
+        """Pick the active version manager: env var, else mise, else asdf, else None.
+
+        Mirrors the runtime idiom (ZSH_DOTFILES_VERSION_MANAGER exported by
+        dot_zshrc.tmpl). Auto-detect prefers mise to match the repo's
+        mise-preferred stance for mid-migration boxes that have both.
+        """
+        env = os.environ.get('ZSH_DOTFILES_VERSION_MANAGER', '').strip()
+        if env in ('asdf', 'mise'):
+            return env
+        if self.run_command(['which', 'mise'])[0]:
+            return 'mise'
+        if self.run_command(['which', 'asdf'])[0]:
+            return 'asdf'
+        return None
+
+    def _binary_version(self, binary: str) -> Optional[str]:
+        """Return a parsed version from `<binary> --version`/`-V`, or None if absent."""
+        if not self.run_command(['which', binary])[0]:
+            return None
+        for flag in ('--version', '-V'):
+            _ok, out, err = self.run_command([binary, flag])
+            text = (out or '') + (err or '')
+            # Tolerant: matches 2.93.0, 0.11.0, v3.13.1, and tmux-style 3.5a.
+            match = re.search(r'(\d+\.\d+(?:\.\d+)?[a-z]?)', text)
+            if match:
+                return match.group(1)
+        return None
+
+    def check_managed_tool(self, manager: Optional[str], tool: str, expected_version: str) -> Dict:
+        """Check a version-managed tool.
+
+        Resolution order matches "PATH/brew satisfies it": query the active
+        manager's `current`; if it reports a concrete version, compare it exactly
+        to the pin. If it reports `system` (a PATH/brew binary), is empty, or no
+        manager is active, fall back to probing the binary on PATH and accept it
+        when its version is >= the pin.
+        """
         result = {
             'tool': tool,
             'expected_version': expected_version,
             'installed': False,
             'current_version': None,
-            'version_correct': False
+            'version_correct': False,
+            'source': None,  # 'asdf' | 'mise' | 'path'
         }
 
-        # Check asdf current for this tool
-        success, stdout, _ = self.run_command(['asdf', 'current', tool])
-        if success:
-            # Parse output like "golang          1.20.5          /Users/bossjones/.tool-versions"
-            parts = stdout.strip().split()
-            if len(parts) >= 2:
-                result['installed'] = True
-                result['current_version'] = parts[1]
-                result['version_correct'] = result['current_version'] == expected_version
+        current = None
+        if manager == 'asdf':
+            success, stdout, _ = self.run_command(['asdf', 'current', tool])
+            if success:
+                # Output like "golang  1.20.5  /Users/bossjones/.tool-versions"
+                parts = stdout.strip().split()
+                if len(parts) >= 2:
+                    current = parts[1]
+        elif manager == 'mise':
+            mise_tool = MISE_TOOL_NAMES.get(tool, tool)
+            success, stdout, _ = self.run_command(['mise', 'current', mise_tool])
+            if success:
+                # Output is just the version, e.g. "2.93.0" or "system".
+                tokens = stdout.strip().split()
+                if tokens:
+                    current = tokens[0]
+
+        # A concrete VM-pinned version: exact-match against the pin.
+        if current and current != 'system':
+            result['installed'] = True
+            result['current_version'] = current
+            result['source'] = manager
+            result['version_correct'] = current == expected_version
+            return result
+
+        # PATH/brew fallback ('system', empty, or no manager active).
+        binary = BINARY_NAMES.get(tool, tool)
+        path_version = self._binary_version(binary)
+        if path_version is not None:
+            result['installed'] = True
+            result['current_version'] = path_version
+            result['source'] = 'path'
+            result['version_correct'] = self._version_gte(path_version, expected_version)
 
         return result
 
@@ -453,13 +583,26 @@ class EnvironmentChecker:
             print(f"\n  Install with:")
             print(f"  sh -c \"$(curl -fsLS chezmoi.io/get)\" -- init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git")
 
-    def check_all_asdf_tools(self):
-        """Check all asdf-managed tools"""
-        self.print_header("Checking ASDF-Managed Tools")
+    def check_all_managed_tools(self):
+        """Check all version-managed tools (asdf or mise), with a PATH/brew fallback."""
+        manager = self._detect_version_manager()
+        label = {'asdf': 'ASDF', 'mise': 'mise'}.get(manager, 'PATH/brew only')
+        self.print_header(f"Checking Version-Managed Tools ({label})")
 
-        # Expected tools and versions from asdf current output
+        if manager is None:
+            self.print_warning(
+                "No version manager active (ZSH_DOTFILES_VERSION_MANAGER unset and "
+                "neither mise nor asdf on PATH) — checking PATH/brew only."
+            )
+        elif manager == 'mise':
+            self.print_warning(
+                "tmux/kubetail use plugin namespaces under mise and may report via "
+                "PATH fallback instead of `mise current`."
+            )
+
+        # Expected tools and versions (shared across managers).
         tools = {
-            'github-cli': '2.35.0',
+            'github-cli': '2.93.0',
             'golang': '1.20.5',
             'helm-docs': '1.13.1',
             'helm': '3.14.2',
@@ -472,26 +615,27 @@ class EnvironmentChecker:
             'neovim': '0.11.3',
             'opa': '0.62.1',
             'ruby': '3.2.1',
-            'shellcheck': '0.10.0',
-            'shfmt': '3.7.0',
+            'shellcheck': '0.11.0',
+            'shfmt': '3.13.1',
             'tmux': '3.5a',
-            'yq': '4.34.1'
+            'yq': '4.53.2'
         }
 
         installed_count = 0
         correct_version_count = 0
 
         for tool, expected_version in tools.items():
-            result = self.check_asdf_tool(tool, expected_version)
-            self.results['asdf_tools'].append(result)
+            result = self.check_managed_tool(manager, tool, expected_version)
+            self.results['managed_tools'].append(result)
 
+            suffix = ' (PATH/brew)' if result.get('source') == 'path' else ''
             if result['installed']:
                 if result['version_correct']:
-                    self.print_success(f"{tool} @ {result['current_version']}")
+                    self.print_success(f"{tool} @ {result['current_version']}{suffix}")
                     installed_count += 1
                     correct_version_count += 1
                 else:
-                    self.print_warning(f"{tool} @ {result['current_version']} (expected: {expected_version})")
+                    self.print_warning(f"{tool} @ {result['current_version']}{suffix} (expected: {expected_version})")
                     installed_count += 1
             else:
                 self.print_failure(f"{tool} - NOT INSTALLED (expected: {expected_version})")
@@ -507,17 +651,18 @@ class EnvironmentChecker:
         brew_installed = sum(1 for pkg in self.results['brew_packages'] if pkg['installed'])
         brew_total = len(self.results['brew_packages'])
 
-        asdf_installed = sum(1 for tool in self.results['asdf_tools'] if tool['installed'])
-        asdf_correct = sum(1 for tool in self.results['asdf_tools'] if tool['version_correct'])
-        asdf_total = len(self.results['asdf_tools'])
+        managed_installed = sum(1 for tool in self.results['managed_tools'] if tool['installed'])
+        managed_correct = sum(1 for tool in self.results['managed_tools'] if tool['version_correct'])
+        managed_total = len(self.results['managed_tools'])
 
         env_path = self.results.get('env_and_path', {})
         print(f"PATH Precedence: {'✓' if env_path.get('path_precedence_ok') else '✗'}")
         print(f"Brew Packages: {brew_installed}/{brew_total} installed")
-        print(f"ASDF Tools: {asdf_installed}/{asdf_total} installed ({asdf_correct} correct versions)")
+        print(f"Managed Tools: {managed_installed}/{managed_total} installed ({managed_correct} correct versions)")
         print(f"Sheldon: {'✓' if self.results['sheldon'].get('installed') else '✗'}")
         print(f"Chezmoi: {'✓' if self.results['chezmoi'].get('installed') else '✗'}")
         print(f"uv: {'✓' if self.results['uv'].get('installed') else '✗'}")
+        print(f"fzf: {'✓' if (self.results['fzf'] or {}).get('installed') else '✗'}")
 
         if self.failed_checks:
             print(f"\n{Colors.RED}{Colors.BOLD}Issues Found: {len(self.failed_checks)}{Colors.ENDC}")
@@ -536,7 +681,8 @@ class EnvironmentChecker:
         self.check_all_sheldon()
         self.check_all_chezmoi()
         self.check_all_uv()
-        self.check_all_asdf_tools()
+        self.check_all_fzf()
+        self.check_all_managed_tools()
 
         return self.generate_report()
 
