@@ -101,5 +101,10 @@ if [ -n "$(command which deno 2>/dev/null)" ]; then
     deno completions zsh > ~/.zsh/completions/_deno 2>/dev/null || true
 fi
 
+if [ -n "$(command which mise 2>/dev/null)" ]; then
+    mise completion zsh > ~/.zsh/completion/_mise
+    mise completion zsh > ~/.zsh/completions/_mise
+fi
+
 {{ end -}}
 {{ end -}}

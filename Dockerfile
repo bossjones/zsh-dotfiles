@@ -3,15 +3,23 @@
 # Reproduces .github/workflows/smoke.yml locally for faster iteration
 #
 # Usage:
-#   make smoke-build   # Build and run full smoke test
-#   make smoke-lint    # Run linting only
-#   make smoke-shell   # Interactive shell for debugging
+#   make smoke-build                                       # Build and run full smoke test (asdf default)
+#   make smoke-lint                                        # Run linting only
+#   make smoke-shell                                       # Interactive shell for debugging
+#   VERSION_MANAGER=mise make smoke                        # Test mise lane
+#   docker build --build-arg VERSION_MANAGER=mise -t … .   # Direct build with mise
 #
 FROM ubuntu:24.04
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TERM=xterm-256color
+
+# Version manager selector (asdf | mise) — propagated from docker-compose.yml or
+# `docker build --build-arg VERSION_MANAGER=mise`. Read by scripts/smoke-test-docker.sh
+# at runtime; passed to chezmoi as --promptString version_manager=<value>.
+ARG VERSION_MANAGER=asdf
+ENV VERSION_MANAGER=${VERSION_MANAGER}
 
 # Install base dependencies (includes packages from before-00-prereq-ubuntu.sh to avoid permission issues)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -64,9 +72,41 @@ ENV LC_ALL=en_US.UTF-8
 # Create test user with sudo access (matches CI runner user setup)
 # Use sudoers.d drop-in file for cleaner configuration
 RUN useradd -m -s /bin/zsh -G sudo tester && \
-    echo "tester ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/tester && \
+    echo 'tester:tester' | chpasswd && \
+    { \
+        echo "Defaults:tester !authenticate"; \
+        echo "tester ALL=(ALL) NOPASSWD:ALL"; \
+    } > /etc/sudoers.d/tester && \
     chmod 0440 /etc/sudoers.d/tester && \
-    visudo -c
+    visudo -c && \
+    printf '#!/bin/sh\necho ""\n' > /home/tester/.sudo_askpass && \
+    chmod 700 /home/tester/.sudo_askpass && \
+    chown tester:tester /home/tester/.sudo_askpass
+
+# `Defaults:tester !authenticate` skips PAM auth entirely so `sudo --askpass
+# --validate` (called by the prereq-installer's sudo_refresh) succeeds without
+# invoking the askpass helper. SUDO_ASKPASS is still exported as a fallback
+# for any code that branches on its presence.
+ENV SUDO_ASKPASS=/home/tester/.sudo_askpass
+
+# MOTD shown on every interactive zsh session in smoke-shell
+RUN printf '%s\n' \
+    '' \
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' \
+    '  Smoke Test Container' \
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' \
+    '' \
+    '  To test provisioning, run ONE of:' \
+    '' \
+    '    VERSION_MANAGER=mise ./scripts/smoke-test-docker.sh build' \
+    '    VERSION_MANAGER=asdf ./scripts/smoke-test-docker.sh build' \
+    '' \
+    '  If prompted "Enter your password (for sudo access):" type: tester' \
+    '' \
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' \
+    '' \
+    > /etc/motd && \
+    printf 'cat /etc/motd\n' >> /etc/zsh/zshrc
 
 # Switch to test user for Homebrew installation
 USER tester
@@ -98,7 +138,7 @@ RUN --mount=type=secret,id=homebrew_token \
     brew install openssl@3 readline libyaml gmp autoconf && \
     brew install rust openssl readline sqlite3 xz zlib tcl-tk pkg-config autogen bash bzip2 libffi cheat python@3.10 cmake \
     curl diff-so-fancy direnv fd gnutls findutils fnm fpp fzf gawk gcc gh git gnu-indent gnu-sed gnu-tar grep gzip \
-    hub jq less lesspipe libxml2 lsof luarocks luv moreutils neofetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper \
+    hub jq less lesspipe libxml2 lsof luarocks luv moreutils fastfetch neovim nnn node tree pyenv pyenv-virtualenv pyenv-virtualenvwrapper \
     ruby-build rbenv ripgrep rsync screen screenfetch shellcheck shfmt unzip urlview vim watch wget zlib zsh openssl@1.1 git-delta \
     tmux && \
     brew tap rbenv/tap && \

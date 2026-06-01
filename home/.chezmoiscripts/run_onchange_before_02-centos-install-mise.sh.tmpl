@@ -1,0 +1,14 @@
+{{- if and (eq .chezmoi.os "linux") (eq .version_manager "mise") -}}
+{{- if or (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "ol") (eq .chezmoi.osRelease.id "rhel") -}}
+#!/bin/sh
+
+# Install mise on CentOS/RHEL/Oracle Linux via the official installer
+#   https://mise.jdx.dev/getting-started.html
+
+printf "${green}[02 - rhel-family] ${reset}"
+echo "Install mise"
+
+command -v mise >/dev/null 2>&1 || curl https://mise.run | sh
+
+{{ end -}}
+{{ end -}}

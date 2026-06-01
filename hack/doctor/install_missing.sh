@@ -148,46 +148,87 @@ for font in "${FONTS[@]}"; do
 done
 
 echo ""
-echo -e "${BLUE}Installing ASDF plugins and tools...${NC}"
+echo -e "${BLUE}Installing version-managed tools...${NC}"
 echo ""
 
-# ASDF tools
-declare -A ASDF_TOOLS=(
+# Active version manager: env var (exported by dot_zshrc.tmpl), else auto-detect.
+# Prefer mise to match the repo's mise-preferred stance on mixed/migration boxes.
+VERSION_MANAGER="${ZSH_DOTFILES_VERSION_MANAGER:-}"
+if [ -z "$VERSION_MANAGER" ]; then
+    if command -v mise &> /dev/null; then
+        VERSION_MANAGER="mise"
+    elif command -v asdf &> /dev/null; then
+        VERSION_MANAGER="asdf"
+    fi
+fi
+echo -e "${BLUE}Version manager: ${VERSION_MANAGER:-<none detected>}${NC}"
+echo ""
+
+# Version-managed tools (shared across asdf/mise). github-cli provides the `gh` binary.
+declare -A MANAGED_TOOLS=(
+    ["github-cli"]="2.93.0"
     ["golang"]="1.20.5"
     ["kubectl"]="1.26.12"
     ["helm"]="3.14.2"
     ["k9s"]="0.32.4"
     ["neovim"]="0.11.3"
     ["ruby"]="3.2.1"
-    ["shellcheck"]="0.10.0"
-    ["shfmt"]="3.7.0"
+    ["shellcheck"]="0.11.0"
+    ["shfmt"]="3.13.1"
     ["tmux"]="3.5a"
-    ["yq"]="4.34.1"
+    ["yq"]="4.53.2"
 )
 
-if command -v asdf &> /dev/null; then
-    for tool in "${!ASDF_TOOLS[@]}"; do
-        version="${ASDF_TOOLS[$tool]}"
+# CLI binary name when it differs from the tool key (for the PATH/brew check).
+declare -A BINARY_NAMES=(
+    ["github-cli"]="gh"
+    ["golang"]="go"
+    ["neovim"]="nvim"
+)
 
-        # Add plugin if not exists
-        if ! asdf plugin list | grep -q "^${tool}$"; then
-            echo -e "${YELLOW}⟳${NC} Adding asdf plugin: $tool"
-            asdf plugin add "$tool" 2>/dev/null || true
-        fi
+# mise registry name when it differs from the asdf plugin name.
+declare -A MISE_TOOL_NAMES=(
+    ["golang"]="go"
+)
 
-        # Install version if not exists
-        if ! asdf list "$tool" 2>/dev/null | grep -q "$version"; then
-            echo -e "${YELLOW}⟳${NC} Installing $tool $version"
-            asdf install "$tool" "$version" || echo -e "${RED}✗ Failed to install $tool $version${NC}"
-        else
-            echo -e "${GREEN}✓${NC} $tool $version"
-        fi
+for tool in "${!MANAGED_TOOLS[@]}"; do
+    version="${MANAGED_TOOLS[$tool]}"
+    binary="${BINARY_NAMES[$tool]:-$tool}"
 
-        # Set global version
-        asdf global "$tool" "$version" 2>/dev/null || true
-    done
-else
-    echo -e "${YELLOW}⚠ ASDF not available, skipping tool installations${NC}"
+    # PATH/brew satisfies it: if the binary is already available, skip the VM install.
+    if command -v "$binary" &> /dev/null; then
+        echo -e "${GREEN}✓${NC} $tool present on PATH ($(command -v "$binary"))"
+        continue
+    fi
+
+    case "$VERSION_MANAGER" in
+        mise)
+            mise_tool="${MISE_TOOL_NAMES[$tool]:-$tool}"
+            echo -e "${YELLOW}⟳${NC} Installing ${mise_tool}@${version} via mise"
+            mise use -g "${mise_tool}@${version}" || echo -e "${RED}✗ Failed to install $tool $version${NC}"
+            ;;
+        asdf)
+            # Add plugin if not exists
+            if ! asdf plugin list | grep -q "^${tool}$"; then
+                echo -e "${YELLOW}⟳${NC} Adding asdf plugin: $tool"
+                asdf plugin add "$tool" 2>/dev/null || true
+            fi
+            # Install version if not exists
+            if ! asdf list "$tool" 2>/dev/null | grep -q "$version"; then
+                echo -e "${YELLOW}⟳${NC} Installing $tool $version"
+                asdf install "$tool" "$version" || echo -e "${RED}✗ Failed to install $tool $version${NC}"
+            fi
+            asdf global "$tool" "$version" 2>/dev/null || true
+            ;;
+        *)
+            echo -e "${YELLOW}⚠ $tool missing and no version manager active; install via brew or set ZSH_DOTFILES_VERSION_MANAGER${NC}"
+            ;;
+    esac
+done
+
+# mise exposes newly installed binaries via shims; refresh them after global installs.
+if [ "$VERSION_MANAGER" = "mise" ] && command -v mise &> /dev/null; then
+    mise reshim 2>/dev/null || true
 fi
 
 echo ""

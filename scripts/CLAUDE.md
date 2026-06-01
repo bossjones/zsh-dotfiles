@@ -6,12 +6,63 @@ Utility scripts for maintaining and automating Claude Code infrastructure in thi
 
 | Script | Purpose | When to Use |
 |--------|---------|-------------|
+| **`backup-dotfiles.py`** | Snapshot chezmoi-managed dotfiles to a timestamped tar.gz | Before a risky `chezmoi apply`, or when trying these dotfiles on a machine that already has configs |
 | **`generate-claude-completion.sh`** | Generate zsh completions for Claude CLI | After Claude CLI updates or when completions are outdated |
 | **`generate-claude-completion-simple.sh`** | Simplified version of completion generator | Fallback if main generator fails; faster but less dynamic |
 | **`migrate-command-namespaces.sh`** | Migrate commands to new namespace structure | During command reorganization or namespace refactoring |
 | **`update-command-references.sh`** | Update documentation references after migration | After running `migrate-command-namespaces.sh` |
 
 ## Script Details
+
+### backup-dotfiles.py
+
+**Purpose:** Snapshot the files chezmoi would overwrite, *before* an apply. `chezmoi apply`
+overwrites existing target files in `$HOME` silently with no built-in backup — this script is
+the safety net.
+
+**Standard:** First script in the repo to follow `.claude/rules/python-scripts.md` — a PEP 723
+`uv run` script (`#!/usr/bin/env -S uv run --script` + inline `# /// script` metadata, single
+`rich` dependency). No virtualenv or `pip install` needed; `uv` resolves deps on first run.
+
+**Features:**
+- **Dynamic discovery** via `chezmoi managed --path-style absolute` — backs up exactly the
+  managed files that currently exist, so it never drifts as dotfiles are added/removed.
+  Only individual files are archived (managed *directories* are skipped to avoid sweeping in
+  unmanaged content like the rest of `~/.config`).
+- **Static fallback**: if `chezmoi` is not on `PATH`, falls back to an embedded list of the
+  root dotfiles + `~/.bin`, `~/.sheldon`, `~/.config/sheldon` (with a warning).
+- Output: `~/.dotfiles-backups/backup-YYYYMMDD-HHMMSS.tar.gz` (HOME-relative arcnames) plus a
+  sibling `.manifest.json` (timestamp, host, chezmoi version, discovery mode, per-file
+  size/mode/sha256).
+- **Restore** is preview-only by default (prints a would-overwrite table); `--apply` writes
+  files back into `$HOME`. Includes a tar path-traversal guard.
+
+**Usage:**
+```bash
+# Back up everything chezmoi manages that currently exists
+uv run scripts/backup-dotfiles.py
+
+# Preview without writing anything
+uv run scripts/backup-dotfiles.py --dry-run
+
+# Custom output directory
+uv run scripts/backup-dotfiles.py --out ~/backups
+
+# Preview a restore (writes nothing)
+uv run scripts/backup-dotfiles.py --restore ~/.dotfiles-backups/backup-20260601-102331.tar.gz
+
+# Actually restore back into $HOME
+uv run scripts/backup-dotfiles.py --restore <archive> --apply
+```
+
+**Flags:** `--out DIR` (default `~/.dotfiles-backups`), `--dry-run`, `--include-external`
+(also back up the `.chezmoiexternal.yaml` repos — implied in dynamic mode), `--restore ARCHIVE`,
+`--apply` (perform the restore instead of previewing).
+
+**Note:** Excludes files in `~/.bin` that are *not* chezmoi-managed (e.g. a user-installed
+`chezmoi`/`dnspeep` binary), because chezmoi would not touch them on apply.
+
+---
 
 ### generate-claude-completion.sh
 

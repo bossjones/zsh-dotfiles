@@ -27,6 +27,7 @@ then
         # $HOME/.pyenv/bin/pyenv virtualenvwrapper_lazy
 fi
 
+{{ if eq .version_manager "asdf" -}}
 if [[ "$OSTYPE" == linux* ]]
 then
     export ASDF_DIR="${HOME}/.asdf"
@@ -34,6 +35,10 @@ fi
 . "$HOME/.asdf/asdf.sh"
 . "$HOME/.asdf/lib/asdf.sh"
 . "$HOME/.asdf/completions/asdf.bash"
+{{ else -}}
+export PATH="$HOME/.local/bin:$PATH"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate sh)"
+{{ end }}
 
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
@@ -127,6 +132,7 @@ case $OS in
   *) ;;
 esac
 
+{{ if eq .version_manager "asdf" -}}
 if [ "$OS" = 'Linux' ]
 then
     export ASDF_DIR="${HOME}/.asdf"
@@ -134,6 +140,10 @@ then
     . "$HOME/.asdf/lib/asdf.sh"
     . "$HOME/.asdf/completions/asdf.bash"
 fi
+{{ else -}}
+export PATH="$HOME/.local/bin:$PATH"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate sh)"
+{{ end }}
 
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
