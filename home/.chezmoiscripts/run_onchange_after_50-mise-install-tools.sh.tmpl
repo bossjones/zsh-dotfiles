@@ -41,6 +41,12 @@ echo "Install mise tools"
 
 eval "$(mise activate bash)"
 
+# Ruby 3.x is EOL/slow to compile from source on macOS 26 / arm64. Use mise's
+# precompiled binaries instead of building from source (mise itself recommends
+# this). Persist the setting, and also export the env var for this run.
+mise settings set ruby.compile false || true
+export MISE_RUBY_COMPILE=0
+
 {{ $tools := dict
   "ruby"       (.myAsdfRubyVersion)
   "golang"     (.myAsdfGolangVersion)
@@ -79,7 +85,7 @@ eval "$(mise activate bash)"
 }}
 
 {{ range sortAlpha $rubyPackages }}
-  gem install {{ . }} --no-doc || true
+  mise exec ruby@{{ $.myAsdfRubyVersion }} -- gem install {{ . }} --no-doc || true
 {{ end -}}
 
 mise reshim || true
