@@ -57,6 +57,107 @@ sh -c "$(curl -fsLS chezmoi.io/get)" -- init -R --debug -v --apply https://githu
    chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git
    ```
 
+## Chezmoi Run Modes
+
+### Interactive (default)
+
+On first run, chezmoi prompts for your configuration. Answers are cached in `~/.config/chezmoi/chezmoi.yaml` and reused on subsequent runs.
+
+```sh
+chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git
+```
+
+### Re-run Prompts
+
+Reset cached answers and re-enter all prompts:
+
+```sh
+chezmoi init --data=false https://github.com/bossjones/zsh-dotfiles.git
+```
+
+### Non-interactive with Environment Variables
+
+`CM_computer_name` and `CM_hostname` pre-populate those prompts so they are skipped silently:
+
+```sh
+CM_computer_name="my-mac" CM_hostname="mymac" chezmoi init --apply https://github.com/bossjones/zsh-dotfiles.git
+```
+
+### Dry-run (preview without applying)
+
+See what would change without touching any files:
+
+```sh
+chezmoi apply --dry-run --verbose
+```
+
+### Verbose Apply
+
+```sh
+chezmoi apply -v
+```
+
+### Interactive Prompts Reference
+
+All prompts surfaced during first-time `chezmoi init`. Cached answers from a previous run are reused automatically.
+
+| Prompt | Type | Default | Description |
+|--------|------|---------|-------------|
+| `Name` | string | `Malcolm Jones` | Your full name |
+| `Email` | string | *(your email)* | Your email address |
+| `Computer name` | string | `boss workstation` | Human-readable machine name |
+| `Host name` | string | `bossworkstation` | Short hostname |
+| `Version manager (asdf or mise)` | string | `asdf` | Runtime version manager to install |
+| `ruby` | bool | `false` | Install Ruby via version manager |
+| `pyenv` | bool | `false` | Install pyenv for Python version management |
+| `nodejs` | bool | `false` | Install Node.js via version manager |
+| `k8s` | bool | `false` | Install Kubernetes toolchain |
+| `cuda` | bool | `false` | Install CUDA support |
+| `fnm` | bool | `false` | Install fnm (Fast Node Manager) |
+| `opencv` | bool | `false` | Install OpenCV system dependencies |
+
+---
+
+## Installed Features
+
+The main tools and features installed and configured by this repo. Optional features are gated behind interactive prompts (noted below).
+
+| Tool | Description |
+|------|-------------|
+| **zsh** | Shell with extensive config, history, keybindings, and completions |
+| **sheldon** | ZSH plugin manager with deferred loading for fast startup |
+| **pure** | Minimal async ZSH prompt |
+| **tmux** | Terminal multiplexer with tpm and oh-my-tmux config |
+| **neovim** | Text editor installed via version manager (AstroVim config) |
+| **fzf** | Fuzzy finder with custom keybindings and shell integration |
+| **ripgrep** | Fast recursive text search (`rg`) |
+| **fd** | Fast file finder |
+| **jq** | Lightweight command-line JSON processor |
+| **yq** | YAML / JSON processor (jq-style) |
+| **gh** | GitHub CLI for PRs, issues, and repo management |
+| **direnv** | Per-directory environment variable manager |
+| **uv** | Fast Python package and project manager (Astral) |
+| **asdf** | Multi-language runtime version manager *(default; use mise as alternative)* |
+| **mise** | Modern polyglot runtime version manager *(alternative to asdf)* |
+| **pyenv** | Python version manager *(optional — `pyenv` prompt)* |
+| **ruby** | Ruby runtime via version manager *(optional — `ruby` prompt)* |
+| **golang** | Go runtime via version manager |
+| **fnm** | Fast Node Manager for Node.js versions *(optional — `fnm` prompt)* |
+| **bun** | JavaScript runtime, bundler, and package manager |
+| **deno** | Secure JavaScript/TypeScript runtime |
+| **shellcheck** | Shell script static analysis / linter |
+| **shfmt** | Shell script formatter |
+| **mkcert** | Create locally-trusted SSL certificates |
+| **cheat** | CLI cheatsheet tool with community and personal sheets |
+| **kubectl** | Kubernetes CLI *(optional — `k8s` prompt)* |
+| **helm** | Kubernetes package manager *(optional — `k8s` prompt)* |
+| **k9s** | Interactive Kubernetes cluster TUI *(optional — `k8s` prompt)* |
+| **krew** | kubectl plugin manager *(optional — `k8s` prompt)* |
+| **kubectx** | Switch between Kubernetes contexts *(optional — `k8s` prompt)* |
+| **opa** | Open Policy Agent CLI *(optional — `k8s` prompt)* |
+
+---
+
 ## Usage
 
 ### Updating Dotfiles

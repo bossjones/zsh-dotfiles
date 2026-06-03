@@ -16,6 +16,8 @@
 {{- $fnm := false -}}
 {{/* If this machine should use cuda */}}
 {{- $cuda := false -}}
+{{/* Which runtime version manager to provision (asdf or mise) */}}
+{{- $version_manager := "asdf" -}}
 {{- "" -}}
 
 {{/* Configs */}}
@@ -94,6 +96,14 @@
 {{-   else -}}
 {{-     $opencv = promptBool "opencv" -}}
 {{-   end -}}
+
+{{- end -}}
+
+{{- /* version_manager: prompt key MUST be "version_manager" so non-TTY `--promptString version_manager=…` (Docker smoke) matches. Must stay outside `if $interactive`; in non-TTY runs `promptString` returns the --promptString value or the default. */ -}}
+{{- if hasKey . "version_manager" -}}
+{{-   $version_manager = .version_manager -}}
+{{- else -}}
+{{-   $version_manager = promptString "version_manager" $version_manager -}}
 {{- end -}}
 
 {{- if $interactive -}}
@@ -116,18 +126,19 @@ data:
   cuda: {{ $cuda }}
   opencv: {{ $opencv }}
   fnm: {{ $fnm }}
-  myFzfVersion: "0.42.0"
+  version_manager: {{ $version_manager | quote }}
+  myFzfVersion: "0.73.1"
   mySheldonVersion: "0.6.6"
   myAsdfVersion: "v0.11.2"
-  myAsdfRubyVersion: "3.2.1"
+  myAsdfRubyVersion: "3.4.9"
   myAsdfGolangVersion: "1.25.1"
   myAsdfTmuxVersion: "3.5a"
   myAsdfNeovimVersion: "latest"
-  myAsdfGithubCliVersion: "2.35.0"
+  myAsdfGithubCliVersion: "2.93.0"
   myAsdfMkcertVersion: "1.4.4"
-  myAsdfShellcheckVersion: "0.10.0"
-  myAsdfShfmtVersion: "3.7.0"
-  myAsdfYqVersion: "4.34.1"
+  myAsdfShellcheckVersion: "0.11.0"
+  myAsdfShfmtVersion: "3.13.1"
+  myAsdfYqVersion: "4.53.2"
   myAsdfHelmVersion: "3.14.2"
   myAsdfHelmfileVersion: "0.162.0"
   myAsdfHelmdocsVersion: "1.13.1"

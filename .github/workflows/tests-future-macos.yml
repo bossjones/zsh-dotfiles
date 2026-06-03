@@ -1,0 +1,204 @@
+name: GitHub Actions CI (future macOS)
+on:
+  schedule:
+    # 07:00 UTC daily
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)
+        required: false
+        default: "false"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["macos-26", "macos-latest"]
+        python-version: ["3.12"]
+        version_manager: ["asdf", "mise"]
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MISE_RUBY_COMPILE: "true"
+      LV_BRANCH: "release-1.3/neovim-0.9"
+      ZSH_DOTFILES_PREP_CI: "1"
+      ZSH_DOTFILES_PREP_DEBUG: "1"
+      ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
+      ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: "1"
+
+    steps:
+      - name: Checkout repository [${{ matrix.os }}, py${{ matrix.python-version }}]
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }} [${{ matrix.os }}]
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: "requirements-test.txt"
+
+      - name: Set up Go 1.20.5 [${{ matrix.os }}, py${{ matrix.python-version }}]
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.20.5"
+      - name: Verify Go installation [${{ matrix.os }}]
+        run: go version
+
+      - name: Cache Homebrew downloads [${{ matrix.os }}]
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew/downloads
+            ~/Library/Caches/Homebrew/api
+          key: brew-${{ matrix.os }}-${{ hashFiles('.github/workflows/tests-future-macos.yml', 'home/dot_Brewfile*') }}
+          restore-keys: |
+            brew-${{ matrix.os }}-
+
+      - name: Cache cargo binaries from prereq installer [${{ matrix.os }}]
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-${{ matrix.os }}-${{ hashFiles('.github/workflows/tests-future-macos.yml') }}
+          restore-keys: |
+            cargo-${{ matrix.os }}-
+
+      - name: Cache version-manager tool installs [${{ matrix.os }}, ${{ matrix.version_manager }}]
+        id: vm-tools-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.asdf/installs
+            ~/.asdf/plugins
+            ~/.asdf/shims
+            ~/.local/share/mise/installs
+            ~/.local/share/mise/plugins
+          key: vm-${{ matrix.version_manager }}-${{ matrix.os }}-${{ hashFiles('home/.chezmoiscripts/run_onchange_after_50-macos-install-asdf-plugins.sh.tmpl', 'home/.chezmoiscripts/run_onchange_after_50-mise-install-tools.sh.tmpl') }}
+          restore-keys: |
+            vm-${{ matrix.version_manager }}-${{ matrix.os }}-
+
+      - name: Cache LunarVim install [${{ matrix.os }}]
+        id: lvim-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/lunarvim
+            ~/.config/lvim
+            ~/.cache/nvim
+          key: lvim-${{ matrix.os }}-${{ env.LV_BRANCH }}
+          restore-keys: |
+            lvim-${{ matrix.os }}-
+
+      - name: Configure Homebrew taps [${{ matrix.os }}]
+        run: |
+          brew tap schniz/tap || true
+
+      - name: Install actionlint via Homebrew [${{ matrix.os }}]
+        run: |
+          brew install actionlint || true
+
+      - name: Install prerequisites (zsh-dotfiles-prep) [${{ matrix.os }}]
+        run: |
+          brew tap schniz/tap || true
+          brew install wget || true
+          brew install curl || true
+          brew install kadwanev/brew/retry || true
+          brew install go || true
+          brew install trash || true
+
+          brew install openssl@3 readline libyaml gmp autoconf tmux || true
+
+          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
+          export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
+
+          wget https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer
+          chmod +x zsh-dotfiles-prereq-installer
+          retry -t 4  -- ./zsh-dotfiles-prereq-installer --debug
+
+      - name: Install Ruby/OpenSSL3 build deps (future macOS) [${{ matrix.os }}]
+        run: |
+          brew install rbenv/tap/openssl@1.1 || true
+          # Compile-time deps for asdf/mise Ruby 3.2.1 build with OpenSSL 3
+          brew install rust gnu-getopt pkg-config cmake libffi bzip2 xz zlib sqlite3 readline libyaml gmp autoconf || true
+
+      - name: Full chezmoi init + apply [${{ matrix.os }}, ${{ matrix.version_manager }}]
+        run: |
+          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
+          export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
+
+          GNUGETOPT_BIN="$(brew --prefix gnu-getopt)/bin"
+          echo "$GNUGETOPT_BIN" >> "${GITHUB_PATH}"
+          export PATH="${GNUGETOPT_BIN}:${PATH}"
+
+          OPENSSL3_PREFIX="$(brew --prefix openssl@3)"
+          export LDFLAGS="-L${OPENSSL3_PREFIX}/lib"
+          export CPPFLAGS="-I${OPENSSL3_PREFIX}/include"
+
+          if [ "${{ matrix.version_manager }}" = "asdf" ]; then
+            export ASDF_DIR="${HOME}/.asdf"
+            export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+            [ -f "$HOME/.asdf/asdf.sh" ] && . "$HOME/.asdf/asdf.sh"
+            echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+            echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+          else
+            export PATH="$HOME/.local/bin:$PATH"
+            echo "$HOME/.local/bin" >> "${GITHUB_PATH}"
+            command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+          fi
+
+          retry -t 4  -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force --promptString version_manager=${{ matrix.version_manager }} --source=.
+
+          retry -t 4  -- post-install-chezmoi
+
+      - name: Install LunarVim [${{ matrix.os }}]
+        if: steps.lvim-cache.outputs.cache-hit != 'true'
+        run: |
+          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
+          export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
+
+          export LUNARVIM_LOG_LEVEL="debug"
+          curl -s "https://raw.githubusercontent.com/LunarVim/LunarVim/${LV_BRANCH}/utils/installer/install.sh" | bash -s -- --install-dependencies -y
+
+      # Allow debugging with tmate
+      - name: Setup tmate debug session [${{ matrix.os }}]
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled }}
+        with:
+          limit-access-to-actor: true
+
+      - name: Run pytest suite [${{ matrix.os }}, ${{ matrix.version_manager }}]
+        run: |
+          zsh -c '
+          { echo "$HOME/bin"; echo "$HOME/.bin"; echo "$HOME/.local/bin"; } >> "${GITHUB_PATH}"
+          export PATH="${HOME}/.bin:${HOME}/bin:${HOME}/.local/bin:${PATH}"
+          pwd
+          ls -lta
+          python -m venv venv
+          source ./venv/bin/activate
+          pip install -U pip setuptools wheel
+          pip install -U -r requirements-test.txt
+          if [ "${{ matrix.version_manager }}" = "asdf" ]; then
+            export ASDF_DIR="${HOME}/.asdf"
+            export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+            . "$HOME/.asdf/asdf.sh"
+            echo "$HOME/.asdf/bin" >> "${GITHUB_PATH}"
+            echo "$HOME/.asdf/shims" >> "${GITHUB_PATH}"
+          else
+            export PATH="$HOME/.local/bin:$PATH"
+            echo "$HOME/.local/bin" >> "${GITHUB_PATH}"
+            command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
+          fi
+
+          make test
+          '

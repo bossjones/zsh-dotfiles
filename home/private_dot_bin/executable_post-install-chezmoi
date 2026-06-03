@@ -132,19 +132,34 @@ fi
 mkdir -p ~/.local/src || true
 if [ "$(uname -m)" = "aarch64" ]; then
   set +e
-  CURRENT_VERSION_NEOVIM=$(asdf current neovim | awk '{print $2}')
-  asdf uninstall neovim "${CURRENT_VERSION_NEOVIM}" || true
+  if [ "${VERSION_MANAGER:-asdf}" = "asdf" ]; then
+    CURRENT_VERSION_NEOVIM=$(asdf current neovim | awk '{print $2}')
+    asdf uninstall neovim "${CURRENT_VERSION_NEOVIM}" || true
+  else
+    # mise: resolve the actual installed version from the install path;
+    # fall back to latest GitHub release tag so git clone gets a real tag.
+    CURRENT_VERSION_NEOVIM=$(basename "$(mise where neovim 2>/dev/null)" 2>/dev/null || true)
+    if [ -z "${CURRENT_VERSION_NEOVIM}" ] || [ "${CURRENT_VERSION_NEOVIM}" = "latest" ]; then
+      CURRENT_VERSION_NEOVIM=$(curl -s "https://api.github.com/repos/neovim/neovim/releases/latest" \
+        | grep '"tag_name"' | sed 's/.*"tag_name": "v\(.*\)".*/\1/' 2>/dev/null || echo "0.11.0")
+    fi
+    mise uninstall neovim 2>/dev/null || true
+  fi
   git clone -b "v${CURRENT_VERSION_NEOVIM}" https://github.com/neovim/neovim ~/.local/src/neovim || true
   cd ~/.local/src/neovim || exit
   rm -rf build || true
   export MANPREFIX=$HOME/.local
   make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=~/.local CMAKE_INSTALL_MANDIR="$HOME"/.local
   make install
-  asdf global neovim system
+  if [ "${VERSION_MANAGER:-asdf}" = "asdf" ]; then
+    asdf global neovim system
+  else
+    mise use -g neovim@system 2>/dev/null || true
+  fi
   nvim --version
   set -e
 else
-  echo "not centos or aarch64. skipping"
+  echo "not aarch64. skipping"
 fi
 
 # FIXME: Note, neovim for asdf doesn't work on arm machines yet.
@@ -234,7 +249,27 @@ if [ "$CURRENT_OS" != "macos" ]; then
   # Check if the operating system is Ubuntu or CentOS
   if [ "$LINUX_DISTRO" = "ubuntu" ] || [ "$LINUX_DISTRO" = "debian" ]; then
     echo "The operating system is $LINUX_DISTRO."
-    sudo apt install luarocks neofetch -y
+    sudo apt install -y luarocks
+    # fastfetch is not in default repos for Debian < 12 / Ubuntu < 22.10 (first
+    # shipped in Debian 13 / Ubuntu 23.10). Try apt first, then fall back to
+    # the upstream .deb so the rest of the script keeps working.
+    sudo apt install -y fastfetch || true
+    if ! command -v fastfetch >/dev/null 2>&1; then
+      echo "Installing fastfetch from GitHub releases..."
+      ff_arch=""
+      case "$(dpkg --print-architecture)" in
+        amd64) ff_arch="amd64" ;;
+        arm64) ff_arch="aarch64" ;;
+        *) echo "warn: unsupported architecture for fastfetch: $(dpkg --print-architecture) — skipping" ;;
+      esac
+      if [ -n "$ff_arch" ]; then
+        ff_deb="$(mktemp --suffix=.deb)"
+        curl -fsSL -o "$ff_deb" \
+          "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/fastfetch-linux-${ff_arch}.deb"
+        sudo dpkg -i "$ff_deb" || sudo apt-get install -f -y
+        rm -f "$ff_deb"
+      fi
+    fi
     sudo luarocks install luacheck
     curl -L "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-$(display_tarball_platform_dash)" >~/.local/bin/hadolint && \
       chmod +x ~/.local/bin/hadolint && \
@@ -250,8 +285,26 @@ if [ "$CURRENT_OS" != "macos" ]; then
     echo "The operating system is CentOS/RHEL-based."
     # Install EPEL repository for additional packages
     sudo dnf install epel-release -y
-    sudo dnf install luarocks neofetch -y
-    sudo dnf install lua-devel -y
+    sudo dnf install -y luarocks lua-devel
+    # fastfetch is in Fedora F39+ and current EPEL; older releases need the
+    # upstream .rpm. Try dnf first, then fall back to GitHub releases.
+    sudo dnf install -y fastfetch || true
+    if ! command -v fastfetch >/dev/null 2>&1; then
+      echo "Installing fastfetch from GitHub releases..."
+      ff_arch=""
+      case "$(uname -m)" in
+        x86_64) ff_arch="amd64" ;;
+        aarch64|arm64) ff_arch="aarch64" ;;
+        *) echo "warn: unsupported architecture for fastfetch: $(uname -m) — skipping" ;;
+      esac
+      if [ -n "$ff_arch" ]; then
+        ff_rpm="$(mktemp --suffix=.rpm)"
+        curl -fsSL -o "$ff_rpm" \
+          "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/fastfetch-linux-${ff_arch}.rpm"
+        sudo dnf install -y "$ff_rpm" || sudo rpm -i "$ff_rpm"
+        rm -f "$ff_rpm"
+      fi
+    fi
     sudo luarocks install luacheck
     curl -L "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-$(display_tarball_platform_dash)" >~/.local/bin/hadolint && \
       chmod +x ~/.local/bin/hadolint && \
@@ -298,11 +351,11 @@ root: ~/
 # pre_window: exec zsh -l
 
 windows:
-  - neofetch:
+  - fastfetch:
       layout: 9fa4,223x75,0,0{118x75,0,0[118x52,0,0{59x52,0,0,8,58x52,60,0,13},118x22,0,53,12],104x75,119,0[104x16,119,0,1,104x15,119,17,9,104x22,119,33,2,104x19,119,56,3]}
       panes:
-        - neofetch:
-          - neofetch
+        - fastfetch:
+          - fastfetch
 EOF
 fi
 

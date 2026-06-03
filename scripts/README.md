@@ -280,3 +280,24 @@ This repository excludes:
 - `lazy-lock\.json` - Neovim plugin lock file (git commit hashes)
 
 See `.secrets.baseline` line 115-117 for the current exclusion pattern.
+
+## Other Scripts in This Directory
+
+This README documents the secret-detection scripts. Other maintenance scripts live alongside
+them — see `scripts/CLAUDE.md` for the full index. Notably:
+
+### backup-dotfiles.py — pre-apply dotfiles backup
+
+A PEP 723 `uv run` script that snapshots the files chezmoi would overwrite, before a risky
+`chezmoi apply`. It discovers targets dynamically from `chezmoi managed`, writes a timestamped
+`tar.gz` + JSON manifest to `~/.dotfiles-backups/`, and offers a preview-first `--restore`.
+
+```bash
+# Back up; preview only; or restore
+uv run scripts/backup-dotfiles.py
+uv run scripts/backup-dotfiles.py --dry-run
+uv run scripts/backup-dotfiles.py --restore <archive>        # preview
+uv run scripts/backup-dotfiles.py --restore <archive> --apply  # write back into $HOME
+```
+
+See `scripts/CLAUDE.md` for full flag documentation.
