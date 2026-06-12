@@ -60,7 +60,7 @@ jobs:
         run: go version
 
       - name: Cache Homebrew downloads [${{ matrix.os }}]
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/Library/Caches/Homebrew/downloads
@@ -70,7 +70,7 @@ jobs:
             brew-${{ matrix.os }}-
 
       - name: Cache cargo binaries from prereq installer [${{ matrix.os }}]
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/bin
@@ -82,7 +82,7 @@ jobs:
 
       - name: Cache version-manager tool installs [${{ matrix.os }}, ${{ matrix.version_manager }}]
         id: vm-tools-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.asdf/installs
@@ -96,7 +96,7 @@ jobs:
 
       - name: Cache LunarVim install [${{ matrix.os }}]
         id: lvim-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.local/share/lunarvim
