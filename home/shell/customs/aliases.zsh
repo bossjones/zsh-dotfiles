@@ -369,8 +369,8 @@ yt-dl-thumb () {
 	youtube-dl -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "${1}"
 }
 yt-dl-thumb-fork () {
-	echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}"
-	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "${1}"
+	echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies-from-browser Firefox --convert-thumbnails jpg ${1}"
+	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies-from-browser Firefox --convert-thumbnails jpg "${1}"
 }
 
 alias dl-thumb='yt-dl-thumb'
@@ -382,8 +382,8 @@ yt-dl-best-test () {
 }
 
 yt-best-fork () {
-	echo " [running] yt-dlp -v -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio\" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json ${1}"
-	yt-dlp -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json "${1}"
+	echo " [running] yt-dlp -v -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio\" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies-from-browser Firefox --convert-thumbnails jpg --write-info-json ${1}"
+	yt-dlp -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies-from-browser Firefox --convert-thumbnails jpg --write-info-json "${1}"
 }
 
 yt-red () {
@@ -437,7 +437,7 @@ dl-safe-fork () {
 
 			if [[ "${_RETVAL}" != "0" ]]; then
 					echo "Trying youtube-dl instead"
-					yt-dlp --convert-thumbnails jpg "${url}"
+					yt-dlp --cookies-from-browser Firefox --convert-thumbnails jpg "${url}"
 			fi
 	fi
 

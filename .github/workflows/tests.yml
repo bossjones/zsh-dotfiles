@@ -38,6 +38,11 @@ jobs:
       ZSH_DOTFILES_PREP_DEBUG: "1"
       ZSH_DOTFILES_PREP_GITHUB_USER: bossjones
       ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: "1"
+      # Homebrew added a third-party tap-trust policy that refuses to load
+      # asdf@0.11.2 from the custom bossjones/asdf-versions tap in non-interactive
+      # CI. This env var (read by both the parent shell and Homebrew's sandboxed
+      # child) lifts the untrusted-tap refusal so the prereq installer can proceed.
+      HOMEBREW_NO_REQUIRE_TAP_TRUST: "1"
 
     steps:
       - name: Checkout repository [${{ matrix.os }}, py${{ matrix.python-version }}]
@@ -131,6 +136,11 @@ jobs:
           wget https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer
           chmod +x zsh-dotfiles-prereq-installer
           retry -t 4  -- ./zsh-dotfiles-prereq-installer --debug
+
+          # Fallback: ensure chezmoi exists at the exact path the next step invokes
+          # ("$HOME/.bin/chezmoi"). The external prereq installer no longer reliably
+          # installs it, which caused "Full chezmoi init + apply" to exit 127.
+          command -v "$HOME/.bin/chezmoi" >/dev/null 2>&1 || sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.bin"
 
       - name: Full chezmoi init + apply [${{ matrix.os }}, py${{ matrix.python-version }}, ${{ matrix.version_manager }}]
         run: |
