@@ -420,32 +420,29 @@ dl-safe () {
 
 }
 
-dl-safe-fork () {
-	pyenv activate yt-dlp3 || true
-	local url=${1}
+dsf() {
+	local url="$1"
+	local list_file="$HOME/.config/yt-dlp/slice-domains.txt"
+	local match=false
+	local domain
 
-	# dl-thumb
-	dl-thumb-fork "${url}"
-
-	_RETVAL=$?
-
-	if [[ "${_RETVAL}" != "0" ]]; then
-			echo "Trying yt-best instead"
-			yt-best-fork "${url}"
-
-			_RETVAL=$?
-
-			if [[ "${_RETVAL}" != "0" ]]; then
-					echo "Trying youtube-dl instead"
-					yt-dlp --cookies-from-browser Firefox --convert-thumbnails jpg "${url}"
+	if [[ -f "$list_file" ]]; then
+		while IFS= read -r domain || [[ -n "$domain" ]]; do
+			# skip blank lines and #-comments
+			[[ -z "$domain" || "$domain" == \#* ]] && continue
+			if [[ "$url" == *"$domain"* ]]; then
+				match=true
+				break
 			fi
+		done < "$list_file"
 	fi
 
-
+	if [[ "$match" == true ]]; then
+		yt-dlp --config-locations ~/.config/yt-dlp/config -I "1::2" "$url"
+	else
+		yt-dlp --config-locations ~/.config/yt-dlp/config "$url"
+	fi
 }
-
-alias dlsf='dl-safe-fork'
-alias dsf='dl-safe-fork'
 
 sleep_dsf() {
 	dsf "${1}"

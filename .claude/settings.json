@@ -14,14 +14,20 @@
       "Bash(chmod:*)",
       "Bash(cp:*)",
       "Bash(date:*)",
+      "Bash(detect-secrets scan:*)",
       "Bash(diff:*)",
       "Bash(dirname:*)",
       "Bash(docker compose build:*)",
+      "Bash(docker info:*)",
       "Bash(echo:*)",
       "Bash(file:*)",
       "Bash(find:*)",
+      "Bash(gallery-dl:*)",
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
+      "Bash(gh label create:*)",
+      "Bash(gh pr *)",
+      "Bash(gh pr checks:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr diff:*)",
       "Bash(gh pr list:*)",
@@ -29,6 +35,8 @@
       "Bash(gh release list:*)",
       "Bash(gh release view:*)",
       "Bash(gh repo view:*)",
+      "Bash(gh:*)",
+      "Bash(git *)",
       "Bash(git add:*)",
       "Bash(git blame:*)",
       "Bash(git branch:*)",
@@ -40,13 +48,18 @@
       "Bash(git log:*)",
       "Bash(git ls-files:*)",
       "Bash(git ls-tree:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git mv:*)",
       "Bash(git push:*)",
       "Bash(git remote -v:*)",
+      "Bash(git remote get-url:*)",
       "Bash(git rev-parse:*)",
       "Bash(git show:*)",
       "Bash(git status:*)",
       "Bash(git tag -l:*)",
+      "Bash(git tag:*)",
       "Bash(git worktree list:*)",
+      "Bash(git:*)",
       "Bash(go doc:*)",
       "Bash(go env:*)",
       "Bash(go list:*)",
@@ -58,200 +71,96 @@
       "Bash(id:*)",
       "Bash(jq:*)",
       "Bash(ls:*)",
+      "Bash(make lint:*)",
+      "Bash(make markdown-lint:*)",
       "Bash(make smoke:*)",
+      "Bash(make verify-structure:*)",
+      "Bash(make:*)",
       "Bash(md5sum:*)",
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "Bash(npm:*)",
       "Bash(pre-commit run:*)",
       "Bash(pwd:*)",
+      "Bash(python3:*)",
       "Bash(realpath:*)",
       "Bash(rg:*)",
+      "Bash(rtk:*)",
+      "Bash(ruff check:*)",
       "Bash(shasum:*)",
       "Bash(shellcheck:*)",
       "Bash(sort:*)",
       "Bash(stat:*)",
       "Bash(tail:*)",
+      "Bash(tee:*)",
       "Bash(touch:*)",
       "Bash(tree:*)",
       "Bash(type:*)",
       "Bash(uname:*)",
       "Bash(uniq:*)",
+      "Bash(unzip:*)",
+      "Bash(uv --version)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run:*)",
       "Bash(uv:*)",
       "Bash(uvx pre-commit run:*)",
+      "Bash(uvx:*)",
       "Bash(wc:*)",
       "Bash(which:*)",
       "Bash(whoami:*)",
+      "Bash(xargs:*)",
       "Edit",
       "mcp__firecrawl-mcp__firecrawl_scrape",
+      "mcp__plugin_telegram__*",
+      "Read(//private/tmp/**)",
+      "Skill(superpowers:*)",
       "WebFetch",
+      "WebFetch(domain:docs.astral.sh)",
+      "WebFetch(domain:docs.claude.ai)",
+      "WebFetch(domain:docs.claude.com)",
+      "WebFetch(domain:docs.github.com)",
       "WebFetch(domain:docs.mermaidchart.com)",
+      "WebFetch(domain:ghcr.io)",
+      "WebFetch(domain:github.com)",
       "WebFetch(domain:job-boards.greenhouse.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:www.perplexity.ai)",
       "WebSearch",
-      "Write",
-      "Bash(mkdir:*)",
-      "Bash(uv:*)",
-      "Bash(find:*)",
-      "Bash(mv:*)",
-      "Bash(grep:*)",
-      "Bash(npm:*)",
-      "Bash(ls:*)",
-      "Bash(cp:*)",
-      "Write",
-      "Edit",
-      "Bash(chmod:*)",
-      "Bash(touch:*)"
+      "Write"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "/Users/bossjones/dev/wshobson/agents",
+      "/Users/bossjones/dev/mlflow/",
+      "/Users/bossjones/dev/adobe-aifoundations/aif-skills",
+      "/Users/bossjones/dev/FlorianBruniaux/claude-code-ultimate-guide",
+      "/Users/bossjones/dev/anthropics/claude-code-action",
+      "/Users/bossjones/dev/anthropics/claude-code-security-review",
+      "/Users/bossjones/dev/obsidian-wiki",
+      "/Users/bossjones/Documents/obsidian/personal.vault",
+      "/Users/bossjones/dev/obsidian-second-brain"
+    ]
   },
   "statusLine": {
     "type": "command",
     "command": "uv run $CLAUDE_PROJECT_DIR/.claude/status_lines/status_line_v10.py",
     "padding": 0
   },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/pre_tool_use.py"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/post_tool_use.py"
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/notification.py --notify"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/stop.py --chat"
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/subagent_stop.py --notify"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/user_prompt_submit.py --log-only --store-last-prompt --name-agent"
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/pre_compact.py"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/session_start.py"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/session_end.py"
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/permission_request.py --log-only"
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/post_tool_use_failure.py"
-          }
-        ]
-      }
-    ],
-    "SubagentStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/subagent_start.py"
-          }
-        ]
-      }
-    ],
-    "Setup": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run $CLAUDE_PROJECT_DIR/.claude/hooks/setup.py"
-          }
-        ]
-      }
-    ]
+  "enabledPlugins": {
+    "agent-harness@boss-skills": true,
+    "superpowers@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "code-documentation@claude-code-workflows": true,
+    "documentation-generation@claude-code-workflows": true,
+    "c4-architecture@claude-code-workflows": true,
+    "documentation-standards@claude-code-workflows": true,
+    "obsidian@obsidian-skills": true
   }
 }
