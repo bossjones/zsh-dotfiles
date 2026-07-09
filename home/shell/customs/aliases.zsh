@@ -2781,6 +2781,26 @@ docker-tail-all() {
     docker ps -q | xargs -L 1 -P $(docker ps | wc -l) docker logs --tail 0 -f
 }
 
+# Toggle XDG_DATA_DIRS to include Homebrew's share dir, or unset it.
+# Homebrew's prefix differs by arch: /opt/homebrew on Apple Silicon, /usr/local on Intel.
+toggle_xdg_data_dirs() {
+    local brew_share
+    if [ -d /opt/homebrew/share ]; then
+        brew_share="/opt/homebrew/share"
+    else
+        brew_share="/usr/local/share"
+    fi
+    local default_dirs="/usr/local/share:/usr/share"
+
+    if [ -n "${XDG_DATA_DIRS}" ] && [[ ":${XDG_DATA_DIRS}:" == *":${brew_share}:"* ]]; then
+        unset XDG_DATA_DIRS
+        echo "[toggle_xdg_data_dirs] unset XDG_DATA_DIRS"
+    else
+        export XDG_DATA_DIRS="${brew_share}:${XDG_DATA_DIRS:-${default_dirs}}"
+        echo "[toggle_xdg_data_dirs] XDG_DATA_DIRS=${XDG_DATA_DIRS}"
+    fi
+}
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
