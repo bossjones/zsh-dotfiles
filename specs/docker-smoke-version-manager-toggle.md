@@ -23,8 +23,8 @@ probe.
 Make `make smoke-mise` and `make smoke-asdf` (or `VERSION_MANAGER=mise make smoke`) run
 the full Docker smoke pipeline against the chosen manager, with the smoke script forwarding
 `--promptString version_manager=$VERSION_MANAGER` to every `chezmoi init` call and
-branching its Ruby-install step between `asdf install ruby 3.2.1` and
-`mise use -g ruby@3.2.1`.
+branching its Ruby-install step between `asdf install ruby 4.0.1` and
+`mise use -g ruby@4.0.1`.
 
 ## Problem Statement
 Concrete gaps observed in the working tree on `feature-asdf-to-mise`:
@@ -36,7 +36,7 @@ Concrete gaps observed in the working tree on `feature-asdf-to-mise`:
 - `Makefile` (lines 30–49) `smoke*` targets never set `VERSION_MANAGER`.
 - `scripts/smoke-test-docker.sh`:
   - Hardcodes the asdf path in `setup_asdf_and_openssl()` (lines 177–221) — sources
-    `~/.asdf/asdf.sh`, exports `ASDF_DIR`, runs `asdf install ruby 3.2.1`.
+    `~/.asdf/asdf.sh`, exports `ASDF_DIR`, runs `asdf install ruby 4.0.1`.
   - The two `chezmoi init` calls in `run_lint()` (line 238) and `run_build()` (lines
     298, 300) omit `--promptString version_manager=…`, so chezmoi falls back to whatever
     is persisted in `~/.config/chezmoi/chezmoi.yaml` (or the default `asdf`).
@@ -170,19 +170,19 @@ IMPORTANT: Execute every step in order, top to bottom.
           fi
           export PATH="${HOME}/.asdf/bin:${HOME}/.asdf/shims:${PATH}"
           if command -v asdf &> /dev/null && [[ -n "${OPENSSL3_PREFIX:-}" ]]; then
-              log_info "Installing Ruby 3.2.1 via asdf with OpenSSL 3..."
-              asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+              log_info "Installing Ruby 4.0.1 via asdf with OpenSSL 3..."
+              asdf install ruby 4.0.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
           fi
       else
           # mise — never source asdf.sh, never set ASDF_DIR (Mutual Exclusion Invariant)
           if command -v mise &> /dev/null; then
               eval "$(mise activate bash)"
-              log_info "Installing Ruby 3.2.1 via mise..."
+              log_info "Installing Ruby 4.0.1 via mise..."
               if [[ -n "${OPENSSL3_PREFIX:-}" ]]; then
                   RUBY_CONFIGURE_OPTS="--with-openssl-dir=${OPENSSL3_PREFIX}" \
-                      mise use -g ruby@3.2.1 || true
+                      mise use -g ruby@4.0.1 || true
               else
-                  mise use -g ruby@3.2.1 || true
+                  mise use -g ruby@4.0.1 || true
               fi
           else
               log_warning "mise not found on PATH — skipping ruby install"
@@ -280,7 +280,7 @@ IMPORTANT: Execute every step in order, top to bottom.
   chezmoi data --format=json | jq .version_manager   # → "mise"
   zsh -ic 'echo "$ZSH_DOTFILES_VERSION_MANAGER"'     # → mise
   zsh -ic 'typeset -f asdf'                          # empty (Mutual Exclusion Invariant)
-  zsh -ic 'mise current ruby'                        # → 3.2.1
+  zsh -ic 'mise current ruby'                        # → 4.0.1
   ```
 
 ### 10. Update parent spec acceptance crosslink (optional, defer)
@@ -357,7 +357,7 @@ Docker-local — none touches the workstation's `$HOME`, per the standing
   rendered shell only activates the selected one. Gating would add layer-cache
   complexity without correctness benefit.
 - **Out of scope** (deferred to follow-up PRs):
-  - Renaming `myAsdf*Version` template keys (parent spec line 224 defers this).
+  - Renaming `myAsdf*Version` template keys — since done in a later PR (tool-version keys renamed to `my<Tool>Version`; `myAsdfVersion` kept).
   - Flipping the default `version_manager` from `asdf` to `mise` (parent spec line 222
     defers this until both CI legs and at least one personal machine are green on mise).
   - Adding a Linux/Docker leg to `.github/workflows/tests.yml`. The existing macOS matrix

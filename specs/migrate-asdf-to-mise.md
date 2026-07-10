@@ -158,7 +158,7 @@ IMPORTANT: Execute every step in order, top to bottom.
     retry -t 4 -- "$HOME/.bin/chezmoi" init -R --debug -v --apply --force \
       --promptString version_manager=${{ matrix.version_manager }} --source=.
     ```
-  - The asdf-source block (lines 155–162, 192–203, 217–222) needs `if: matrix.version_manager == 'asdf'` and a parallel mise block with `if: matrix.version_manager == 'mise'` that runs `eval "$(mise activate bash)"` and `mise install ruby@3.2.1` (or `mise use -g ruby@3.2.1`) instead of `asdf install ruby 3.2.1`.
+  - The asdf-source block (lines 155–162, 192–203, 217–222) needs `if: matrix.version_manager == 'asdf'` and a parallel mise block with `if: matrix.version_manager == 'mise'` that runs `eval "$(mise activate bash)"` and `mise install ruby@4.0.1` (or `mise use -g ruby@4.0.1`) instead of `asdf install ruby 4.0.1`.
   - The `OPENSSL3_PREFIX` exports for arm64 ruby compilation apply identically — keep them outside the conditional.
 
 ### 9. Verification — Local (dry-run only on primary workstation)
@@ -221,7 +221,7 @@ For real `chezmoi apply` validation, push the branch and rely on the CI matrix (
 ## Notes
 - **Defaults**: keep `version_manager: "asdf"` for now. Once CI is green for both legs and you've rolled mise on at least one personal machine, flip the default in a follow-up PR.
 - **External installer**: `zsh-dotfiles-prereq-installer` (run from `tests.yml` lines 82–84) likely installs asdf today as part of its setup. Confirm whether it does — if yes, the mise CI leg will end up with both managers on PATH. That's harmless (mise's PATH order wins via shim dir) but worth noting; consider adding `ZSH_DOTFILES_PREP_SKIP_ASDF=1` if that env var exists in the prep installer.
-- **Version variable naming**: leave `myAsdf*Version` keys alone for now — renaming is a no-op refactor and these names are just identifiers. A follow-up PR can rename to `myTool*Version` once asdf is removed entirely.
+- **Version variable naming**: the `myAsdf*Version` tool-version keys were renamed to `my<Tool>Version` (e.g. `myAsdfRubyVersion` → `myRubyVersion`) in a later PR — now that both asdf and mise consume the same pins, the `Asdf` infix was misleading. `myAsdfVersion` (asdf's own release version) is kept as-is.
 - **Custom plugin URLs**: the asdf scripts register 8 custom plugin repos (kubectl, helm, k9s, kubectx, mkcert, opa, helm-docs, kubetail). mise's registry has all of these built in — verify per-tool with `mise registry | grep <tool>` before deleting the custom-repo handling in the mise port.
 - **Sheldon**: mise activation lives in `home/shell/mise/path.zsh` (plain `.zsh`, self-guarded with `command -v mise`); sheldon's `[plugins.env]` / `[plugins.path]` blocks (lines 30–36 of `dot_sheldon/plugins.toml.tmpl`) auto-source it. Keep `[plugins.asdf]` gated on `version_manager == "asdf"`, but delete any inline `[plugins.mise]` entry — it's superseded by the shell module.
 - **No new pip/uv deps required** for this change.

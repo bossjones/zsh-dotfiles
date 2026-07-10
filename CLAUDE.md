@@ -119,7 +119,7 @@ chezmoi doctor                            # Verify template syntax
 ### Platform-Specific Handling
 - **macOS 15**: Requires special OpenSSL 3 configuration and rbenv tap
 - **ASDF Integration**: Sets up ASDF environment variables and PATH
-- **Ruby**: Installs Ruby 3.2.1 with OpenSSL 3 support
+- **Ruby**: Installs Ruby 4.0.1 with OpenSSL 3 support
 
 ### Development Dependencies
 Key packages installed during CI:

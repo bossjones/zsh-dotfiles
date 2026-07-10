@@ -255,8 +255,8 @@ setup_version_manager() {
         export PATH="${HOME}/.asdf/bin:${HOME}/.asdf/shims:${PATH}"
 
         if command -v asdf &> /dev/null && [[ -n "$OPENSSL3_PREFIX" ]]; then
-            log_info "Installing Ruby 3.2.1 via asdf with OpenSSL 3..."
-            asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+            log_info "Installing Ruby 4.0.1 via asdf with OpenSSL 3..."
+            asdf install ruby 4.0.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
         fi
 
         log_info "ASDF_DIR=$ASDF_DIR"
@@ -267,12 +267,12 @@ setup_version_manager() {
             log_info "Activating mise..."
             eval "$(mise activate bash)"
 
-            log_info "Installing Ruby 3.2.1 via mise..."
+            log_info "Installing Ruby 4.0.1 via mise..."
             if [[ -n "$OPENSSL3_PREFIX" ]]; then
                 RUBY_CONFIGURE_OPTS="--with-openssl-dir=${OPENSSL3_PREFIX}" \
-                    mise use -g ruby@3.2.1 || true
+                    mise use -g ruby@4.0.1 || true
             else
-                mise use -g ruby@3.2.1 || true
+                mise use -g ruby@4.0.1 || true
             fi
         else
             log_warning "mise not found on PATH — skipping ruby install"

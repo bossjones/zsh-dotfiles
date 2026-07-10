@@ -60,7 +60,7 @@ Run the checker again to confirm:
 - helm (3.14.2)
 - k9s (0.32.4)
 - neovim (0.11.3)
-- ruby (3.2.1)
+- ruby (4.0.1)
 - And 12 more...
 
 ## Installation Commands Reference
