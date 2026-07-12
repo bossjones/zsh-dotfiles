@@ -172,10 +172,13 @@ feature.
 ### Enabling
 
 ```bash
-chezmoi init --promptBool fzf_tab=true   # first init (or non-TTY / CI)
+chezmoi init --promptBool fzf_tab=true   # first init (interactive TTY)
 chezmoi apply
 exec zsh
 ```
+
+Non-TTY environments (CI, provisioning scripts) skip the prompt and default to off;
+set `CM_fzf_tab=true` in the environment to opt in there.
 
 Requires `fzf` on `$PATH` (already provisioned by this repo). If fzf is missing, fzf-tab
 is never sourced and stock Tab completion keeps working.

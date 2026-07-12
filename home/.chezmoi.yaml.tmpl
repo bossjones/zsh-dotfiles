@@ -108,13 +108,17 @@
 {{-   $version_manager = promptString "version_manager" $version_manager -}}
 {{- end -}}
 
-{{- /* fzf_tab: kept outside `if $interactive` so non-TTY `--promptBool fzf_tab=…`
-       (Docker smoke / CI) matches. In non-TTY runs promptBool returns the
-       --promptBool value or the default. */ -}}
+{{- /* fzf_tab: prompt only when interactive. An unanswered promptBool falls back
+       to /dev/tty, which does not exist on CI runners / docker smoke (they run
+       non-TTY and only pass --promptString version_manager). With a TTY,
+       `--promptBool fzf_tab=…` is consumed by promptBool without prompting;
+       for non-TTY opt-in set CM_fzf_tab=true in the environment. */ -}}
 {{- if hasKey . "fzf_tab" -}}
 {{-   $fzf_tab = .fzf_tab -}}
-{{- else -}}
+{{- else if $interactive -}}
 {{-   $fzf_tab = promptBool "fzf_tab" $fzf_tab -}}
+{{- else if env "CM_fzf_tab" -}}
+{{-   $fzf_tab = eq (env "CM_fzf_tab") "true" -}}
 {{- end -}}
 
 {{- if $interactive -}}

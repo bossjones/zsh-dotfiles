@@ -39,9 +39,16 @@ make macos-init-fzf-tab-dry-run
 ### Option B: chezmoi directly
 
 ```bash
-chezmoi init --promptBool fzf_tab=true   # first init (works non-TTY too, e.g. CI)
+chezmoi init --promptBool fzf_tab=true   # first init (interactive TTY)
 chezmoi apply
 exec zsh
+```
+
+Without a TTY (CI, provisioning scripts), the `fzf_tab` prompt is skipped and defaults
+to off; opt in by setting `CM_fzf_tab=true` in the environment instead:
+
+```bash
+CM_fzf_tab=true chezmoi init --apply --force --source=.
 ```
 
 ### Verify it took
