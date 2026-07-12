@@ -100,3 +100,49 @@ smoke-full-run-mise:  ## Run baked mise image (interactive zsh)
 smoke-full-clean:  ## Remove baked smoke images
 	-docker rmi zsh-dotfiles-smoke-full:asdf zsh-dotfiles-smoke-full:mise \
 	            zsh-dotfiles-smoke:asdf      zsh-dotfiles-smoke:mise 2>/dev/null || true
+
+# ---------------------------------------------------------------------------
+# chezmoi init with good defaults (new-machine provisioning)
+#
+# Host name / Computer name are autopopulated from this machine; everything
+# else defaults to the standard bossjones answers. Override any variable on
+# the command line, e.g.:
+#   make macos-init-good-defaults-branch CHEZMOI_BRANCH=claude/ruby-4-0-1-upgrade-5a05fa
+# ---------------------------------------------------------------------------
+CHEZMOI_REPO ?= https://github.com/bossjones/zsh-dotfiles.git
+CHEZMOI_BRANCH ?= main
+CHEZMOI_HOSTNAME ?= $(shell scutil --get LocalHostName 2>/dev/null || hostname -s)
+CHEZMOI_COMPUTER_NAME ?= $(shell scutil --get ComputerName 2>/dev/null || hostname -s)
+
+CHEZMOI_GOOD_DEFAULTS := \
+	--promptString "Name=Malcolm Jones" \
+	--promptString "Email=bossjones@theblacktonystark.com" \
+	--promptString "Computer name=$(CHEZMOI_COMPUTER_NAME)" \
+	--promptString "Host name=$(CHEZMOI_HOSTNAME)" \
+	--promptString "version_manager=mise" \
+	--promptBool "ruby=true" \
+	--promptBool "pyenv=true" \
+	--promptBool "nodejs=true" \
+	--promptBool "k8s=false" \
+	--promptBool "cuda=false" \
+	--promptBool "fnm=true" \
+	--promptBool "opencv=false"
+
+.PHONY: macos-init-good-defaults-source macos-init-good-defaults-branch \
+        macos-init-good-defaults-oneliner macos-init-good-defaults-dry-run
+
+macos-init-good-defaults-source:  ## chezmoi init --apply from the current checkout (--source=.)
+	@echo "\033[0;34mRunning chezmoi init --apply from --source=. (host: $(CHEZMOI_HOSTNAME))...\033[0m"
+	chezmoi init -R --debug -v --apply $(CHEZMOI_GOOD_DEFAULTS) --source=.
+
+macos-init-good-defaults-branch:  ## chezmoi init --apply from GitHub on CHEZMOI_BRANCH (default: main)
+	@echo "\033[0;34mRunning chezmoi init --apply from $(CHEZMOI_REPO) branch $(CHEZMOI_BRANCH) (host: $(CHEZMOI_HOSTNAME))...\033[0m"
+	chezmoi init -R --debug -v --apply --branch $(CHEZMOI_BRANCH) $(CHEZMOI_GOOD_DEFAULTS) $(CHEZMOI_REPO)
+
+macos-init-good-defaults-oneliner:  ## Install chezmoi via chezmoi.io/get, then init --apply from GitHub
+	@echo "\033[0;34mInstalling chezmoi via one-liner and running init --apply (host: $(CHEZMOI_HOSTNAME))...\033[0m"
+	sh -c "$$(curl -fsLS chezmoi.io/get)" -- init -R --debug -v --apply $(CHEZMOI_GOOD_DEFAULTS) $(CHEZMOI_REPO)
+
+macos-init-good-defaults-dry-run:  ## Preview what init would do from --source=. without changing anything
+	@echo "\033[0;34mDry-running chezmoi init from --source=. (host: $(CHEZMOI_HOSTNAME))...\033[0m"
+	chezmoi init -R --debug -v --dry-run $(CHEZMOI_GOOD_DEFAULTS) --source=.
