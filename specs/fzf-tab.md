@@ -572,7 +572,9 @@ make test
   `diff` from validation step 1 to `.pre-commit-config.yaml` as a permanent guard — that is
   arguably worth a follow-up issue independent of fzf-tab.
 - **No new Python or system dependencies.** sheldon clones fzf-tab itself; fzf is already
-  installed (`myFzfVersion: "0.73.1"`, `run_onchange_before_02-linux-install-fzf.sh.tmpl`).
+  installed (`myFzfVersion: "0.73.1"`; `run_onchange_before_02-linux-install-fzf.sh.tmpl`
+  on linux, `run_onchange_before_02-macos-install-fzf.sh.tmpl` on macOS since the
+  2026-07 main merge).
 - **The binary module is deliberately out of scope.** If completion in very large
   directories feels slow, run `build-fzf-tab-module` once by hand and restart zsh; fzf-tab
   picks it up automatically (`fzf-tab.zsh:530-547`). It clones the full zsh source matching
