@@ -7,6 +7,7 @@
 {{ include "shell/init.zsh" }}
 
 export ZSH_DOTFILES_VERSION_MANAGER={{ .version_manager | quote }}
+export ZSH_DOTFILES_FZF_TAB={{ and (hasKey . "fzf_tab") .fzf_tab }}
 
 {{  if or (lookPath "sheldon") (stat (joinPath .chezmoi.homeDir ".local" "bin" "sheldon")) -}}
 # Source sheldon plugins (with runtime config check)
@@ -30,6 +31,7 @@ fi
 {{ include "shell/init.zsh" }}
 
 export ZSH_DOTFILES_VERSION_MANAGER={{ .version_manager | quote }}
+export ZSH_DOTFILES_FZF_TAB={{ and (hasKey . "fzf_tab") .fzf_tab }}
 
 {{  if or (lookPath "sheldon") (stat (joinPath .chezmoi.homeDir ".local" "bin" "sheldon")) -}}
 # Source sheldon plugins (with runtime config check)

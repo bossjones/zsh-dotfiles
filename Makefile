@@ -6,16 +6,16 @@ pre-commit:
 	uv run pre-commit run -a
 
 test:
-	py.test --tb=short --no-header --showlocals --reruns 6 test_dotfiles.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
+	py.test --tb=short --no-header --showlocals --reruns 6 test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
 
 test-pdb:
-	py.test --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
+	py.test --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
 
 uv-test:
-	uv run pytest -vvvv --tb=short --no-header --showlocals --reruns 6 --durations-min=0.05 --durations=10 test_dotfiles.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
+	uv run pytest -vvvv --tb=short --no-header --showlocals --reruns 6 --durations-min=0.05 --durations=10 test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
 
 uv-test-pdb:
-	uv run pytest --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
+	uv run pytest --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
 
 .PHONY: update-cursor-rules
 update-cursor-rules:  ## Update cursor rules from prompts/drafts/cursor_rules
@@ -146,3 +146,32 @@ macos-init-good-defaults-oneliner:  ## Install chezmoi via chezmoi.io/get, then 
 macos-init-good-defaults-dry-run:  ## Preview what init would do from --source=. without changing anything
 	@echo "\033[0;34mDry-running chezmoi init from --source=. (host: $(CHEZMOI_HOSTNAME))...\033[0m"
 	chezmoi init -R --debug -v --dry-run $(CHEZMOI_GOOD_DEFAULTS) --source=.
+
+# ---------------------------------------------------------------------------
+# fzf-tab opt-in (kept OUT of CHEZMOI_GOOD_DEFAULTS on purpose)
+#
+# fzf-tab replaces zsh's completion menu with an fzf selector; it is an
+# optional add-on, so it lives in its own variable and is only combined with
+# the good defaults in the dedicated *-fzf-tab targets below, e.g.:
+#   make macos-init-fzf-tab-branch CHEZMOI_BRANCH=feature-fzf-tab
+# ---------------------------------------------------------------------------
+CHEZMOI_FZF_TAB_DEFAULTS := --promptBool "fzf_tab=true"
+
+.PHONY: macos-init-fzf-tab-source macos-init-fzf-tab-branch \
+        macos-init-fzf-tab-oneliner macos-init-fzf-tab-dry-run
+
+macos-init-fzf-tab-source:  ## Good defaults + fzf-tab enabled, init --apply from the current checkout (--source=.)
+	@echo "\033[0;34mRunning chezmoi init --apply with fzf-tab from --source=. (host: $(CHEZMOI_HOSTNAME))...\033[0m"
+	chezmoi init -R --debug -v --apply $(CHEZMOI_GOOD_DEFAULTS) $(CHEZMOI_FZF_TAB_DEFAULTS) --source=.
+
+macos-init-fzf-tab-branch:  ## Good defaults + fzf-tab enabled, init --apply from GitHub on CHEZMOI_BRANCH (default: main)
+	@echo "\033[0;34mRunning chezmoi init --apply with fzf-tab from $(CHEZMOI_REPO) branch $(CHEZMOI_BRANCH) (host: $(CHEZMOI_HOSTNAME))...\033[0m"
+	chezmoi init -R --debug -v --apply --branch $(CHEZMOI_BRANCH) $(CHEZMOI_GOOD_DEFAULTS) $(CHEZMOI_FZF_TAB_DEFAULTS) $(CHEZMOI_REPO)
+
+macos-init-fzf-tab-oneliner:  ## Install chezmoi via chezmoi.io/get, then init --apply with fzf-tab from GitHub
+	@echo "\033[0;34mInstalling chezmoi via one-liner and running init --apply with fzf-tab (host: $(CHEZMOI_HOSTNAME))...\033[0m"
+	sh -c "$$(curl -fsLS chezmoi.io/get)" -- init -R --debug -v --apply $(CHEZMOI_GOOD_DEFAULTS) $(CHEZMOI_FZF_TAB_DEFAULTS) $(CHEZMOI_REPO)
+
+macos-init-fzf-tab-dry-run:  ## Preview good defaults + fzf-tab init from --source=. without changing anything
+	@echo "\033[0;34mDry-running chezmoi init with fzf-tab from --source=. (host: $(CHEZMOI_HOSTNAME))...\033[0m"
+	chezmoi init -R --debug -v --dry-run $(CHEZMOI_GOOD_DEFAULTS) $(CHEZMOI_FZF_TAB_DEFAULTS) --source=.
