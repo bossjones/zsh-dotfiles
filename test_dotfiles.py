@@ -91,6 +91,7 @@ def test_all_alias_defined(zsh_output_subprocess):
     output = zsh_output_subprocess("alias")
 
     expected_aliases = [
+        "ccusage='npx ccusage@latest'",
         "cn=cursor-nightly",
         "dl-thumb=yt-dl-thumb",
         "dl-thumb-fork=yt-dl-thumb-fork",
