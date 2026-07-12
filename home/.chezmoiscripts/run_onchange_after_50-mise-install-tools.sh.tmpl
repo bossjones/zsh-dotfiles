@@ -48,23 +48,23 @@ mise settings set ruby.compile false || true
 export MISE_RUBY_COMPILE=0
 
 {{ $tools := dict
-  "ruby"       (.myAsdfRubyVersion)
-  "golang"     (.myAsdfGolangVersion)
-  "asdf:mise-plugins/mise-tmux" (.myAsdfTmuxVersion)
-  "neovim"     (.myAsdfNeovimVersion)
-  "github-cli" (.myAsdfGithubCliVersion)
-  "mkcert"     (.myAsdfMkcertVersion)
-  "shellcheck" (.myAsdfShellcheckVersion)
-  "shfmt"      (.myAsdfShfmtVersion)
-  "yq"         (.myAsdfYqVersion)
-  "helm"       (.myAsdfHelmVersion)
-  "helmfile"   (.myAsdfHelmfileVersion)
-  "helm-docs"  (.myAsdfHelmdocsVersion)
-  "k9s"        (.myAsdfK9sVersion)
-  "kubectx"    (.myAsdfKubectxVersion)
-  "opa"        (.myAsdfOpaVersion)
-  "kubectl"    (.myAsdfKubectlVersion)
-  "aqua:johanhaleby/kubetail" (.myAsdfKubetailVersion)
+  "ruby"       (.myRubyVersion)
+  "golang"     (.myGolangVersion)
+  "asdf:mise-plugins/mise-tmux" (.myTmuxVersion)
+  "neovim"     (.myNeovimVersion)
+  "github-cli" (.myGithubCliVersion)
+  "mkcert"     (.myMkcertVersion)
+  "shellcheck" (.myShellcheckVersion)
+  "shfmt"      (.myShfmtVersion)
+  "yq"         (.myYqVersion)
+  "helm"       (.myHelmVersion)
+  "helmfile"   (.myHelmfileVersion)
+  "helm-docs"  (.myHelmdocsVersion)
+  "k9s"        (.myK9sVersion)
+  "kubectx"    (.myKubectxVersion)
+  "opa"        (.myOpaVersion)
+  "kubectl"    (.myKubectlVersion)
+  "aqua:johanhaleby/kubetail" (.myKubetailVersion)
 }}
 
 # Install + globally pin each tool. mise's built-in registry covers every
@@ -85,7 +85,7 @@ export MISE_RUBY_COMPILE=0
 }}
 
 {{ range sortAlpha $rubyPackages }}
-  mise exec ruby@{{ $.myAsdfRubyVersion }} -- gem install {{ . }} --no-doc || true
+  mise exec ruby@{{ $.myRubyVersion }} -- gem install {{ . }} --no-doc || true
 {{ end -}}
 
 mise reshim || true

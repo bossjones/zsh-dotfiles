@@ -15,3 +15,7 @@ shell
 .chezmoiscripts/run_onchange_after_50-mise-install-tools.sh
 .chezmoiscripts/run_once_before_01-mise-backup-tool-versions.sh
 {{ end -}}
+
+{{ if ne .chezmoi.os "darwin" -}}
+.config/iterm2
+{{ end -}}

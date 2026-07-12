@@ -39,6 +39,9 @@ fi
 echo -e "${GREEN}✓ Homebrew is installed${NC}"
 echo ""
 
+# Avoid Homebrew's interactive "ask mode" confirmation for every install below
+export HOMEBREW_NO_ASK=1
+
 # Install Sheldon if missing
 echo -e "${BLUE}Checking Sheldon...${NC}"
 if [[ ! -f "$HOME/.local/bin/sheldon" ]]; then
@@ -172,7 +175,7 @@ declare -A MANAGED_TOOLS=(
     ["helm"]="3.14.2"
     ["k9s"]="0.32.4"
     ["neovim"]="0.11.3"
-    ["ruby"]="3.2.1"
+    ["ruby"]="4.0.1"
     ["shellcheck"]="0.11.0"
     ["shfmt"]="3.13.1"
     ["tmux"]="3.5a"

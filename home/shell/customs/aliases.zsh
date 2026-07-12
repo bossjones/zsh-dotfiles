@@ -2801,6 +2801,9 @@ toggle_xdg_data_dirs() {
     fi
 }
 
+# Claude Code usage analytics
+alias ccusage='npx ccusage@latest'
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------

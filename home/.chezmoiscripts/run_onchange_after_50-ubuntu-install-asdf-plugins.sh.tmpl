@@ -43,22 +43,22 @@ asdf plugin-add helm-docs https://github.com/sudermanjr/asdf-helm-docs.git || tr
 asdf plugin-add kubetail https://github.com/janpieper/asdf-kubetail.git || true
 
 {{ $plugins := dict
-  "ruby"    (.myAsdfRubyVersion)
-  "golang"    (.myAsdfGolangVersion)
-  "tmux" (.myAsdfTmuxVersion)
-  "neovim" (.myAsdfNeovimVersion)
-  "github-cli" (.myAsdfGithubCliVersion)
-  "mkcert" (.myAsdfMkcertVersion)
-  "shellcheck" (.myAsdfShellcheckVersion)
-  "shfmt" (.myAsdfShfmtVersion)
-  "yq" (.myAsdfYqVersion)
-  "helm" (.myAsdfHelmVersion)
-  "helmfile" (.myAsdfHelmfileVersion)
-  "helm-docs" (.myAsdfHelmdocsVersion)
-  "k9s" (.myAsdfK9sVersion)
-  "kubectx" (.myAsdfKubectxVersion)
-  "opa" (.myAsdfOpaVersion)
-  "kubectl" (.myAsdfKubectlVersion)
+  "ruby"    (.myRubyVersion)
+  "golang"    (.myGolangVersion)
+  "tmux" (.myTmuxVersion)
+  "neovim" (.myNeovimVersion)
+  "github-cli" (.myGithubCliVersion)
+  "mkcert" (.myMkcertVersion)
+  "shellcheck" (.myShellcheckVersion)
+  "shfmt" (.myShfmtVersion)
+  "yq" (.myYqVersion)
+  "helm" (.myHelmVersion)
+  "helmfile" (.myHelmfileVersion)
+  "helm-docs" (.myHelmdocsVersion)
+  "k9s" (.myK9sVersion)
+  "kubectx" (.myKubectxVersion)
+  "opa" (.myOpaVersion)
+  "kubectl" (.myKubectlVersion)
 }}
 
 # Add plugins & install versions

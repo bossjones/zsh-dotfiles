@@ -1,0 +1,28 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+
+#!/bin/sh
+
+# Install fzf on macOS via Homebrew
+# Mirrors zsh-dotfiles-prep: brew install fzf + $(brew --prefix)/opt/fzf/install
+# NOTE: --no-update-rc because dot_zshrc.tmpl already sources ~/.fzf.zsh
+
+export HOMEBREW_NO_ASK=1
+
+printf "${green}[10 - fzf] ${reset}"
+
+if [ -z "$(command -v fzf 2>/dev/null)" ]; then
+    (
+        set -x; printf ">>> fzf not found, installing via Homebrew\n" &&
+        brew install fzf
+    )
+fi
+
+if [ -x "$(brew --prefix)/opt/fzf/install" ]; then
+    "$(brew --prefix)/opt/fzf/install" --all --no-update-rc || true
+fi
+
+if [ -n "$(command -v fzf 2>/dev/null)" ]; then
+    fzf --version
+fi
+
+{{ end -}}

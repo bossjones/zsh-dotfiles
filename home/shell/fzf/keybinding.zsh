@@ -14,4 +14,4 @@ then
     _MY_PATH_TO_FZF_KEYBINDINGS=$HOME/.fzf/shell/key-bindings.zsh
 fi
 
-source "${_MY_PATH_TO_FZF_KEYBINDINGS}"
+[[ -f "${_MY_PATH_TO_FZF_KEYBINDINGS}" ]] && source "${_MY_PATH_TO_FZF_KEYBINDINGS}"

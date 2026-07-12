@@ -614,7 +614,7 @@ class EnvironmentChecker:
             'mkcert': '1.4.4',
             'neovim': '0.11.3',
             'opa': '0.62.1',
-            'ruby': '3.2.1',
+            'ruby': '4.0.1',
             'shellcheck': '0.11.0',
             'shfmt': '3.13.1',
             'tmux': '3.5a',
