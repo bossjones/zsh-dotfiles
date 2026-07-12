@@ -3198,11 +3198,11 @@
 			<key>Name</key>
 			<string>restricted tmux-base16-ocean-dark</string>
 			<key>Non Ascii Font</key>
-			<string>Hack-Regular 12</string>
+			<string>HackNF-Regular 12</string>
 			<key>Non-ASCII Anti Aliased</key>
 			<true/>
 			<key>Normal Font</key>
-			<string>DroidSansMonoNerdFontComplete- 14</string>
+			<string>DroidSansMNF 14</string>
 			<key>Option Key Sends</key>
 			<integer>2</integer>
 			<key>Prompt Before Closing 2</key>
@@ -4018,11 +4018,11 @@
 			<key>Name</key>
 			<string>norc tmux-base16-ocean-dark</string>
 			<key>Non Ascii Font</key>
-			<string>Hack-Regular 12</string>
+			<string>HackNF-Regular 12</string>
 			<key>Non-ASCII Anti Aliased</key>
 			<true/>
 			<key>Normal Font</key>
-			<string>DroidSansMonoNerdFontComplete- 14</string>
+			<string>DroidSansMNF 14</string>
 			<key>Option Key Sends</key>
 			<integer>2</integer>
 			<key>Prompt Before Closing 2</key>
