@@ -1,0 +1,29 @@
+{{- if and (eq .chezmoi.os "darwin") .pyenv -}}
+
+#!/bin/sh
+
+# Install pyenv on macOS via Homebrew
+# Mirrors the macOS pyenv path in zsh-dotfiles-prep's prereq installer:
+# brew supplies the binary + plugins, PYENV_ROOT (~/.pyenv) holds the versions
+
+export HOMEBREW_NO_ASK=1
+
+printf "${green}[02 - macos] ${reset}"
+echo "Install pyenv"
+
+brew install openssl readline sqlite3 xz zlib tcl-tk pkg-config libffi || true
+brew install pyenv pyenv-virtualenv pyenv-virtualenvwrapper || true
+
+if [ -n "$(command -v pyenv 2>/dev/null)" ]; then
+    pyenv --version
+
+    if [ ! -d "${HOME}/.pyenv/versions/{{ .myPyenvPythonVersion }}" ]; then
+        (
+            set -x; printf ">>> pyenv python {{ .myPyenvPythonVersion }} not found, installing\n" &&
+            env PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install -f {{ .myPyenvPythonVersion }} &&
+            pyenv global {{ .myPyenvPythonVersion }}
+        ) || true
+    fi
+fi
+
+{{ end -}}
