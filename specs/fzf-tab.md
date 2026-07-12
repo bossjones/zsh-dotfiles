@@ -18,6 +18,9 @@ zstyles. Users opt in with `chezmoi init --promptBool fzf_tab=true`.
 - With the flag on, `bindkey '^I'` reports `fzf-tab-complete` in a real interactive shell,
   and fzf-tab loads after `compinit` and before all widget-wrapping plugins.
 - With fzf absent from `$PATH`, fzf-tab is not sourced at all, so Tab keeps working.
+- After opting in, switching back to stock completion never requires chezmoi:
+  `toggle-fzf-tab` flips the current shell, `fzf-tab-off` / `fzf-tab-on` flip it
+  persistently for all future shells via a sentinel file.
 
 ## Problem Statement
 
@@ -104,6 +107,21 @@ Supporting decisions:
    (`lib/ftb-tmux-popup:19-22`).
 4. **Guard against missing fzf** with a custom sheldon `defer-if-fzf` template, so the
    plugin is never sourced on a box without fzf.
+5. **Runtime toggle layer, so A/B-ing the two completion systems never requires chezmoi.**
+   fzf-tab's built-ins (`disable-fzf-tab` / `enable-fzf-tab` / `toggle-fzf-tab`,
+   `fzf-tab.zsh:342-476`) give per-session switching — `disable-fzf-tab` rebinds `^I` to
+   the saved original widget and unhooks its `compadd`/`_main_complete`/`_approximate`
+   patches. On top of that, a sentinel file
+   `${XDG_CONFIG_HOME:-$HOME/.config}/zsh-dotfiles/fzf-tab-disabled` plus `fzf-tab-off` /
+   `fzf-tab-on` helper functions make the preference persist across shells: the
+   `defer-if-fzf` guard skips sourcing fzf-tab entirely when the sentinel exists. The
+   chezmoi flag remains the install/uninstall boundary, not the day-to-day A/B switch.
+
+   | Layer | Command | Scope |
+   |---|---|---|
+   | Per-session | `toggle-fzf-tab` (plugin built-in) | current shell only |
+   | Persistent preference | `fzf-tab-off` / `fzf-tab-on` (sentinel-backed) | current + all future shells |
+   | Full removal | edit `data.fzf_tab` in `~/.config/chezmoi/chezmoi.yaml`, `chezmoi apply`, `exec zsh` | machine-wide, byte-identical to today |
 
 ## Relevant Files
 
@@ -195,73 +213,134 @@ IMPORTANT: Execute every step in order, top to bottom.
 ### 2. Create `home/shell/fzf-tab/settings.zsh`
 
 Plain zsh — **no Go template syntax**; this file is read from the source checkout, not
-rendered. It is sourced (deferred) immediately before `compinit`.
+rendered. It is sourced (deferred) immediately before `compinit`. Structure: sentinel
+path → styles function → toggle helpers → sentinel early-return → apply styles.
 
 ```zsh
 #!/usr/bin/env zsh
-# fzf-tab configuration.
+# fzf-tab configuration and runtime toggle helpers.
 #
 # Loaded only when the chezmoi `fzf_tab` feature flag is on (see plugins.toml.tmpl).
 # Deferred, and registered immediately BEFORE compinit so that `:completion:*` styles
 # are in place first, per fzf-tab's README.
+#
+# Toggle layers (cheapest first):
+#   toggle-fzf-tab            plugin built-in, current shell only
+#   fzf-tab-off / fzf-tab-on  sentinel-backed, persists across shells, no chezmoi
+#   chezmoi flag              edit data.fzf_tab in ~/.config/chezmoi/chezmoi.yaml + apply
 
-# --- :completion:* prerequisites ------------------------------------------------
-# Group headers require a descriptions format. fzf-tab strips escape sequences here,
-# so keep it plain (no %F{red}).
-zstyle ':completion:*:descriptions' format '[%d]'
+_zsh_dotfiles_fzf_tab_sentinel="${XDG_CONFIG_HOME:-$HOME/.config}/zsh-dotfiles/fzf-tab-disabled"
 
-# fzf-tab supersedes zsh's own menu; `menu no` is what lets it capture the
-# unambiguous prefix (see -ftb-complete's compstate[unambiguous] handling).
-zstyle ':completion:*' menu no
+# All styles live in a function so fzf-tab-on can re-apply them after fzf-tab-off
+# deleted them.
+_zsh_dotfiles_fzf_tab_styles() {
+  # --- :completion:* prerequisites ----------------------------------------------
+  # Group headers require a descriptions format. fzf-tab strips escape sequences
+  # here, so keep it plain (no %F{red}).
+  zstyle ':completion:*:descriptions' format '[%d]'
 
-# LS_COLORS is populated by zsh-dircolors-solarized in the defer-more phase, long
-# after this file is sourced -- so evaluate lazily with `zstyle -e`, not `zstyle`.
-zstyle -e ':completion:*' list-colors 'reply=("${(s.:.)LS_COLORS}")'
+  # fzf-tab supersedes zsh's own menu; `menu no` is what lets it capture the
+  # unambiguous prefix (see -ftb-complete's compstate[unambiguous] handling).
+  zstyle ':completion:*' menu no
 
-# --- :fzf-tab:* -----------------------------------------------------------------
-zstyle ':fzf-tab:*' show-group full
-zstyle ':fzf-tab:*' single-group color header
-zstyle ':fzf-tab:*' continuous-trigger '/'
-zstyle ':fzf-tab:*' switch-group F1 F2
-zstyle ':fzf-tab:*' fzf-min-height 15
-zstyle ':fzf-tab:*' fzf-pad 4
+  # LS_COLORS is populated by zsh-dircolors-solarized in the defer-more phase, long
+  # after this file is sourced -- so evaluate lazily with `zstyle -e`, not `zstyle`.
+  zstyle -e ':completion:*' list-colors 'reply=("${(s.:.)LS_COLORS}")'
 
-# Directory previews. eza when present, BSD/GNU-portable ls otherwise.
-if command -v eza >/dev/null 2>&1; then
-  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
-else
-  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -1 $realpath'
-fi
+  # --- :fzf-tab:* ----------------------------------------------------------------
+  zstyle ':fzf-tab:*' show-group full
+  zstyle ':fzf-tab:*' single-group color header
+  zstyle ':fzf-tab:*' continuous-trigger '/'
+  zstyle ':fzf-tab:*' switch-group F1 F2
+  zstyle ':fzf-tab:*' fzf-min-height 15
+  zstyle ':fzf-tab:*' fzf-pad 4
 
-# tmux popup rendering requires tmux >= 3.2. ftb-tmux-popup already degrades to plain
-# fzf when $TMUX_PANE is unset, so gate on version only, not on "am I inside tmux".
-if command -v tmux >/dev/null 2>&1; then
-  _ftb_tmux_ver=$(tmux -V 2>/dev/null)
-  _ftb_tmux_ver=${_ftb_tmux_ver#tmux }        # "tmux 3.5a" -> "3.5a"
-  _ftb_tmux_ver=${_ftb_tmux_ver%%[^0-9.]*}    # "3.5a"      -> "3.5"
-  autoload -Uz is-at-least
-  if [[ -n $_ftb_tmux_ver ]] && is-at-least 3.2 $_ftb_tmux_ver; then
-    zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
-    zstyle ':fzf-tab:*' popup-min-size 80 12
-    zstyle ':fzf-tab:*' popup-pad 0 0
+  # Directory previews. eza when present, BSD/GNU-portable ls otherwise.
+  if command -v eza >/dev/null 2>&1; then
+    zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+  else
+    zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -1 $realpath'
   fi
-  unset _ftb_tmux_ver
-fi
+
+  # tmux popup rendering requires tmux >= 3.2. ftb-tmux-popup already degrades to
+  # plain fzf when $TMUX_PANE is unset, so gate on version only, not "am I inside
+  # tmux".
+  local ftb_tmux_ver
+  if command -v tmux >/dev/null 2>&1; then
+    ftb_tmux_ver=$(tmux -V 2>/dev/null)
+    ftb_tmux_ver=${ftb_tmux_ver#tmux }        # "tmux 3.5a" -> "3.5a"
+    ftb_tmux_ver=${ftb_tmux_ver%%[^0-9.]*}    # "3.5a"      -> "3.5"
+    autoload -Uz is-at-least
+    if [[ -n $ftb_tmux_ver ]] && is-at-least 3.2 $ftb_tmux_ver; then
+      zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
+      zstyle ':fzf-tab:*' popup-min-size 80 12
+      zstyle ':fzf-tab:*' popup-pad 0 0
+    fi
+  fi
+}
+
+# Persistent off-switch: disables the current shell now and, via the sentinel,
+# every future shell (defer-if-fzf in plugins.toml skips sourcing fzf-tab).
+fzf-tab-off() {
+  mkdir -p "${_zsh_dotfiles_fzf_tab_sentinel:h}"
+  touch "$_zsh_dotfiles_fzf_tab_sentinel"
+  (( $+functions[disable-fzf-tab] )) && disable-fzf-tab
+  # Revert the styles this file set, so stock compsys behaves exactly like the
+  # flag-off render. (fzf-tab's own disable-fzf-tab already restores list-grouped.)
+  zstyle -d ':completion:*:descriptions' format
+  zstyle -d ':completion:*' menu
+  zstyle -d ':completion:*' list-colors
+  print "fzf-tab disabled (persists across shells; run fzf-tab-on to re-enable)"
+}
+
+fzf-tab-on() {
+  rm -f "$_zsh_dotfiles_fzf_tab_sentinel"
+  # enable-fzf-tab only exists if the plugin was sourced; when the sentinel was
+  # present at startup, defer-if-fzf skipped it entirely.
+  if (( $+functions[enable-fzf-tab] )); then
+    _zsh_dotfiles_fzf_tab_styles
+    enable-fzf-tab
+    print "fzf-tab enabled"
+  else
+    print "fzf-tab will load in new shells (run: exec zsh)"
+  fi
+}
+
+# The helpers above are defined unconditionally so a disabled shell can still run
+# fzf-tab-on. Styles apply only when the toggle is not off.
+[[ -f "$_zsh_dotfiles_fzf_tab_sentinel" ]] && return 0
+_zsh_dotfiles_fzf_tab_styles
 ```
 
-Note: `local` is not usable at file scope in zsh — hence the plain variable plus `unset`.
+Notes:
+
+- `local` works here because the tmux-version scratch variable now lives inside a
+  function (the earlier file-scope `unset` dance is gone).
+- `zstyle -d` restores today's state exactly — the repo currently sets **none** of these
+  three styles, so deleting them is a faithful revert, not an approximation.
+- With the sentinel present at startup this file still loads (it is a plain `defer`
+  stanza), but only defines the helpers and returns before touching any zstyle, so stock
+  compsys is unpolluted.
 
 ### 3. Rework `home/dot_sheldon/plugins.toml.tmpl`
 
 **3a.** In `[templates]` (after line 8), add a guard template so fzf-tab is never sourced
-when fzf is missing. `command -v fzf` is evaluated during `eval "$(sheldon source)"`, by
+when fzf is missing **or the user has toggled it off persistently** (the `fzf-tab-off`
+sentinel from step 2). Both checks are evaluated during `eval "$(sheldon source)"`, by
 which point the eager `[plugins.path]` glob has already sourced `home/shell/fzf/path.zsh`.
 
 ```gotmpl
 {{ if .fzf_tab -}}
-defer-if-fzf = { value = 'command -v fzf >/dev/null 2>&1 && zsh-defer source "{{ "{{ file }}" }}"', each = true }
+defer-if-fzf = { value = 'command -v fzf >/dev/null 2>&1 && [[ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/zsh-dotfiles/fzf-tab-disabled" ]] && zsh-defer source "{{ "{{ file }}" }}"', each = true }
 {{ end -}}
 ```
+
+The zsh snippet uses only double quotes, so it stays valid inside the TOML single-quoted
+literal. With the sentinel present, the disabled state is a true "off" — fzf-tab is never
+sourced, not merely loaded-then-disabled. The reordered compinit / zsh-autosuggestions
+lanes still render (they're gated on the chezmoi flag, not the sentinel) but are
+behaviorally neutral; for a byte-exact stock environment, the flag-off render remains the
+gold standard.
 
 **3b.** Immediately **before** `[plugins.zsh-syntax-highlighting]` (currently line 112),
 insert the gated fzf-tab lane:
@@ -341,16 +420,39 @@ the assertion must go through tmux. Follow `test_dotfiles.py::test_aliases`.
   only happens once fzf-tab has sourced against a live compsys.
 - `test_fzf_tab_absent_when_disabled` — skip unless the flag is `false`; assert
   `bindkey '^I'` does **not** contain `fzf-tab-complete`.
-- Mark all three `@pytest.mark.flaky()` and `@pytest.mark.skipif(IN_DOCKER, ...)`, matching
+- `test_fzf_tab_sentinel_skips_sourcing` — skip unless the flag is `true`. Point
+  `XDG_CONFIG_HOME` at a pytest `tmp_path` that already contains
+  `zsh-dotfiles/fzf-tab-disabled` (spawn with
+  `window_shell=f"env XDG_CONFIG_HOME={tmp_path} zsh -i"` so the real `~/.config` is
+  never touched); assert `bindkey '^I'` does **not** report `fzf-tab-complete` and
+  `whence -w disable-fzf-tab` resolves to nothing (the plugin was never sourced), while
+  `whence -w fzf-tab-on` is a function (helpers still defined).
+- `test_fzf_tab_off_on_roundtrip` — skip unless the flag is `true`. Spawn with a clean
+  tmp `XDG_CONFIG_HOME`; send `fzf-tab-off`, assert `bindkey '^I'` is no longer
+  `fzf-tab-complete` and the sentinel file exists under `tmp_path`; send `fzf-tab-on`,
+  assert `fzf-tab-complete` is back and the sentinel is gone.
+- Mark all five `@pytest.mark.flaky()` and `@pytest.mark.skipif(IN_DOCKER, ...)`, matching
   the existing suite's conventions.
 
 ### 7. Validate and document
 
 - Run every command in **Validation Commands** below.
 - Add a short "fzf-tab (optional)" section to `README.md` covering:
-  `chezmoi init --promptBool fzf_tab=true`, the default-off behavior, the F1/F2 group
-  switch, the `/` continuous trigger, Ctrl-Space multi-select, `toggle-fzf-tab`, and the
-  optional manual `build-fzf-tab-module` speedup.
+  - Enabling: `chezmoi init --promptBool fzf_tab=true` (first init) and the default-off
+    behavior.
+  - Daily use: the F1/F2 group switch, the `/` continuous trigger, Ctrl-Space
+    multi-select, and the optional manual `build-fzf-tab-module` speedup.
+  - **Switching back — the three toggle layers, in order:**
+    1. `toggle-fzf-tab` — instant, current shell only (plugin built-in; `disable-fzf-tab`
+       / `enable-fzf-tab` for one-way switches).
+    2. `fzf-tab-off` / `fzf-tab-on` — persistent across all new shells, no chezmoi;
+       backed by `${XDG_CONFIG_HOME:-$HOME/.config}/zsh-dotfiles/fzf-tab-disabled`.
+    3. Full removal — after the first init the flag is stored in
+       `~/.config/chezmoi/chezmoi.yaml`, and because of the `hasKey` pattern,
+       `chezmoi init --promptBool fzf_tab=false` will **not** flip it. Edit
+       `data.fzf_tab: false` in that file, then `chezmoi apply && exec zsh`
+       (or `chezmoi init --data=false` to re-prompt everything). This restores the
+       byte-identical stock config.
 
 ## Testing Strategy
 
@@ -370,6 +472,10 @@ Edge cases the tests must cover:
 - **Flag off** — `plugins.toml` renders byte-identical; `bindkey '^I'` is not fzf-tab.
 - **tmux < 3.2, or no tmux** — `fzf-command` stays unset and fzf renders inline.
 - **`LS_COLORS` set late** — `zstyle -e` defers evaluation past zsh-dircolors-solarized.
+- **Sentinel present at startup** — fzf-tab must never be sourced; helpers still defined;
+  no fzf-tab zstyles leak into stock compsys.
+- **`fzf-tab-off` / `fzf-tab-on` roundtrip** — `^I` and the sentinel file flip together,
+  in the same live shell.
 - **Both sheldon templates in sync** — enforced by `diff`.
 
 ## Acceptance Criteria
@@ -387,6 +493,15 @@ Edge cases the tests must cover:
 - [ ] `chezmoi doctor` reports no template errors.
 - [ ] In a live shell with the flag on, `bindkey '^I'` → `fzf-tab-complete`.
 - [ ] With fzf removed from `$PATH`, fzf-tab is not sourced and Tab still completes.
+- [ ] With the flag on and the sentinel file present, a new shell never sources fzf-tab:
+      `bindkey '^I'` is stock, `disable-fzf-tab` is undefined, and none of the three
+      `:completion:*` styles from `settings.zsh` are set — but `fzf-tab-on` is defined.
+- [ ] `fzf-tab-off` in a live shell restores the pre-fzf-tab `^I` widget, deletes the
+      three zstyles it set, and creates the sentinel; `fzf-tab-on` reverses all of it
+      in-place without a shell restart.
+- [ ] `README.md` documents all three toggle layers, including the
+      `~/.config/chezmoi/chezmoi.yaml` flip path (and why `--promptBool` alone can't
+      flip an already-stored flag).
 - [ ] `make test` passes.
 
 ## Validation Commands
@@ -427,7 +542,23 @@ tmux kill-session -t fzftab-check
 # 6. fzf-missing fallback: fzf-tab must not be sourced, Tab must still work.
 env -i HOME="$HOME" PATH=/usr/bin:/bin zsh -i -c 'bindkey "^I"' | grep -v fzf-tab-complete
 
-# 7. Full suite.
+# 7. Runtime toggle roundtrip (flag on). XDG_CONFIG_HOME points at a temp dir so the
+#    real ~/.config is untouched; deferred plugins need a zle prompt, hence tmux.
+tmpcfg=$(mktemp -d)
+tmux new-session -d -s fzftab-toggle "env XDG_CONFIG_HOME=$tmpcfg zsh -i"
+sleep 3
+tmux send-keys -t fzftab-toggle "fzf-tab-off; bindkey '^I'" Enter
+sleep 1
+tmux capture-pane -p -t fzftab-toggle | tail -3        # expect: NOT fzf-tab-complete
+ls "$tmpcfg/zsh-dotfiles/fzf-tab-disabled"             # expect: sentinel exists
+tmux send-keys -t fzftab-toggle "fzf-tab-on; bindkey '^I'" Enter
+sleep 1
+tmux capture-pane -p -t fzftab-toggle | tail -3        # expect: fzf-tab-complete
+ls "$tmpcfg/zsh-dotfiles/fzf-tab-disabled" 2>&1        # expect: No such file
+tmux kill-session -t fzftab-toggle
+rm -rf "$tmpcfg"
+
+# 8. Full suite.
 make test
 ```
 
@@ -449,5 +580,12 @@ make test
   something to put in the provisioning path.
 - **`setopt AUTO_MENU`** (`home/dot_zshrc.local.tmpl:57`, darwin/arm64 only) becomes inert
   once fzf-tab owns `^I`. Left in place; harmless.
+- **Flipping the flag after the first init is not `--promptBool`.** The `hasKey` pattern
+  means once `fzf_tab` is stored in `~/.config/chezmoi/chezmoi.yaml`, re-running
+  `chezmoi init --promptBool fzf_tab=…` is a no-op (hasKey short-circuits the prompt).
+  Edit `data.fzf_tab` in that file and `chezmoi apply`, or `chezmoi init --data=false` to
+  re-prompt everything. This is also why the runtime toggle layer exists: day-to-day A/B
+  between fzf-tab and stock completion should use `toggle-fzf-tab` (per shell) or
+  `fzf-tab-off` / `fzf-tab-on` (persistent), never a chezmoi round-trip.
 - **Bumping the pin** later means updating `myFzfTabRev` in `home/.chezmoi.yaml.tmpl` and
   running `sheldon lock --update`.
