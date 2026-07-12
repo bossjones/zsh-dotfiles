@@ -1,0 +1,26 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+
+#!/usr/bin/env bash
+# Import iTerm2 preferences (profiles, colors, fonts, global settings) from the
+# chezmoi-managed snapshot into the com.googlecode.iterm2 defaults domain.
+# Re-runs whenever the tracked plist changes:
+# iterm2 settings hash: {{ include "private_dot_config/iterm2/private_com.googlecode.iterm2.plist" | sha256sum }}
+
+set -euo pipefail
+
+PLIST="$HOME/.config/iterm2/com.googlecode.iterm2.plist"
+
+if [ ! -f "$PLIST" ]; then
+  echo "iterm2: $PLIST not found; skipping defaults import" >&2
+  exit 0
+fi
+
+# Importing while iTerm2 is running would be clobbered by cfprefsd when it quits.
+if pgrep -xq iTerm2; then
+  echo "iterm2: iTerm2 is running; skipping defaults import (quit iTerm2 and re-run chezmoi apply)" >&2
+  exit 0
+fi
+
+defaults import com.googlecode.iterm2 "$PLIST"
+echo "iterm2: imported preferences from $PLIST"
+{{ end -}}
