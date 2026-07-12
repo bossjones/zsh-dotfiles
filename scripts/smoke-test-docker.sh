@@ -31,6 +31,9 @@ case "$VERSION_MANAGER" in
 esac
 export VERSION_MANAGER
 
+# Avoid Homebrew's interactive "ask mode" confirmation for brew install below
+export HOMEBREW_NO_ASK=1
+
 log_info() { echo -e "${BLUE}ℹ️  $1${RESET}"; }
 log_success() { echo -e "${GREEN}✅ $1${RESET}"; }
 log_warning() { echo -e "${YELLOW}⚠️  $1${RESET}"; }

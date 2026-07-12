@@ -39,6 +39,9 @@ fi
 echo -e "${GREEN}✓ Homebrew is installed${NC}"
 echo ""
 
+# Avoid Homebrew's interactive "ask mode" confirmation for every install below
+export HOMEBREW_NO_ASK=1
+
 # Install Sheldon if missing
 echo -e "${BLUE}Checking Sheldon...${NC}"
 if [[ ! -f "$HOME/.local/bin/sheldon" ]]; then

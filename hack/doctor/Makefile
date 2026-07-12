@@ -75,7 +75,7 @@ install-chezmoi: ## Install Chezmoi dotfile manager
 install-asdf: ## Install ASDF version manager
 	@if ! command -v asdf &> /dev/null; then \
 		echo "$(YELLOW)Installing ASDF...$(NC)"; \
-		brew install asdf; \
+		HOMEBREW_NO_ASK=1 brew install asdf; \
 		echo "$(GREEN)✓ ASDF installed$(NC)"; \
 		echo "$(YELLOW)⚠ Add this to your ~/.zshrc:$(NC)"; \
 		echo "  . $$(brew --prefix asdf)/libexec/asdf.sh"; \
