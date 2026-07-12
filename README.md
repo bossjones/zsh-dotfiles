@@ -115,6 +115,7 @@ All prompts surfaced during first-time `chezmoi init`. Cached answers from a pre
 | `cuda` | bool | `false` | Install CUDA support |
 | `fnm` | bool | `false` | Install fnm (Fast Node Manager) |
 | `opencv` | bool | `false` | Install OpenCV system dependencies |
+| `fzf_tab` | bool | `false` | Replace zsh's completion menu with an fzf selector ([fzf-tab](https://github.com/Aloxaf/fzf-tab)) |
 
 ---
 
@@ -155,6 +156,57 @@ The main tools and features installed and configured by this repo. Optional feat
 | **krew** | kubectl plugin manager *(optional — `k8s` prompt)* |
 | **kubectx** | Switch between Kubernetes contexts *(optional — `k8s` prompt)* |
 | **opa** | Open Policy Agent CLI *(optional — `k8s` prompt)* |
+| **fzf-tab** | fzf-powered Tab completion *(optional — `fzf_tab` prompt)* |
+
+---
+
+## fzf-tab (optional)
+
+[fzf-tab](https://github.com/Aloxaf/fzf-tab) replaces zsh's completion menu with an fzf
+selector. It is **off by default** and gated behind the `fzf_tab` chezmoi flag; with the
+flag off, the rendered shell configuration is byte-identical to a checkout without the
+feature.
+
+> Full tutorial (activation, keybindings, toggling, troubleshooting): [docs/fzf-tab.md](docs/fzf-tab.md)
+
+### Enabling
+
+```bash
+chezmoi init --promptBool fzf_tab=true   # first init (or non-TTY / CI)
+chezmoi apply
+exec zsh
+```
+
+Requires `fzf` on `$PATH` (already provisioned by this repo). If fzf is missing, fzf-tab
+is never sourced and stock Tab completion keeps working.
+
+### Daily use
+
+- **Tab** opens the fzf selector; type to filter, **Enter** accepts.
+- **F1 / F2** switch between completion groups (e.g. files vs. options).
+- **/** (continuous trigger) accepts the current match and immediately re-triggers
+  completion — handy for descending directories.
+- **Ctrl-Space** multi-selects candidates.
+- Inside tmux ≥ 3.2 the selector renders in a tmux popup (`ftb-tmux-popup`); elsewhere it
+  falls back to inline fzf.
+- Optional speedup for very large directories: run `build-fzf-tab-module` once by hand
+  and restart zsh (needs a C toolchain, git, and network; deliberately not part of
+  provisioning).
+
+### Switching back — three toggle layers, cheapest first
+
+1. **`toggle-fzf-tab`** — plugin built-in, instant, current shell only
+   (`disable-fzf-tab` / `enable-fzf-tab` for one-way switches).
+2. **`fzf-tab-off` / `fzf-tab-on`** — persistent across all new shells, no chezmoi.
+   Backed by the sentinel file
+   `${XDG_CONFIG_HOME:-$HOME/.config}/zsh-dotfiles/fzf-tab-disabled`; while it exists,
+   new shells never even source fzf-tab.
+3. **Full removal** — after the first init the flag is stored in
+   `~/.config/chezmoi/chezmoi.yaml`, and because of the `hasKey` pattern a later
+   `chezmoi init --promptBool fzf_tab=false` will **not** flip it (stored keys
+   short-circuit the prompt). Edit `data.fzf_tab: false` in that file, then
+   `chezmoi apply && exec zsh` (or `chezmoi init --data=false` to re-prompt
+   everything). This restores the byte-identical stock config.
 
 ---
 

@@ -16,6 +16,8 @@
 {{- $fnm := false -}}
 {{/* If this machine should use cuda */}}
 {{- $cuda := false -}}
+{{/* If this machine should use fzf-tab completion */}}
+{{- $fzf_tab := false -}}
 {{/* Which runtime version manager to provision (asdf or mise) */}}
 {{- $version_manager := "asdf" -}}
 {{- "" -}}
@@ -106,6 +108,15 @@
 {{-   $version_manager = promptString "version_manager" $version_manager -}}
 {{- end -}}
 
+{{- /* fzf_tab: kept outside `if $interactive` so non-TTY `--promptBool fzf_tab=…`
+       (Docker smoke / CI) matches. In non-TTY runs promptBool returns the
+       --promptBool value or the default. */ -}}
+{{- if hasKey . "fzf_tab" -}}
+{{-   $fzf_tab = .fzf_tab -}}
+{{- else -}}
+{{-   $fzf_tab = promptBool "fzf_tab" $fzf_tab -}}
+{{- end -}}
+
 {{- if $interactive -}}
 {{-   writeToStdout "💡 Tip: you can re-enter your name and email with `chezmoi init --data=false`.\n" -}}
 {{- end -}}
@@ -127,7 +138,9 @@ data:
   opencv: {{ $opencv }}
   fnm: {{ $fnm }}
   version_manager: {{ $version_manager | quote }}
+  fzf_tab: {{ $fzf_tab }}
   myFzfVersion: "0.73.1"
+  myFzfTabRev: "24105b15714bfec37989ed5c5b6e60f572253019"
   mySheldonVersion: "0.6.6"
   myAsdfVersion: "v0.11.2"
   myRubyVersion: "4.0.1"
