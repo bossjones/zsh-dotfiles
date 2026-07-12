@@ -4,6 +4,8 @@
 
 # Install wtp (Worktree Plus) on macOS via Homebrew
 
+export HOMEBREW_NO_ASK=1
+
 if [ -z "$(command -v wtp 2>/dev/null)" ]; then
     (
         set -x; printf ">>> wtp not found, installing via Homebrew\n" &&

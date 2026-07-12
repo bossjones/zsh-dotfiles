@@ -31,6 +31,9 @@ case "$VERSION_MANAGER" in
 esac
 export VERSION_MANAGER
 
+# Avoid Homebrew's interactive "ask mode" confirmation for brew install below
+export HOMEBREW_NO_ASK=1
+
 log_info() { echo -e "${BLUE}ℹ️  $1${RESET}"; }
 log_success() { echo -e "${GREEN}✅ $1${RESET}"; }
 log_warning() { echo -e "${YELLOW}⚠️  $1${RESET}"; }
@@ -255,8 +258,8 @@ setup_version_manager() {
         export PATH="${HOME}/.asdf/bin:${HOME}/.asdf/shims:${PATH}"
 
         if command -v asdf &> /dev/null && [[ -n "$OPENSSL3_PREFIX" ]]; then
-            log_info "Installing Ruby 3.2.1 via asdf with OpenSSL 3..."
-            asdf install ruby 3.2.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
+            log_info "Installing Ruby 4.0.1 via asdf with OpenSSL 3..."
+            asdf install ruby 4.0.1 -- --with-openssl-dir="${OPENSSL3_PREFIX}" || true
         fi
 
         log_info "ASDF_DIR=$ASDF_DIR"
@@ -267,12 +270,12 @@ setup_version_manager() {
             log_info "Activating mise..."
             eval "$(mise activate bash)"
 
-            log_info "Installing Ruby 3.2.1 via mise..."
+            log_info "Installing Ruby 4.0.1 via mise..."
             if [[ -n "$OPENSSL3_PREFIX" ]]; then
                 RUBY_CONFIGURE_OPTS="--with-openssl-dir=${OPENSSL3_PREFIX}" \
-                    mise use -g ruby@3.2.1 || true
+                    mise use -g ruby@4.0.1 || true
             else
-                mise use -g ruby@3.2.1 || true
+                mise use -g ruby@4.0.1 || true
             fi
         else
             log_warning "mise not found on PATH — skipping ruby install"

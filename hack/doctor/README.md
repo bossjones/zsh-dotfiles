@@ -87,7 +87,7 @@ Verifies the following tools and their versions:
 | mkcert | 1.4.4 |
 | neovim | 0.11.3 |
 | opa | 0.62.1 |
-| ruby | 3.2.1 |
+| ruby | 4.0.1 |
 | shellcheck | 0.10.0 |
 | shfmt | 3.7.0 |
 | tmux | 3.5a |

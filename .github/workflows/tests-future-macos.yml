@@ -129,7 +129,7 @@ jobs:
       - name: Install Ruby/OpenSSL3 build deps (future macOS) [${{ matrix.os }}]
         run: |
           brew install rbenv/tap/openssl@1.1 || true
-          # Compile-time deps for asdf/mise Ruby 3.2.1 build with OpenSSL 3
+          # Compile-time deps for asdf/mise Ruby 4.0.1 build with OpenSSL 3
           brew install rust gnu-getopt pkg-config cmake libffi bzip2 xz zlib sqlite3 readline libyaml gmp autoconf || true
 
       - name: Full chezmoi init + apply [${{ matrix.os }}, ${{ matrix.version_manager }}]

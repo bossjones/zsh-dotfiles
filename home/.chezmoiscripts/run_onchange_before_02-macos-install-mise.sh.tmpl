@@ -6,6 +6,7 @@
 printf "${green}[02 - macos] ${reset}"
 echo "Install mise"
 
+export HOMEBREW_NO_ASK=1
 command -v mise >/dev/null 2>&1 || brew install mise || true
 
 {{ end -}}

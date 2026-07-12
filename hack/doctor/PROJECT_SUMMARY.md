@@ -88,7 +88,7 @@ make test
 | helm | 3.14.2 | Kubernetes package manager |
 | k9s | 0.32.4 | Kubernetes TUI |
 | neovim | 0.11.3 | Modern Vim |
-| ruby | 3.2.1 | Ruby language |
+| ruby | 4.0.1 | Ruby language |
 | shellcheck | 0.10.0 | Shell script linter |
 | shfmt | 3.7.0 | Shell formatter |
 | tmux | 3.5a | Terminal multiplexer |
