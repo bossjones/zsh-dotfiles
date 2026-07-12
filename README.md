@@ -65,6 +65,7 @@ Read the deep dive in **[docs/architecture.md](docs/architecture.md)** and the e
 | ⚡ [Shell Loading](docs/shell-loading.md) | The deferred sheldon pipeline — load order, defer tiers, the `env.zsh`/`path.zsh` glob convention |
 | 🎚️ [Feature Flags](docs/feature-flags.md) | Every prompt, boolean, install-time `ZSH_DOTFILES_*` var, and runtime toggle — including which flags are **inert** |
 | 🔀 [Version Managers](docs/version-managers.md) | The asdf ⇄ mise toggle threaded end-to-end, plus the pinned tool-version matrix |
+| ⌨️ [fzf-tab](docs/fzf-tab.md) | The optional `fzf_tab` feature flag — fzf-powered Tab completion, off by default |
 | 📦 [Provisioning Scripts](docs/provisioning-scripts.md) | The chezmoi `run_` lifecycle and every provisioning script by phase |
 | 🖥️ [iTerm2 &amp; macOS](docs/iterm2-and-macos.md) | The self-verifying iTerm2 settings importer, Nerd Fonts, and `~/.osx` |
 | 🧪 [Testing &amp; CI](docs/testing-and-ci.md) | pytest + libtmux, Docker smoke lanes, the 5 GitHub workflows and 8-cell matrix |
@@ -96,7 +97,7 @@ Runtime version management — pick one at install time (see [Version Managers](
 
 Both provision pinned versions of Go, Ruby, Node, Neovim, tmux, shellcheck/shfmt, the Kubernetes toolchain, and more — the exact matrix lives in [docs/version-managers.md](docs/version-managers.md#pinned-tool-versions).
 
-Optional features are prompted at init. **Note:** of the seven boolean prompts, only `pyenv`, `opencv`, and `cuda` currently change what's installed; `ruby`, `nodejs`, `k8s`, and `fnm` are recorded but not yet wired to any template — see [Feature Flags](docs/feature-flags.md#chezmoi-feature-booleans) and [Gotchas](docs/gotchas.md#6-several-feature-flags-are-inert).
+Optional features are prompted at init. **Note:** of the eight boolean prompts, `pyenv`, `opencv`, `cuda`, and `fzf_tab` are live (they change your rendered config); `ruby`, `nodejs`, `k8s`, and `fnm` are recorded but not yet wired to any template — see [Feature Flags](docs/feature-flags.md#chezmoi-feature-booleans) and [Gotchas](docs/gotchas.md#6-several-feature-flags-are-inert). The newest, [`fzf_tab`](docs/fzf-tab.md), is off by default and swaps zsh's completion menu for an fzf selector when enabled.
 
 ---
 

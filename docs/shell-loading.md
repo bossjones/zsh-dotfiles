@@ -128,6 +128,16 @@ sequenceDiagram
 
 ---
 
+## Optional: the fzf-tab lane
+
+The order above is the **default** (`fzf_tab` off). Enabling the [`fzf_tab`](fzf-tab.md) feature flag rewrites part of the pipeline so [fzf-tab](https://github.com/Aloxaf/fzf-tab) can bind Tab correctly:
+
+- `compinit` **relocates** — from its default spot near the end (step 20) up to just after `boss-git-zsh-plugin` and before `zsh-syntax-highlighting`, because fzf-tab must load *after* `compinit` but *before* the widget wrappers (`zsh-syntax-highlighting` / `zsh-autosuggestions` / `fast-syntax-highlighting`).
+- A `fzf-tab-settings` module (`home/shell/fzf-tab/settings.zsh`) loads just before it, and `fzf-tab` itself loads via a fourth template, `defer-if-fzf`, which also honors a runtime kill-switch file `~/.config/zsh-dotfiles/fzf-tab-disabled`.
+- `zsh-autosuggestions` becomes **deferred** (it's immediate in the default layout).
+
+With the flag off, none of this is emitted and your `~/.sheldon/plugins.toml` is byte-identical to a checkout without the feature. Full details in **[docs/fzf-tab.md](fzf-tab.md)**.
+
 ## OS and distro conditionals
 
 `plugins.toml.tmpl` is itself a chezmoi Go template, so the plugin *set* is machine-specific:

@@ -19,18 +19,19 @@ These boolean flags are collected by `home/.chezmoi.yaml.tmpl` and stored in you
 `data:`. Each is prompted with `promptBool` in interactive runs (default `false`).
 
 > ⚠️ **Not every flag is wired up.** Toggling a flag only matters if some template actually
-> reads it. As of this writing, only **`pyenv`**, **`opencv`**, and **`cuda`** are consumed by
-> any `.tmpl`; **`ruby`, `nodejs`, `k8s`, and `fnm` are recorded but inert** — no template
-> reads them, so flipping them changes nothing about what gets installed. This is verifiable
-> with `grep -rl '\.<flag>' home/ --include='*.tmpl'`. See [Gotchas](gotchas.md#6-several-feature-flags-are-inert)
-> for the full analysis. The table's **Actually consumed by** column reflects the *verified*
-> reality, not the original intent.
+> reads it. As of this writing, **`pyenv`**, **`opencv`**, **`cuda`**, and **`fzf_tab`** are
+> consumed by a `.tmpl`; **`ruby`, `nodejs`, `k8s`, and `fnm` are recorded but inert** — no
+> template reads them, so flipping them changes nothing about what gets installed. This is
+> verifiable with `grep -rl '\.<flag>' home/ --include='*.tmpl'`. See
+> [Gotchas](gotchas.md#6-several-feature-flags-are-inert) for the full analysis. The table's
+> **Actually consumed by** column reflects the *verified* reality, not the original intent.
 
 | Flag | Default | Status | Actually consumed by (verified) |
 |------|---------|--------|---------------------------------|
 | `pyenv` | `false` | ✅ **Live** | `home/compat.sh.tmpl`, `home/compat.bash.tmpl`, `home/.chezmoiscripts/run_onchange_before_02-macos-install-pyenv.sh.tmpl`, `run_before-00-prereq-{centos,ubuntu}-pyenv.sh.tmpl` |
 | `opencv` | `false` | ✅ **Live (Linux)** | `home/.chezmoiscripts/run_onchange_before_02-{centos,ubuntu}-install-opencv-deps.sh.tmpl` |
 | `cuda` | `false` | ✅ **Live (Ubuntu/Oracle)** | `home/dot_sheldon/plugins.toml.tmpl`, `home/private_dot_config/sheldon/plugins.toml.tmpl` (loads the `cuda` module) |
+| `fzf_tab` | `false` | ✅ **Live** | `home/dot_sheldon/plugins.toml.tmpl` (+ `private_dot_config/sheldon/`) — gates the fzf-tab plugin lane. Env override `CM_fzf_tab=true`; runtime kill-switch file `~/.config/zsh-dotfiles/fzf-tab-disabled`. See [fzf-tab](fzf-tab.md) |
 | `ruby` | `false` | ⚠️ **Inert** | *(no `.tmpl` reads `.ruby`)* |
 | `nodejs` | `false` | ⚠️ **Inert** | *(no `.tmpl` reads `.nodejs`)* |
 | `k8s` | `false` | ⚠️ **Inert** | *(no `.tmpl` reads `.k8s`)* |

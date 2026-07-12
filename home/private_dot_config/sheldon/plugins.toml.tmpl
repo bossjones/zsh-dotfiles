@@ -1,3 +1,6 @@
+{{- /* fzf_tab may be absent from configs generated before the flag existed
+       (chezmoi renders with missingkey=error), so guard with hasKey. */ -}}
+{{- $fzfTab := and (hasKey . "fzf_tab") .fzf_tab -}}
 # Sheldon configuration file
 #
 # See https://rossmacarthur.github.io/sheldon/
@@ -6,7 +9,9 @@
 defer = { value = 'zsh-defer source "{{ "{{ file }}" }}"', each = true }
 defer-more = { value = 'zsh-defer -t 0.5 source "{{ "{{ file }}" }}"', each = true }
 ffpath = { value = 'fpath+="{{ "{{ dir }}/functions" }}" && autoload -U "{{ "{{ dir }}" }}"/functions/*(.:t)', each = true }
-
+{{ if $fzfTab -}}
+defer-if-fzf = { value = 'command -v fzf >/dev/null 2>&1 && [[ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/zsh-dotfiles/fzf-tab-disabled" ]] && zsh-defer source "{{ "{{ file }}" }}"', each = true }
+{{ end }}
 [plugins]
 
 ###################
@@ -109,6 +114,28 @@ apply = ["defer"]
 # use = ["**/python/*.plugin.zsh"]
 # apply = ["defer"]
 #######################################################
+{{ if $fzfTab -}}
+###################
+# fzf-tab lane: styles -> compinit -> fzf-tab, all ahead of the widget wrappers.
+# fzf-tab must load after compinit but before zsh-autosuggestions /
+# zsh-syntax-highlighting / fast-syntax-highlighting, and must be the last
+# plugin to bind ^I (the eager `boss_fzf` inline binding runs first).
+###################
+[plugins.fzf-tab-settings]
+local = "~/.local/share/chezmoi/home/shell/fzf-tab"
+use = ["settings.zsh"]
+apply = ["defer"]
+
+[plugins.compinit]
+local = "~/.local/share/chezmoi/home/shell"
+apply = ["defer"]
+
+[plugins.fzf-tab]
+github = "Aloxaf/fzf-tab"
+rev = "{{ .myFzfTabRev }}"
+apply = ["defer-if-fzf"]
+
+{{ end -}}
 [plugins.zsh-syntax-highlighting]
 github = "zsh-users/zsh-syntax-highlighting"
 apply = ["defer"]
@@ -116,7 +143,8 @@ apply = ["defer"]
 [plugins.zsh-autosuggestions]
 github = "zsh-users/zsh-autosuggestions"
 use = ["{{- "{{ name }}.zsh" }}"]
-
+{{ if $fzfTab }}apply = ["defer"]
+{{ end }}
 [plugins.zsh-hooks]
 github = "zsh-hooks/zsh-hooks"
 use = ["{{- "{{ name }}.plugin.zsh" }}"]
@@ -160,6 +188,7 @@ use = ["zsh-dircolors-solarized.zsh"]
 apply = ["defer-more"]
 #######################################################
 
+{{ if not $fzfTab -}}
 [plugins.compinit]
 local = "~/.local/share/chezmoi/home/shell"
 apply = ["defer"]
@@ -168,6 +197,7 @@ apply = ["defer"]
 # github = "Aloxaf/fzf-tab"
 # apply = ["defer"]
 
+{{ end -}}
 ###################
 # Deferred more
 ###################
