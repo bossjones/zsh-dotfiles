@@ -45,6 +45,20 @@ repos:
     hooks:
       - id: prettier
         types_or: [yaml, json]
+        # JSONC files are hand-formatted (comment placement, aligned trailing comments).
+        exclude: &jsonc_files ^(\.devcontainer/devcontainer\.json|home/private_dot_config/cmux/private_cmux\.json)$
+
+  # There is no upstream check-jsonc hook (pre-commit-hooks#695, #1196 are still open),
+  # so JSONC files get this one: comments and trailing commas are allowed, everything
+  # else is still strict JSON. Read-only -- it never rewrites the files.
+  - repo: local
+    hooks:
+      - id: check-jsonc
+        name: check jsonc
+        description: Validate JSON-with-comments files
+        entry: python scripts/check-jsonc.py
+        language: python
+        files: *jsonc_files
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -52,7 +66,8 @@ repos:
       # Simply check whether files parse as valid python.
       - id: check-ast
       - id: check-json
-        exclude: ^\.devcontainer/devcontainer\.json$
+        # These two are JSONC; check-jsonc validates them instead.
+        exclude: *jsonc_files
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
