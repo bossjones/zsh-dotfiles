@@ -58,7 +58,7 @@ jobs:
           cache-dependency-path: "requirements-test.txt"
 
       - name: Set up Go 1.20.5 [${{ matrix.os }}, py${{ matrix.python-version }}]
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: "1.20.5"
       - name: Verify Go installation [${{ matrix.os }}]
