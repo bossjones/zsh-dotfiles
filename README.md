@@ -112,7 +112,7 @@ Optional features are prompted at init. **Note:** of the eight boolean prompts, 
 │   ├── .chezmoi.yaml.tmpl    # feature flags + pinned tool versions
 │   ├── .chezmoiscripts/      # run_ provisioning scripts (per-OS, ordered)
 │   ├── .chezmoiexternal.yaml # git externals (oh-my-tmux, boss-cheatsheets)
-│   └── private_dot_config/   # ~/.config payloads (iterm2, sheldon, ghostty, cmux)
+│   └── private_dot_config/   # ~/.config payloads (iterm2, sheldon, ghostty, cmux, ccstatusline)
 ├── docs/                     # ← this documentation set
 ├── scripts/                  # PEP 723 helper scripts (backup-dotfiles, check-jsonc)
 ├── ai_docs/                  # generated notes: reports/, workflows/, cheatsheets/

@@ -45,8 +45,13 @@ repos:
     hooks:
       - id: prettier
         types_or: [yaml, json]
-        # JSONC files are hand-formatted (comment placement, aligned trailing comments).
-        exclude: &jsonc_files ^(\.devcontainer/devcontainer\.json|home/private_dot_config/cmux/private_cmux\.json)$
+        # Two kinds of file opt out of reformatting:
+        #   - JSONC files are hand-formatted (comment placement, aligned trailing comments).
+        #   - ccstatusline rewrites its settings.json on every TUI save as
+        #     JSON.stringify(settings, null, 2). Reformatting it here (prettier collapses
+        #     single-element arrays onto one line) would make every save show up as
+        #     chezmoi drift for zero semantic change. See test_ccstatusline_settings.py.
+        exclude: ^(\.devcontainer/devcontainer\.json|home/private_dot_config/cmux/private_cmux\.json|home/private_dot_config/ccstatusline/settings\.json)$
 
   # There is no upstream check-jsonc hook (pre-commit-hooks#695, #1196 are still open),
   # so JSONC files get this one: comments and trailing commas are allowed, everything
@@ -58,7 +63,7 @@ repos:
         description: Validate JSON-with-comments files
         entry: python scripts/check-jsonc.py
         language: python
-        files: *jsonc_files
+        files: &jsonc_files ^(\.devcontainer/devcontainer\.json|home/private_dot_config/cmux/private_cmux\.json)$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -72,6 +77,9 @@ repos:
       - id: check-merge-conflict
       - id: check-symlinks
       - id: end-of-file-fixer
+        # JSON.stringify emits no trailing newline; adding one here would be permanent
+        # one-byte chezmoi drift against what ccstatusline writes.
+        exclude: ^home/private_dot_config/ccstatusline/settings\.json$
       - id: mixed-line-ending
       - id: trailing-whitespace
 
