@@ -6,16 +6,16 @@ pre-commit:
 	uv run pre-commit run -a
 
 test:
-	py.test --tb=short --no-header --showlocals --reruns 6 test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
+	py.test --tb=short --no-header --showlocals --reruns 6 test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py test_ccstatusline_settings.py
 
 test-pdb:
-	py.test --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
+	py.test --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py test_ccstatusline_settings.py
 
 uv-test:
-	uv run pytest -vvvv --tb=short --no-header --showlocals --reruns 6 --durations-min=0.05 --durations=10 test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
+	uv run pytest -vvvv --tb=short --no-header --showlocals --reruns 6 --durations-min=0.05 --durations=10 test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py test_ccstatusline_settings.py
 
 uv-test-pdb:
-	uv run pytest --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py
+	uv run pytest --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py test_ccstatusline_settings.py
 
 .PHONY: update-cursor-rules
 update-cursor-rules:  ## Update cursor rules from prompts/drafts/cursor_rules
