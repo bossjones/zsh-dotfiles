@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1.4
+# GPU / driver-compatibility verification container (REQUIRES a GPU).
+#
+# Answers the question no CPU-only test can: does a binary built with CUDA
+# toolkit <X> actually RUN on the driver installed on this host? Because the
+# container runtime injects the HOST driver, this is a faithful rehearsal of a
+# toolkit upgrade before installing anything on the host.
+#
+# Requires nvidia-container-toolkit on the host. Two ways to expose the GPU:
+#
+#   CDI (preferred; no daemon.json edit, no docker restart -- Docker 25+):
+#     sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+#     docker run --rm --device nvidia.com/gpu=all zsh-dotfiles-gpu
+#
+#   nvidia runtime (needs `nvidia-ctk runtime configure` + daemon restart):
+#     docker run --rm --gpus all zsh-dotfiles-gpu
+#
+# Usage:
+#   make smoke-gpu                                        # build + run (CDI)
+#   make smoke-gpu-shell                                  # interactive
+#   make smoke-gpu CUDA_IMAGE=nvidia/cuda:12.1.0-devel-ubuntu22.04   # other toolkit
+#
+# Pick CUDA_IMAGE to match the toolkit you intend to install on the host. The
+# script reports the driver's CUDA API level and fails loudly if the toolkit is
+# too new for it.
+ARG CUDA_IMAGE=nvidia/cuda:13.0.0-devel-ubuntu22.04
+FROM ${CUDA_IMAGE}
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TERM=xterm-256color
+
+# zsh/dash/bash are here for poking at the shell modules by hand in
+# `make smoke-gpu-shell`, e.g.:
+#     source /tmp/dotfiles/home/shell/cuda/custom.zsh && echo $CUDA_HOME
+#
+# Note: scripts/cuda-verify-config.sh does NOT work in this image, and that is
+# expected. It assumes a clean slate and drives its own staged apt install/purge
+# sequence; this base image already ships a CUDA install at /usr/local/cuda, so
+# its Stage 0 ("nothing installed") is false from the start and the staged
+# installs conflict. Use Dockerfile.cuda for module verification and this image
+# only for driver/runtime compatibility.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        zsh dash bash \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . /tmp/dotfiles
+WORKDIR /tmp/dotfiles
+
+CMD ["/tmp/dotfiles/scripts/cuda-verify-gpu.sh"]
