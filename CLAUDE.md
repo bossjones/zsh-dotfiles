@@ -12,7 +12,18 @@ A comprehensive dotfiles management system using **chezmoi** for ZSH configurati
 ```bash
 make test           # Run pytest with retries and tmux-based integration tests
 make test-pdb       # Run tests with debugger (bpdb)
+make smoke-cuda     # Verify home/shell/cuda/* shell modules against real NVIDIA apt packages (no GPU needed)
+make smoke-gpu      # Verify a CUDA toolkit against the host's real driver in a container (GPU required)
 ```
+
+> **`home/shell/cuda/` has no CI coverage.** The GitHub Actions matrix is macOS-only, and the
+> `cuda` sheldon plugin is gated on `.chezmoi.os == "linux"`, so no CI job ever sources
+> `custom.zsh`/`posix-env.sh`. `make smoke-cuda`/`make smoke-gpu` (see
+> [docs/testing-and-ci.md](docs/testing-and-ci.md#cuda--gpu-verification-rigs)) are the only real
+> gate for that code — run them after touching those files. `ZSH_DOTFILES_CUDA_ROOT` overrides the
+> toolkit search prefix, which is the hook for testing the resolution logic against a throwaway
+> directory instead of `/usr/local`. `LD_LIBRARY_PATH` is intentionally never set by these modules —
+> see the comment header in `home/shell/cuda/custom.zsh`.
 
 ### Development Tasks
 ```bash
