@@ -175,6 +175,21 @@ def test_discover_targets_static_fallback(
     assert len(paths) == len(mod.STATIC_TARGETS)
 
 
+def test_static_fallback_includes_non_dotfile_targets(
+    mod: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """~/compat.sh and ~/compat.bash are managed but have no leading dot.
+
+    They render from home/compat.sh.tmpl and home/compat.bash.tmpl and are sourced
+    by ~/.profile and ~/.bashrc. Being the only non-dot entries, they were omitted
+    from the original static list; this guards the regression.
+    """
+    monkeypatch.setattr(mod, "_run_chezmoi", lambda args: None)
+    paths, _ = mod.discover_targets()
+    for target in ("~/compat.sh", "~/compat.bash"):
+        assert Path(target).expanduser() in paths, f"{target} missing from static list"
+
+
 # --------------------------------------------------------------------------- #
 # do_backup
 # --------------------------------------------------------------------------- #
