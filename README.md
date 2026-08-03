@@ -97,7 +97,7 @@ Runtime version management — pick one at install time (see [Version Managers](
 
 Both provision pinned versions of Go, Ruby, Node, Neovim, tmux, shellcheck/shfmt, the Kubernetes toolchain, and more — the exact matrix lives in [docs/version-managers.md](docs/version-managers.md#pinned-tool-versions).
 
-Optional features are prompted at init. **Note:** of the eight boolean prompts, `pyenv`, `opencv`, `cuda`, and `fzf_tab` are live (they change your rendered config); `ruby`, `nodejs`, `k8s`, and `fnm` are recorded but not yet wired to any template — see [Feature Flags](docs/feature-flags.md#chezmoi-feature-booleans) and [Gotchas](docs/gotchas.md#6-several-feature-flags-are-inert). The newest, [`fzf_tab`](docs/fzf-tab.md), is off by default and swaps zsh's completion menu for an fzf selector when enabled.
+Optional features are prompted at init. **Note:** of the eight boolean prompts, `pyenv`, `opencv`, and `fzf_tab` are live (they change your rendered config); `ruby`, `nodejs`, `k8s`, `fnm`, and `cuda` are recorded but not yet wired to any template — see [Feature Flags](docs/feature-flags.md#chezmoi-feature-booleans) and [Gotchas](docs/gotchas.md#6-several-feature-flags-are-inert). The newest, [`fzf_tab`](docs/fzf-tab.md), is off by default and swaps zsh's completion menu for an fzf selector when enabled.
 
 ---
 

@@ -17,7 +17,7 @@
 | 3 | `pytest-rerunfailures` pinned twice in [`requirements-test.txt`](../requirements-test.txt) | Harmless but sloppy | Delete the duplicate line |
 | 4 | [`run_onchange_before_99-macos-osx-settings.sh.tmpl`](../home/.chezmoiscripts/run_onchange_before_99-macos-osx-settings.sh.tmpl) is a comment-only stub | Implies macOS defaults auto-apply; they don't | Wire up `~/.osx --no-restart`, or remove the stub |
 | 5 | README structure tree had stale paths | Confusing onboarding | Addressed in this docs pass |
-| 6 | `ruby`, `nodejs`, `k8s`, `fnm` feature flags are **inert** — recorded in chezmoi data but read by no template | Toggling them silently does nothing | Wire them to real gates, or drop the prompts |
+| 6 | `ruby`, `nodejs`, `k8s`, `fnm`, `cuda` feature flags are **inert** — recorded in chezmoi data but read by no template | Toggling them silently does nothing | Wire them to real gates, or drop the prompts |
 | 7 | `run_before-00-*` / `run_after-00-*` scripts use a **hyphen**, not the `before_`/`after_` underscore chezmoi requires | They run in the "during" bucket, interleaved with file writes — not strictly before/after | Rename to `run_before_00-…` / `run_after_00-…` |
 
 ---
@@ -85,7 +85,7 @@ The previous `README.md` structure tree referenced `ai_docs/summaries/` (the rea
 
 ## 6. Several feature flags are inert
 
-Of the seven boolean feature flags collected at `chezmoi init` (`ruby`, `pyenv`, `nodejs`, `k8s`, `opencv`, `fnm`, `cuda`), **four are never read by any template**. They are dutifully stored in `~/.config/chezmoi/chezmoi.yaml` but consulted by nothing, so toggling them has no effect.
+Of the seven boolean feature flags collected at `chezmoi init` (`ruby`, `pyenv`, `nodejs`, `k8s`, `opencv`, `fnm`, `cuda`), **five are never read by any template**. They are dutifully stored in `~/.config/chezmoi/chezmoi.yaml` but consulted by nothing, so toggling them has no effect.
 
 Verify it yourself — only `.tmpl` files can act on a flag:
 
@@ -99,7 +99,7 @@ done
 |------|--------------------|---------|
 | `pyenv` | ✅ 5 files (compat scripts + install scripts) | **Live** — a real, cross-cutting gate |
 | `opencv` | ✅ 2 Linux install scripts | **Live** on Linux only |
-| `cuda` | ✅ sheldon `plugins.toml.tmpl` (×2) | **Live** (and the `cuda` module is itself Ubuntu/Oracle-gated) |
+| `cuda` | ❌ none | **Inert** — the `cuda` shell module is gated on `.chezmoi.os` + `.chezmoi.osRelease.name`, never on `.cuda` |
 | `ruby` | ❌ none | **Inert** |
 | `nodejs` | ❌ none | **Inert** |
 | `k8s` | ❌ none | **Inert** — the only `.k8s` hit in the tree is `events.k8s.io` inside a kubectl loop |
