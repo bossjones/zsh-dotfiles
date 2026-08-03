@@ -43,6 +43,7 @@ The [tutorial track](tutorials/README.md) is a numbered, goal-oriented path — 
 | 04 | [Switch version manager](tutorials/04-switch-version-manager.md) | A shell running on mise |
 | 05 | [Run smoke tests locally](tutorials/05-run-smoke-tests-locally.md) | CI parity on your laptop |
 | 06 | [Customize iTerm2](tutorials/06-customize-iterm2.md) | Version-controlled terminal settings |
+| 07 | [Verify CUDA before applying](tutorials/07-verify-cuda-before-applying.md) | Confidence in your CUDA/driver state before changing it |
 
 ## Conventions
 
