@@ -28,6 +28,77 @@ services:
       - HOMEBREW_NO_ANALYTICS=1
       - VERSION_MANAGER=${VERSION_MANAGER:-asdf}
 
+  # CUDA shell-module verification against real NVIDIA apt packages (no GPU).
+  # Jammy on purpose: NVIDIA's repos are per-distro and the host is 22.04.
+  cuda-verify:
+    build:
+      context: .
+      dockerfile: Dockerfile.cuda
+      args:
+        CUDA_SERIES: ${CUDA_SERIES:-13-0}
+    container_name: dotfiles-cuda-verify
+    environment:
+      - TERM=xterm-256color
+      - CUDA_SERIES=${CUDA_SERIES:-13-0}
+
+  cuda-verify-shell:
+    build:
+      context: .
+      dockerfile: Dockerfile.cuda
+      args:
+        CUDA_SERIES: ${CUDA_SERIES:-13-0}
+    container_name: dotfiles-cuda-verify-shell
+    environment:
+      - TERM=xterm-256color
+      - CUDA_SERIES=${CUDA_SERIES:-13-0}
+    stdin_open: true
+    tty: true
+    entrypoint: /bin/bash
+
+  # GPU / driver-compatibility verification. REQUIRES nvidia-container-toolkit.
+  #
+  # The `devices` entry below is the CDI form, which needs no daemon.json edit and
+  # no docker restart (Docker 25+ with CDI enabled -- check `docker info | grep -i cdi`).
+  # Generate the spec once: sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+  #
+  # If you configured the nvidia *runtime* instead
+  # (`sudo nvidia-ctk runtime configure --runtime=docker` + daemon restart), delete
+  # the `devices` list and use this instead:
+  #     deploy:
+  #       resources:
+  #         reservations:
+  #           devices:
+  #             - driver: nvidia
+  #               count: all
+  #               capabilities: [gpu]
+  gpu-verify:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+      args:
+        CUDA_IMAGE: ${CUDA_IMAGE:-nvidia/cuda:13.0.0-devel-ubuntu22.04}
+    container_name: dotfiles-gpu-verify
+    devices:
+      - nvidia.com/gpu=all
+    environment:
+      - TERM=xterm-256color
+      - MIN_DRIVER=${MIN_DRIVER:-}
+
+  gpu-verify-shell:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+      args:
+        CUDA_IMAGE: ${CUDA_IMAGE:-nvidia/cuda:13.0.0-devel-ubuntu22.04}
+    container_name: dotfiles-gpu-verify-shell
+    devices:
+      - nvidia.com/gpu=all
+    environment:
+      - TERM=xterm-256color
+    stdin_open: true
+    tty: true
+    entrypoint: /bin/bash
+
   # Interactive shell for debugging failed tests
   smoke-shell:
     build:

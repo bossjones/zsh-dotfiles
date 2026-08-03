@@ -159,7 +159,7 @@ All prompts surfaced during first-time `chezmoi init` (from [`home/.chezmoi.yaml
 | `pyenv` | bool | `false` | — | Install pyenv for Python version management |
 | `nodejs` | bool | `false` | — | Install Node.js via the selected version manager |
 | `k8s` | bool | `false` | — | Install the Kubernetes toolchain |
-| `cuda` | bool | `false` | — | Install CUDA support |
+| `cuda` | bool | `false` | — | Recorded only; no template reads it (the `cuda` shell module is OS-gated) |
 | `fnm` | bool | `false` | — | Install fnm (Fast Node Manager) |
 | `opencv` | bool | `false` | — | Install OpenCV system dependencies |
 

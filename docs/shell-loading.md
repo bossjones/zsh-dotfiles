@@ -102,12 +102,29 @@ Plugins load in the order they appear in [`plugins.toml.tmpl`](../home/dot_sheld
 | 18 | `fast-syntax-highlighting` | [zdharma-continuum/fast-syntax-highlighting](https://github.com/zdharma-continuum/fast-syntax-highlighting) | **defer-more** | Faster highlighter |
 | 19 | `zsh-dircolors-solarized` | [joel-porquet/zsh-dircolors-solarized](https://github.com/joel-porquet/zsh-dircolors-solarized) | **defer-more** | Solarized `LS_COLORS` |
 | 20 | `compinit` | `home/shell/compinit.zsh` | **defer** | Daily-cached completion init (`compinit`) |
-| 21 | *(Ubuntu/Oracle only)* `cuda` | `home/shell/cuda/custom.zsh` | immediate | CUDA env |
+| 21 | *(Ubuntu/Oracle only)* `cuda` | `home/shell/cuda/custom.zsh` | immediate | Detects the installed CUDA toolkit; no-op if none |
 | 22 | `bossaliases` | `home/shell/customs/aliases.zsh` | immediate | The big custom alias/function library |
 | 23 | `aliases` | `home/shell/**/aliases.zsh` | immediate | Per-tool aliases |
 | 24 | `boss_fzf` | inline `source ~/.fzf.zsh` | immediate | fzf keybindings & completion (macOS, Ubuntu/Oracle) |
 
 > **Note the exceptions to the "highlighting is deferred" rule.** `zsh-autosuggestions` (14) and `zsh-hooks` (15) are *immediate* — they are declared without `apply = ["defer"]`. `compinit` (20) is deferred and cached daily, which is a major startup win.
+
+> **The `cuda` module (21) discovers its version at shell start.** It does not hardcode a toolkit
+> version. It prefers `/usr/local/cuda` — the symlink `update-alternatives` maintains — then falls
+> back to the highest-numbered `/usr/local/cuda-<major>.<minor>` still on disk, and does nothing at
+> all when no toolkit is installed. That last case is normal on a machine whose CUDA comes from pip
+> wheels: PyTorch resolves `libcu*`/`libcublas` out of `site-packages/nvidia/*`, never from
+> `/usr/local/cuda`. It exports `CUDA_HOME` and `CUDA_PATH` (CMake's `FindCUDAToolkit` looks for the
+> latter) and adds exactly one `PATH` entry, containment-guarded so a re-source cannot duplicate it.
+>
+> It deliberately does **not** set `LD_LIBRARY_PATH`. The `.deb` packages register
+> `/usr/local/cuda/targets/x86_64-linux/lib` via `/etc/ld.so.conf.d/000_cuda.conf`, so the dynamic
+> linker already finds the libraries; because `LD_LIBRARY_PATH` outranks the `ldconfig` cache, setting
+> it would only create a way for a stale entry to shadow the correct libraries.
+>
+> `ZSH_DOTFILES_CUDA_ROOT` overrides the search prefix so the behaviour can be exercised against a
+> throwaway tree. Leave it unset in normal use. The POSIX equivalent for `~/.profile` and `~/.bashrc`
+> lives in `home/shell/cuda/posix-env.sh` and is inlined into `home/compat.{sh,bash}.tmpl`.
 
 ### What that looks like on the timeline
 

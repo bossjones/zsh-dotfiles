@@ -55,14 +55,22 @@ err_console = Console(stderr=True)
 ABS_PREFIX = "_abs"
 
 # Fallback target list, used only when `chezmoi managed` is unavailable. Mirrors
-# the chezmoi source tree (home/dot_*, home/dot_sheldon, home/private_dot_config,
-# home/private_dot_bin) as of this writing.
+# the chezmoi source tree (home/dot_*, home/compat.*, home/dot_sheldon,
+# home/private_dot_config, home/private_dot_bin) as of this writing.
+#
+# NOTE: not every managed target is a dotfile. `home/compat.sh.tmpl` and
+# `home/compat.bash.tmpl` render to ~/compat.sh and ~/compat.bash, which are
+# sourced by ~/.profile and ~/.bashrc respectively. They are the only entries here
+# without a leading dot, which is precisely why they were missed originally --
+# don't drop them when refreshing this list.
 STATIC_TARGETS: tuple[str, ...] = (
     "~/.zshrc",
     "~/.zshrc.local",
     "~/.zprofile",
     "~/.bashrc",
     "~/.profile",
+    "~/compat.sh",
+    "~/compat.bash",
     "~/.gitconfig",
     "~/.gitignore_global",
     "~/.agignore",

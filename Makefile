@@ -68,6 +68,48 @@ smoke-mise-shell:  ## Interactive shell with VERSION_MANAGER=mise for manual ver
 	@echo "\033[0;34mStarting interactive shell with VERSION_MANAGER=mise...\033[0m"
 	VERSION_MANAGER=mise docker compose run --rm smoke-shell
 
+# ---------------------------------------------------------------------------
+# CUDA / GPU verification (ad-hoc; not part of CI)
+#
+# CI runs on macOS only and the cuda sheldon plugin is Linux-gated, so nothing in
+# .github/workflows ever sources home/shell/cuda/*. These targets are the real
+# gate for that code.
+#
+#   smoke-cuda  - no GPU needed. Exercises the shell modules against real NVIDIA
+#                 apt packages, real update-alternatives and real ld.so.conf.d.
+#   smoke-gpu   - needs a GPU + nvidia-container-toolkit. Answers "can my driver
+#                 run binaries built by toolkit X?" before installing X on the host.
+#
+# Override the toolkit under test:
+#   CUDA_SERIES=12-1 make smoke-cuda
+#   CUDA_IMAGE=nvidia/cuda:12.1.0-devel-ubuntu22.04 make smoke-gpu
+#   MIN_DRIVER=580.126.20 make smoke-gpu     # also assert a documented floor
+# ---------------------------------------------------------------------------
+.PHONY: smoke-cuda smoke-cuda-shell smoke-gpu smoke-gpu-shell smoke-cuda-clean
+
+smoke-cuda:  ## Verify the CUDA shell modules against real NVIDIA packages (no GPU required)
+	@echo "\033[0;34mVerifying CUDA shell modules in Docker (CUDA_SERIES=$${CUDA_SERIES:-13-0})...\033[0m"
+	docker compose run --rm --build cuda-verify
+
+smoke-cuda-shell:  ## Interactive shell in the CUDA verification container
+	@echo "\033[0;34mStarting CUDA verification shell...\033[0m"
+	docker compose run --rm --build cuda-verify-shell
+
+smoke-gpu:  ## Verify a CUDA toolkit against the host driver (requires GPU + nvidia-container-toolkit)
+	@echo "\033[0;34mVerifying GPU/driver compatibility (CUDA_IMAGE=$${CUDA_IMAGE:-nvidia/cuda:13.0.0-devel-ubuntu22.04})...\033[0m"
+	@command -v nvidia-smi >/dev/null 2>&1 || { echo "\033[0;31mnvidia-smi not found on the host - no GPU to test.\033[0m"; exit 2; }
+	@nvidia-ctk cdi list >/dev/null 2>&1 || echo "\033[0;33mwarning: no CDI spec found. Run: sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml\033[0m"
+	docker compose run --rm --build gpu-verify
+
+smoke-gpu-shell:  ## Interactive shell in the GPU verification container
+	@echo "\033[0;34mStarting GPU verification shell...\033[0m"
+	docker compose run --rm --build gpu-verify-shell
+
+smoke-cuda-clean:  ## Remove the CUDA/GPU verification images
+	@echo "\033[0;34mRemoving CUDA/GPU verification images...\033[0m"
+	-docker rmi chezmoi-cuda-verify chezmoi-cuda-verify-shell chezmoi-gpu-verify chezmoi-gpu-verify-shell 2>/dev/null || true
+	-docker compose rm -f cuda-verify cuda-verify-shell gpu-verify gpu-verify-shell 2>/dev/null || true
+
 .PHONY: smoke-full smoke-full-asdf smoke-full-mise \
         smoke-full-run-asdf smoke-full-run-mise smoke-full-clean
 

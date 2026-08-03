@@ -17,6 +17,7 @@
 | 04 | [Switch Version Manager](04-switch-version-manager.md) | You've migrated the machine from `asdf` to `mise` (or back) |
 | 05 | [Run Smoke Tests Locally](05-run-smoke-tests-locally.md) | You can reproduce the CI matrix in Docker before pushing |
 | 06 | [Customize iTerm2](06-customize-iterm2.md) | Your iTerm2 profile changes are captured into the repo and re-applied on another machine |
+| 07 | [Verify CUDA Before Applying](07-verify-cuda-before-applying.md) | You can inspect your CUDA/driver state, prove the shell module resolves correctly, and rehearse a toolkit upgrade in a container before touching the host |
 
 If you're brand new here, start at **00** and work down — each tutorial after 01 stands alone, so feel free to skip to whichever one matches what you're trying to do today.
 
@@ -32,6 +33,7 @@ flowchart LR
     T01 --> T04["04 Switch Version Manager"]
     T01 --> T05["05 Run Smoke Tests Locally"]
     T01 --> T06["06 Customize iTerm2"]
+    T01 --> T07["07 Verify CUDA Before Applying"]
 ```
 
 ---
