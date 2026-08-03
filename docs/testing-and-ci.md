@@ -10,6 +10,7 @@ Comprehensive reference for the testing framework, GitHub workflows, Docker smok
 - [GitHub Actions Job Pipeline](#github-actions-job-pipeline)
 - [Pre-Commit Hooks](#pre-commit-hooks)
 - [Docker Smoke Tests](#docker-smoke-tests)
+- [CUDA / GPU Verification Rigs](#cuda--gpu-verification-rigs)
 
 ---
 
@@ -54,6 +55,18 @@ VERSION_MANAGER=mise make smoke
 
 # Clean up Docker images/containers
 make smoke-clean
+```
+
+### CUDA / GPU Verification (ad-hoc)
+
+Nothing in CI covers `home/shell/cuda/` — CI is macOS-only and those modules are Linux-gated.
+
+```bash
+# Verify the CUDA shell modules against real NVIDIA packages (no GPU needed)
+make smoke-cuda
+
+# Verify a CUDA toolkit works against this host's driver (needs a GPU)
+make smoke-gpu
 ```
 
 ---
@@ -148,6 +161,23 @@ Defined in the [`Makefile`](../Makefile). Note that only some targets are declar
 | `smoke-mise` | Full with `VERSION_MANAGER=mise` | Test mise version manager lane | `make smoke-mise` |
 | `smoke-asdf-shell` | Interactive with `VERSION_MANAGER=asdf` | Interactive asdf debugging | `make smoke-asdf-shell` |
 | `smoke-mise-shell` | Interactive with `VERSION_MANAGER=mise` | Interactive mise debugging | `make smoke-mise-shell` |
+
+### CUDA / GPU Verification Targets (ad-hoc, not in CI)
+
+| Target | Runs | Needs a GPU? | Example |
+|--------|------|--------------|---------|
+| `smoke-cuda` | Shell modules vs. real NVIDIA apt packages | No | `CUDA_SERIES=12-1 make smoke-cuda` |
+| `smoke-cuda-shell` | Interactive bash in that container | No | `make smoke-cuda-shell` |
+| `smoke-gpu` | A CUDA toolkit vs. the host's driver | **Yes** | `MIN_DRIVER=580.126.20 make smoke-gpu` |
+| `smoke-gpu-shell` | Interactive bash with the GPU attached | **Yes** | `make smoke-gpu-shell` |
+| `smoke-cuda-clean` | None (cleanup) | No | `make smoke-cuda-clean` |
+
+**These are the only real coverage for `home/shell/cuda/`.** CI runs on macOS only
+([`tests.yml`](../.github/workflows/tests.yml) matrix is `macos-14`/`macos-15`) and the `cuda`
+sheldon plugin is gated on `.chezmoi.os == "linux"`, so no CI job ever sources those modules. The
+pytest suite does not cover them either.
+
+See [Docker Smoke Tests](#docker-smoke-tests) for what each rig actually asserts.
 
 ### Pre-Provisioned Image Targets (DOCKER_BUILDKIT=1 required)
 
@@ -464,6 +494,71 @@ VERSION_MANAGER=mise docker compose run --rm smoke build
 # Interactive debugging
 docker compose run --rm smoke-shell /bin/zsh
 ```
+
+---
+
+## CUDA / GPU Verification Rigs
+
+Two separate ad-hoc rigs, because they answer different questions. Neither runs in CI.
+
+### Why separate from the standard smoke image
+
+[`Dockerfile`](../Dockerfile) is `ubuntu:24.04`; these are `ubuntu:22.04`, because NVIDIA's apt
+repos are per-distro (`ubuntu2204` vs `ubuntu2404`) and must match the host being modelled. Adding
+NVIDIA's repo to the standard image would also drag in
+`/etc/apt/preferences.d/cuda-repository-pin-600`, which pins their whole repo above Ubuntu's default
+500 — not something the normal smoke lane should inherit.
+
+### `Dockerfile.cuda` — module verification, no GPU
+
+`make smoke-cuda` → [`scripts/cuda-verify-config.sh`](../scripts/cuda-verify-config.sh). The modules
+only inspect the filesystem, so no GPU or `nvidia-container-toolkit` is needed. It installs and
+purges **real** NVIDIA packages, so it refuses to run outside a container unless `FORCE=1`.
+
+Costs kilobytes, not gigabytes: `cuda-toolkit-<series>-config-common` is ~16 KB and owns the
+`/usr/local/cuda` symlink, the `update-alternatives` registration and
+`/etc/ld.so.conf.d/000_cuda.conf`. Only `cuda-nvcc-<series>` (~25 MB) is pulled for the happy path.
+
+| Stage | Asserts |
+|-------|---------|
+| 0 | Clean slate → modules no-op, `PATH` untouched, exit 0, no diagnostics |
+| 1 | Our apt pin beats NVIDIA's 600 pin, **with a negative control**, and does not collaterally block `nvidia-container-toolkit` |
+| 2 | Real alternatives for toolkits lacking `bin/` are rejected |
+| 3 | The alternatives-managed symlink is preferred; `nvcc` reachable |
+| 3b | Numeric ordering against real dirs (`cuda-9.0` must not beat `cuda-13.0`) |
+| 4 | `cuda-11` / `cuda-12` major-version aliases are excluded |
+| 5 | `ldconfig` resolves `libcudart` with `LD_LIBRARY_PATH` unset |
+| 6 | Purging stale toolkits still resolves the survivor |
+| 7 | A dangling `/usr/local/cuda` mid-purge falls back correctly |
+| 8 | Full purge leaves gutted dirs behind → modules still no-op |
+
+### `Dockerfile.gpu` — driver compatibility, GPU required
+
+`make smoke-gpu` → [`scripts/cuda-verify-gpu.sh`](../scripts/cuda-verify-gpu.sh). Answers the one
+question no CPU-only test can: **can the host's driver run binaries built by toolkit X?** Because the
+container runtime injects the host driver, pointing `CUDA_IMAGE` at the toolkit you intend to install
+rehearses that upgrade before touching the host.
+
+The **PTX JIT** stage is the sharpest check — minor-version compatibility works by the driver
+JIT-compiling the toolkit's PTX at load time, so a too-old driver fails there even when a prebuilt
+cubin loads fine. It also fails loudly if the toolkit has dropped your GPU's architecture.
+
+```sh
+# One-time host setup. CDI needs no daemon.json edit and no docker restart
+# (Docker 25+; confirm with: docker info | grep -i cdi).
+sudo apt-get install -y nvidia-container-toolkit
+sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+
+make smoke-gpu
+CUDA_IMAGE=nvidia/cuda:12.1.0-devel-ubuntu22.04 make smoke-gpu   # rehearse a different toolkit
+MIN_DRIVER=580.126.20 make smoke-gpu                             # also assert a documented floor
+```
+
+If the GPU is not exposed the script exits 2 with an actionable message rather than passing silently.
+
+> `scripts/cuda-verify-config.sh` intentionally does **not** work in this image: the base already
+> ships a CUDA install, so its clean-slate Stage 0 is false and its staged installs conflict. Use
+> `Dockerfile.cuda` for module verification.
 
 ---
 
