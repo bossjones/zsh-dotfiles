@@ -2804,6 +2804,66 @@ toggle_xdg_data_dirs() {
 # Claude Code usage analytics
 alias ccusage='npx ccusage@latest'
 
+# headroom (https://github.com/headroomlabs-ai/headroom) - local compression
+# proxy for LLM API traffic. Run in proxy mode, not `headroom wrap claude` -
+# wrap mode installs an internal component also named "rtk" that shadows the
+# real Homebrew rtk (Rust Token Killer) binary on PATH.
+headroom_start() {
+    local port="${HEADROOM_PORT:-8787}"
+    local pid_file="/tmp/headroom-proxy.pid"
+    local log_file="/tmp/headroom-proxy.log"
+
+    if [[ -f "${pid_file}" ]] && kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
+        echo "[headroom_start] already running (pid $(cat "${pid_file}"), port ${port})"
+        return 0
+    fi
+
+    nohup headroom proxy --port "${port}" >"${log_file}" 2>&1 &
+    echo $! >"${pid_file}"
+    echo "[headroom_start] started headroom proxy on port ${port} (pid $!, log ${log_file})"
+}
+
+headroom_stop() {
+    local pid_file="/tmp/headroom-proxy.pid"
+
+    if [[ ! -f "${pid_file}" ]] || ! kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
+        echo "[headroom_stop] not running"
+        rm -f "${pid_file}"
+        return 0
+    fi
+
+    kill "$(cat "${pid_file}")"
+    rm -f "${pid_file}"
+    echo "[headroom_stop] stopped"
+}
+
+headroom_status() {
+    local port="${HEADROOM_PORT:-8787}"
+    local pid_file="/tmp/headroom-proxy.pid"
+
+    if [[ -f "${pid_file}" ]] && kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
+        echo "[headroom_status] running (pid $(cat "${pid_file}"), port ${port})"
+    else
+        echo "[headroom_status] not running"
+    fi
+}
+
+# Passthrough wrapper: runs claude through the local headroom compression
+# proxy. Start the proxy first with headroom_start. Usage mirrors claude
+# itself, e.g.:
+#   hclaude --model sonnet --permission-mode plan
+#   hclaude --model opus --permission-mode plan --resume
+hclaude() {
+    local port="${HEADROOM_PORT:-8787}"
+    local pid_file="/tmp/headroom-proxy.pid"
+
+    if [[ ! -f "${pid_file}" ]] || ! kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
+        echo "[hclaude] warning: headroom proxy doesn't appear to be running on port ${port} (run headroom_start)" >&2
+    fi
+
+    ANTHROPIC_BASE_URL="http://localhost:${port}" claude "$@"
+}
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
