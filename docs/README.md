@@ -25,6 +25,7 @@ flowchart TD
 | [Feature Flags](feature-flags.md) | Every prompt, boolean, install-time `ZSH_DOTFILES_*` var, and runtime toggle (marks the inert ones) |
 | [Version Managers](version-managers.md) | asdf ⇄ mise toggle threaded end-to-end + pinned tool-version matrix |
 | [fzf-tab](fzf-tab.md) | The optional `fzf_tab` feature flag — fzf-powered Tab completion, off by default |
+| [hclaude](headroom-claude.md) | Running Claude Code through the local headroom compression proxy — `hclaude`, `headroom_start`/`stop`/`status` |
 | [Provisioning Scripts](provisioning-scripts.md) | The chezmoi `run_` lifecycle and every provisioning script by phase |
 | [iTerm2 &amp; macOS](iterm2-and-macos.md) | The self-verifying iTerm2 importer, Nerd Fonts, and `~/.osx` |
 | [Testing &amp; CI](testing-and-ci.md) | pytest + libtmux, Docker smoke lanes, the 5 GitHub workflows and 8-cell matrix |
