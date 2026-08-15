@@ -2864,6 +2864,43 @@ hclaude() {
     ANTHROPIC_BASE_URL="http://localhost:${port}" claude "$@"
 }
 
+# ai_cli_update - refresh the GitHub Copilot and Claude command-line tools and
+# their plugins in one shot. Runs, in order:
+#   copilot update
+#   copilot plugin update --all
+#   claude plugin marketplace update
+# Each tool is guarded: a missing binary is skipped with a warning instead of
+# aborting the run, and every step is attempted even if an earlier one fails.
+# Returns non-zero if any attempted command exits non-zero.
+ai_cli_update() {
+    local rc=0
+
+    if command -v copilot >/dev/null 2>&1; then
+        echo "[ai_cli_update] copilot update"
+        copilot update || { echo "[ai_cli_update] 'copilot update' failed" >&2; rc=1; }
+
+        echo "[ai_cli_update] copilot plugin update --all"
+        copilot plugin update --all || { echo "[ai_cli_update] 'copilot plugin update --all' failed" >&2; rc=1; }
+    else
+        echo "[ai_cli_update] skipping copilot: command not found on PATH" >&2
+    fi
+
+    if command -v claude >/dev/null 2>&1; then
+        echo "[ai_cli_update] claude plugin marketplace update"
+        claude plugin marketplace update || { echo "[ai_cli_update] 'claude plugin marketplace update' failed" >&2; rc=1; }
+    else
+        echo "[ai_cli_update] skipping claude: command not found on PATH" >&2
+    fi
+
+    if [[ ${rc} -eq 0 ]]; then
+        echo "[ai_cli_update] done"
+    else
+        echo "[ai_cli_update] completed with errors" >&2
+    fi
+
+    return ${rc}
+}
+
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh
 # ---------------------------------------------------------
