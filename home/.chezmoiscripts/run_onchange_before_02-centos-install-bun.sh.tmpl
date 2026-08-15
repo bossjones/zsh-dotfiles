@@ -1,0 +1,24 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if (or (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "ol") (eq .chezmoi.osRelease.id "rhel")) -}}
+
+#!/bin/sh
+
+# Install bun on CentOS/RHEL/OL via official curl installer
+# Requires: unzip
+
+if [ ! -d "${HOME}/.bun" ]; then
+    (
+        set -x; printf "${yellow}[11 - bun does not exist, downloading] ${reset}" &&
+        curl -fsSL https://bun.com/install | bash
+    )
+fi
+
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+if [ -n "$(command -v bun 2>/dev/null)" ]; then
+    bun --version
+fi
+
+{{ end -}}
+{{ end -}}

@@ -1,0 +1,27 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+
+#!/usr/bin/env bash
+# Install the fonts referenced by the iTerm2 profiles in
+# private_dot_config/iterm2/ (PostScript names: DroidSansMNF, HackNF-Regular).
+# Monaco and Menlo ship with macOS and need no install.
+
+set -euo pipefail
+
+if ! command -v brew >/dev/null 2>&1; then
+  echo "fonts: brew not found; skipping font install" >&2
+  exit 0
+fi
+
+FONT_CASKS=(
+  font-droid-sans-mono-nerd-font
+  font-hack-nerd-font
+)
+
+for cask in "${FONT_CASKS[@]}"; do
+  if brew list --cask "$cask" >/dev/null 2>&1; then
+    echo "fonts: $cask already installed"
+  else
+    brew install --cask "$cask"
+  fi
+done
+{{ end -}}

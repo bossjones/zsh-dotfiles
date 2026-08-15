@@ -1,3 +1,5 @@
+export PATH="$HOME/.local/share/fnm:$PATH"
+
 FNM_BIN="$(which fnm)"
 
 if [ -x "$FNM_BIN" ]; then

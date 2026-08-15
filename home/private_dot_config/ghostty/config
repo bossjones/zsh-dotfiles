@@ -1,0 +1,84 @@
+# ~/.config/ghostty/config
+# Some taken from https://github.com/manaflow-ai/cmux/issues/1657
+# Read directly by cmux (libghostty). Reload in cmux with Cmd+Shift+, .
+
+# --- Font (JetBrainsMono Nerd Font is installed; glyphs power sidebar/prompt icons) ---
+font-family = "JetBrainsMono Nerd Font"
+font-size = 13
+font-thicken = true
+font-thicken-strength = 64
+font-feature = calt
+font-feature = liga
+
+# --- Theme: auto light/dark (catppuccin) ---
+theme = dark:catppuccin-mocha,light:catppuccin-latte
+window-theme = auto
+
+# --- Cursor & selection (catppuccin mocha rosewater accent) ---
+cursor-color = f5e0dc
+cursor-text = 1e1e2e
+cursor-style-blink = false
+cursor-opacity = 0.9
+selection-background = 585b70
+selection-foreground = cdd6f4
+
+# --- cmux-optimized window & splits (issue #1657) ---
+window-show-tab-bar = never          # cmux provides its own tab UI; hide Ghostty's
+unfocused-split-opacity = 0.65       # dim inactive agent panes to clarify focus
+window-padding-x = 12                # breathing room next to the cmux sidebar
+window-padding-y = 10
+window-padding-balance = true
+background-opacity = 0.65            # lower = more transparent. cmux alpha-stacks its own
+                                     # background, so it reads slightly more opaque than
+                                     # standalone Ghostty — drop toward 0.7 for more see-through,
+                                     # raise to 1.0 to disable translucency entirely.
+background-blur = 20                 # macOS frosted-glass behind the transparency (radius in px;
+                                     # `true` also works). Makes low opacity look far better.
+window-padding-color = extend
+window-colorspace = display-p3
+
+# --- Terminal behavior ---
+working-directory = /Users/bossjones/dev
+window-inherit-working-directory = true
+copy-on-select = clipboard
+clipboard-trim-trailing-spaces = false
+clipboard-read = allow
+clipboard-write = allow
+clipboard-paste-protection = true
+clipboard-paste-bracketed-safe = true
+mouse-hide-while-typing = true
+cursor-click-to-move = true
+scroll-to-bottom = keystroke,no-output
+confirm-close-surface = false        # cmux has its own close guards
+scrollback-limit = 10000000
+cursor-style = block
+
+# --- Shell integration ---
+shell-integration = zsh
+shell-integration-features = no-cursor
+term = xterm-256color
+
+# --- macOS ---
+macos-option-as-alt = left           # Option word-nav; 'left' avoids non-US keyboard breakage
+macos-auto-secure-input = true
+macos-titlebar-style = transparent
+focus-follows-mouse = false           # matches cmux's no-focus-stealing policy
+
+# --- Keybindings: split resize + zoom (non-conflicting with cmux.json shortcuts) ---
+keybind = cmd+ctrl+left=resize_split:left,20
+keybind = cmd+ctrl+right=resize_split:right,20
+keybind = cmd+ctrl+up=resize_split:up,10
+keybind = cmd+ctrl+down=resize_split:down,10
+keybind = cmd+shift+z=toggle_split_zoom
+resize-overlay = after-first
+resize-overlay-position = bottom-right
+resize-overlay-duration = 500ms
+
+# --- Keybindings: line editing & misc (no collisions in cmux.json) ---
+keybind = cmd+left=text:\x01
+keybind = cmd+right=text:\x05
+keybind = alt+backspace=text:\x17
+keybind = cmd+k=clear_screen
+keybind = cmd+equal=increase_font_size:2
+keybind = cmd+minus=decrease_font_size:2
+keybind = cmd+0=reset_font_size

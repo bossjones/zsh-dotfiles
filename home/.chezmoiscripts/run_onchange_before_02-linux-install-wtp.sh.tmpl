@@ -1,0 +1,33 @@
+{{- if (eq .chezmoi.os "linux") -}}
+#!/bin/bash
+
+# Install wtp (Worktree Plus) on Linux from GitHub releases
+
+WTP_VERSION={{ .myWtpVersion }}
+
+HARDWARE=$(uname -m)
+
+if [ "${HARDWARE}" = "aarch64" ]; then
+    HARDWARE="arm64"
+elif [ "${HARDWARE}" = "x86_64" ]; then
+    HARDWARE="x86_64"
+else
+    echo "This platform doesn't support wtp yet!!"
+    exit 1
+fi
+
+if [ ! -f ~/.local/bin/wtp ]; then
+    mkdir -p ~/.local/bin
+    TMPDIR=$(mktemp -d)
+    curl -L "https://github.com/satococoa/wtp/releases/download/v${WTP_VERSION}/wtp_${WTP_VERSION}_Linux_${HARDWARE}.tar.gz" -o "${TMPDIR}/wtp.tar.gz"
+    tar -xzf "${TMPDIR}/wtp.tar.gz" -C "${TMPDIR}"
+    mv "${TMPDIR}/wtp" ~/.local/bin/wtp
+    chmod +x ~/.local/bin/wtp
+    rm -rf "${TMPDIR}"
+fi
+
+if [ -n "$(command -v wtp 2>/dev/null)" ]; then
+    wtp --version
+fi
+
+{{ end -}}

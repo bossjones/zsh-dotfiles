@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile:1.4
+# Pre-provisioned smoke image: chezmoi-applied home + post-install baked in.
+# Built on top of the base smoke image so apt/brew layers are reused.
+#
+# Build (run base first):
+#   docker build -f Dockerfile      -t zsh-dotfiles-smoke:asdf      --build-arg VERSION_MANAGER=asdf .
+#   docker build -f Dockerfile.full -t zsh-dotfiles-smoke-full:asdf --build-arg VERSION_MANAGER=asdf \
+#                --build-arg BASE_IMAGE=zsh-dotfiles-smoke:asdf .
+#
+# Run:
+#   docker run --rm -it zsh-dotfiles-smoke-full:asdf
+ARG BASE_IMAGE=zsh-dotfiles-smoke:asdf
+FROM ${BASE_IMAGE}
+
+# Re-declare so the value is visible in this stage (FROM consumes ARGs above it).
+ARG VERSION_MANAGER=asdf
+ENV VERSION_MANAGER=${VERSION_MANAGER}
+
+# Bake provision into a layer. Inherits USER tester, WORKDIR /tmp/dotfiles,
+# HOME, PATH, SUDO_ASKPASS, and ZSH_DOTFILES_PREP_* from the base image.
+RUN /tmp/dotfiles/scripts/smoke-test-docker.sh provision
+
+CMD ["/bin/zsh"]

@@ -3,10 +3,7 @@
 # chezmoi managed - ~/.bashrc
 # ---------------------------------------------------------
 export PATH="${HOME}/bin:${HOME}/.bin:${HOME}/.local/bin:$PATH"
-export PATH="/usr/local/cuda/bin:${PATH}"
-export PATH="/usr/local/cuda-11.8/bin${PATH:+:${PATH}}"
-export LD_LIBRARY_PATH="/usr/local/cuda-11.8/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-
+{{ include "shell/cuda/posix-env.sh" }}
 
 [ -f ~/.fzf.bash ] && . ~/.fzf.bash
 
@@ -24,6 +21,7 @@ then
         # $HOME/.pyenv/bin/pyenv virtualenvwrapper_lazy
 fi
 
+{{ if eq .version_manager "asdf" -}}
 if [[ "$OSTYPE" == linux* ]]
 then
     export ASDF_DIR="${HOME}/.asdf"
@@ -31,12 +29,14 @@ fi
 . "$HOME/.asdf/asdf.sh"
 . "$HOME/.asdf/lib/asdf.sh"
 . "$HOME/.asdf/completions/asdf.bash"
-
+{{ else -}}
+export PATH="$HOME/.local/bin:$PATH"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+{{ end }}
 
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "`fnm env`"
-[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 
 # ---------------------------------------------------------
@@ -120,6 +120,7 @@ case $OS in
   *) ;;
 esac
 
+{{ if eq .version_manager "asdf" -}}
 if [ "$OS" = 'Linux' ]
 then
     export ASDF_DIR="${HOME}/.asdf"
@@ -127,11 +128,14 @@ then
     . "$HOME/.asdf/lib/asdf.sh"
     . "$HOME/.asdf/completions/asdf.bash"
 fi
+{{ else -}}
+export PATH="$HOME/.local/bin:$PATH"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+{{ end }}
 
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "`fnm env`"
-[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 
 # ---------------------------------------------------------

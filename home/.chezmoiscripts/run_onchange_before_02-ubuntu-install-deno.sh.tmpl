@@ -1,0 +1,24 @@
+{{- if (eq .chezmoi.os "linux") -}}
+{{- if (eq .chezmoi.osRelease.id "ubuntu") -}}
+
+#!/bin/sh
+
+# Install deno on Ubuntu via official curl installer
+# Requires: unzip
+
+if [ ! -d "${HOME}/.deno" ]; then
+    (
+        set -x; printf "${yellow}[11 - deno does not exist, downloading] ${reset}" &&
+        curl -fsSL https://deno.land/install.sh | sh -s -- --no-modify-path
+    )
+fi
+
+export DENO_INSTALL="$HOME/.deno"
+export PATH="$DENO_INSTALL/bin:$PATH"
+
+if [ -n "$(command -v deno 2>/dev/null)" ]; then
+    deno --version
+fi
+
+{{ end -}}
+{{ end -}}

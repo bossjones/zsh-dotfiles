@@ -88,7 +88,7 @@ make test
 | helm | 3.14.2 | Kubernetes package manager |
 | k9s | 0.32.4 | Kubernetes TUI |
 | neovim | 0.11.3 | Modern Vim |
-| ruby | 3.2.1 | Ruby language |
+| ruby | 4.0.1 | Ruby language |
 | shellcheck | 0.10.0 | Shell script linter |
 | shfmt | 3.7.0 | Shell formatter |
 | tmux | 3.5a | Terminal multiplexer |
@@ -100,7 +100,7 @@ make test
 | kubetail | 1.6.20 | Kubernetes log viewer |
 | mkcert | 1.4.4 | Local certificate generator |
 | opa | 0.62.1 | Policy engine |
-| rye | 0.33.0 | Python package manager |
+| uv | latest | Python package and project manager |
 
 ## 🎯 Usage Examples
 
@@ -198,7 +198,7 @@ declare -A ASDF_TOOLS=(
 ### Color Coding
 
 - 🟢 **Green ✓**: Correctly installed
-- 🔴 **Red ✗**: Missing or incorrect  
+- 🔴 **Red ✗**: Missing or incorrect
 - 🟡 **Yellow ⚠**: Warning (installed but wrong version)
 
 ### Exit Codes

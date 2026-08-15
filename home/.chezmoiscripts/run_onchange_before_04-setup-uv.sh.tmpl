@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Install uv - Astral's Python package and project manager
+# https://docs.astral.sh/uv/
+
+# Install uv via standalone installer if not already present
+if [ -z "$(command -v uv 2>/dev/null)" ]; then
+    echo "Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
+
+# Ensure ~/.local/bin is on PATH for the rest of this script
+export PATH="$HOME/.local/bin:$PATH"
+
+# Generate ZSH completions for uv and uvx
+if [ -n "$(command -v uv 2>/dev/null)" ]; then
+    mkdir -p "$HOME/.zsh/completion" || true
+    mkdir -p "$HOME/.zsh/completions" || true
+    uv generate-shell-completion zsh > ~/.zsh/completions/_uv
+    uv generate-shell-completion zsh > ~/.zsh/completion/_uv
+    uvx --generate-shell-completion zsh > ~/.zsh/completions/_uvx
+    uvx --generate-shell-completion zsh > ~/.zsh/completion/_uvx
+fi

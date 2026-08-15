@@ -45,6 +45,25 @@ repos:
     hooks:
       - id: prettier
         types_or: [yaml, json]
+        # Two kinds of file opt out of reformatting:
+        #   - JSONC files are hand-formatted (comment placement, aligned trailing comments).
+        #   - ccstatusline rewrites its settings.json on every TUI save as
+        #     JSON.stringify(settings, null, 2). Reformatting it here (prettier collapses
+        #     single-element arrays onto one line) would make every save show up as
+        #     chezmoi drift for zero semantic change. See test_ccstatusline_settings.py.
+        exclude: ^(\.devcontainer/devcontainer\.json|home/private_dot_config/cmux/private_cmux\.json|home/private_dot_config/ccstatusline/settings\.json)$
+
+  # There is no upstream check-jsonc hook (pre-commit-hooks#695, #1196 are still open),
+  # so JSONC files get this one: comments and trailing commas are allowed, everything
+  # else is still strict JSON. Read-only -- it never rewrites the files.
+  - repo: local
+    hooks:
+      - id: check-jsonc
+        name: check jsonc
+        description: Validate JSON-with-comments files
+        entry: python scripts/check-jsonc.py
+        language: python
+        files: &jsonc_files ^(\.devcontainer/devcontainer\.json|home/private_dot_config/cmux/private_cmux\.json)$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -52,10 +71,15 @@ repos:
       # Simply check whether files parse as valid python.
       - id: check-ast
       - id: check-json
+        # These two are JSONC; check-jsonc validates them instead.
+        exclude: *jsonc_files
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
       - id: end-of-file-fixer
+        # JSON.stringify emits no trailing newline; adding one here would be permanent
+        # one-byte chezmoi drift against what ccstatusline writes.
+        exclude: ^home/private_dot_config/ccstatusline/settings\.json$
       - id: mixed-line-ending
       - id: trailing-whitespace
 
@@ -79,7 +103,7 @@ repos:
         name: Lint GitHub Actions workflow files
         description: Runs actionlint to lint GitHub Actions workflow files
         language: system
-        types: ["yaml", "yml"]
+        types: ["yaml"]
         files: ^\.github/workflows/
         entry: actionlint
         minimum_pre_commit_version: 3.0.0

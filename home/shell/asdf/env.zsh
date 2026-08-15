@@ -1,31 +1,33 @@
-if [[ "$OSTYPE" == linux* ]]
-then
-    export ASDF_DIR="${HOME}/.asdf"
-fi
+if [ "${ZSH_DOTFILES_VERSION_MANAGER:-}" = "asdf" ]; then
+    if [[ "$OSTYPE" == linux* ]]
+    then
+        export ASDF_DIR="${HOME}/.asdf"
+    fi
 
-# ------------------
+    # ------------------
 
-OS="`uname`"
-case $OS in
-  'Linux')
-    OS='Linux'
-    ;;
-  'FreeBSD')
-    OS='FreeBSD'
-    ;;
-  'WindowsNT')
-    OS='Windows'
-    ;;
-  'Darwin')
-    OS='Mac'
-    ;;
-  'SunOS')
-    OS='Solaris'
-    ;;
-  *) ;;
-esac
+    OS="`uname`"
+    case $OS in
+      'Linux')
+        OS='Linux'
+        ;;
+      'FreeBSD')
+        OS='FreeBSD'
+        ;;
+      'WindowsNT')
+        OS='Windows'
+        ;;
+      'Darwin')
+        OS='Mac'
+        ;;
+      'SunOS')
+        OS='Solaris'
+        ;;
+      *) ;;
+    esac
 
-if [ "$OS" = 'Mac' ]
-then
-    export ASDF_DIR="${HOME}/.asdf"
+    if [ "$OS" = 'Mac' ]
+    then
+        export ASDF_DIR="${HOME}/.asdf"
+    fi
 fi

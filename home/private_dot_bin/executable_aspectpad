@@ -300,4 +300,3 @@ elif [ $hh -gt $ww -a $htest -eq 0 ]; then
 	convert $tmpA1 -gravity center -background "$pcolor" -extent ${ww}x${hh} "$outfile"
 	exit
 fi
-

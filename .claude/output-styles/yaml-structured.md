@@ -36,7 +36,7 @@ files:
     action: "modified"
     description: "Added new function implementation"
   - path: "/absolute/path/to/config.json"
-    action: "updated" 
+    action: "updated"
     description: "Changed timeout settings"
 commands:
   - "npm test"

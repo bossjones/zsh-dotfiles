@@ -1,0 +1,21 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+
+#!/bin/sh
+
+# Install bun on macOS via official curl installer
+
+if [ ! -d "${HOME}/.bun" ]; then
+    (
+        set -x; printf "${yellow}[11 - bun does not exist, downloading] ${reset}" &&
+        curl -fsSL https://bun.com/install | bash
+    )
+fi
+
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+if [ -n "$(command -v bun 2>/dev/null)" ]; then
+    bun --version
+fi
+
+{{ end -}}

@@ -14,4 +14,4 @@ then
     _MY_PATH_TO_FZF=$HOME/.fzf/bin
 fi
 
-path+="${_MY_PATH_TO_FZF}"
+[[ -d "${_MY_PATH_TO_FZF}" ]] && path+="${_MY_PATH_TO_FZF}"

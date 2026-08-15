@@ -1,0 +1,93 @@
+" ============================================================
+" Encoding Settings
+" ============================================================
+set encoding=utf-8              " Internal encoding used by Vim buffers/strings
+set fileencoding=utf-8          " Encoding written to file on save
+set fileformat=unix             " Default line ending format for new files (LF)
+set fileformats=unix,dos,mac    " Line ending formats Vim will recognize when reading files
+set ambiwidth=double            " Treat ambiguous-width characters (e.g. CJK symbols) as double-width
+
+" ============================================================
+" General Behavior
+" ============================================================
+set nocompatible                " Disable Vi compatibility mode — enables full Vim features
+set vb t_vb=                    " Disable both audible bell and visual bell (no flash)
+set ruler                       " Show cursor position (line, column) in the status bar
+set laststatus=2                " Always show the status line (even with only one window open)
+set backspace=2                 " Allow backspace to delete over indent, end-of-line, and insert start
+set wrapscan                    " Wrap search back to top of file after reaching the bottom
+set wildmenu                    " Enable enhanced tab-completion menu in command mode
+set hidden                      " Allow switching buffers without saving (keeps unsaved changes in memory)
+set autoread                    " Automatically reload file if it's changed outside of Vim
+
+" ============================================================
+" Search Settings
+" ============================================================
+set incsearch                   " Show search matches incrementally as you type
+set ignorecase                  " Case-insensitive search by default
+set smartcase                   " Override ignorecase if search pattern contains uppercase letters
+set hlsearch                    " Highlight all matches for the current search pattern
+
+" ============================================================
+" File Safety (Backups / Swap / Undo)
+" ============================================================
+set nobackup                    " Don't create a backup file before overwriting
+set noswapfile                  " Don't create a .swp swap file for crash recovery
+set noundofile                  " Don't write an undo history file (no .un~ files)
+set viminfo+=!                  " Include global variables (! marks) when saving viminfo state
+
+" ============================================================
+" Display & UI
+" ============================================================
+set number                      " Show absolute line numbers in the left gutter
+set wrap                        " Visually wrap long lines (doesn't modify the actual file)
+set list                        " Show invisible characters (tabs, trailing spaces, etc.)
+set listchars=tab:>-            " Render tab characters visually as '>-'
+set cursorline                  " Highlight the entire line where the cursor is
+set showcmd                     " Show the partially typed command in the bottom-right corner
+set title                       " Update the terminal window title to reflect the current file
+set nopaste                     " Start with paste mode off (preserves auto-indent behavior)
+set background=dark             " Tell Vim the terminal background is dark (affects colorscheme choices)
+set showmatch                   " Briefly jump to the matching bracket when you type a closing one
+
+" Popup menu (autocomplete) colors
+highlight Pmenu ctermbg=lightcyan ctermfg=black    " Background/foreground for autocomplete popup
+highlight PmenuSel ctermbg=blue ctermfg=black      " Highlight for the currently selected popup item
+highlight PmenuSbar ctermbg=darkgray               " Color of the popup menu scroll bar
+highlight PmenuThumb ctermbg=lightgray             " Color of the scroll bar thumb (drag handle)
+
+" ============================================================
+" Status Line
+" ============================================================
+" Format: truncated filepath | modified/readonly flags | encoding | fileformat | filetype | line,col | scroll%
+set statusline=%<%f\ %m%r%h%w%{'['.(&fenc!=''?&fenc:&enc).']['.&ff.']'}%y%=%l,%c%V%8P
+
+" ============================================================
+" Syntax & Filetype
+" ============================================================
+syntax enable                   " Enable syntax highlighting (preserves your colorscheme overrides)
+filetype on                     " Enable filetype detection
+filetype indent on              " Load filetype-specific indent rules (e.g. 2-space for Ruby)
+filetype plugin on              " Load filetype-specific plugins
+
+" ============================================================
+" Modeline
+" ============================================================
+set modeline                    " Allow per-file settings via 'vim: set ...' lines in the file itself
+set modelines=5                 " Check the first and last 5 lines of each file for modeline directives
+
+" ============================================================
+" Command Line
+" ============================================================
+set cmdheight=1                 " Height of the command-line area at the bottom (1 line)
+
+" ============================================================
+" Default Indentation (2 spaces, no hard tabs)
+" ============================================================
+set ts=2 sw=2 sts=2 expandtab  " tabstop=2: tab width | shiftwidth=2: indent size | softtabstop=2: <Tab> in insert mode | expandtab: use spaces instead of tabs
+
+" ============================================================
+" ChangeLog Plugin
+" ============================================================
+" Username and email inserted automatically into ChangeLog entries
+let g:changelog_username="Malcolm Jones <bossjones@theblacktonystark.com>"

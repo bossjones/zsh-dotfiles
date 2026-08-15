@@ -3,11 +3,12 @@
 # chezmoi managed - ~/.profile
 # ---------------------------------------------------------
 export PATH="${HOME}/bin:${HOME}/.bin:${HOME}/.local/bin:$PATH"
-export PATH=/usr/local/cuda/bin:${PATH}
-export PATH=/usr/local/cuda-11.8/bin${PATH:+:${PATH}}
-export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-
-[ -f ~/.fzf.bash ] && . ~/.fzf.bash
+{{ include "shell/cuda/posix-env.sh" }}
+if [ -n "$ZSH_VERSION" ]; then
+    [ -f ~/.fzf.zsh ] && . ~/.fzf.zsh
+elif [ -n "$BASH_VERSION" ]; then
+    [ -f ~/.fzf.bash ] && . ~/.fzf.bash
+fi
 
 . "$HOME/.cargo/env"
 
@@ -23,6 +24,7 @@ then
         # $HOME/.pyenv/bin/pyenv virtualenvwrapper_lazy
 fi
 
+{{ if eq .version_manager "asdf" -}}
 if [[ "$OSTYPE" == linux* ]]
 then
     export ASDF_DIR="${HOME}/.asdf"
@@ -30,11 +32,14 @@ fi
 . "$HOME/.asdf/asdf.sh"
 . "$HOME/.asdf/lib/asdf.sh"
 . "$HOME/.asdf/completions/asdf.bash"
+{{ else -}}
+export PATH="$HOME/.local/bin:$PATH"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate sh)"
+{{ end }}
 
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "`fnm env`"
-[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 
 # sheldon version {{- .mySheldonVersion}}
@@ -65,9 +70,10 @@ fi
 export PATH="$HOMEBREW_PREFIX/bin:$PATH"
 export PATH="${HOME}/bin:${HOME}/.bin:${HOME}/.local/bin:$PATH"
 
-if [ -f "$HOME/.fzf.bash" ]
-then
-  . ~/.fzf.bash
+if [ -n "$ZSH_VERSION" ]; then
+  [ -f "$HOME/.fzf.zsh" ] && . "$HOME/.fzf.zsh"
+elif [ -n "$BASH_VERSION" ]; then
+  [ -f "$HOME/.fzf.bash" ] && . "$HOME/.fzf.bash"
 fi
 
 if [ -f "$HOME/.cargo/env" ]
@@ -123,6 +129,7 @@ case $OS in
   *) ;;
 esac
 
+{{ if eq .version_manager "asdf" -}}
 if [ "$OS" = 'Linux' ]
 then
     export ASDF_DIR="${HOME}/.asdf"
@@ -130,10 +137,13 @@ then
     . "$HOME/.asdf/lib/asdf.sh"
     . "$HOME/.asdf/completions/asdf.bash"
 fi
+{{ else -}}
+export PATH="$HOME/.local/bin:$PATH"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate sh)"
+{{ end }}
 
 # fnm
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "`fnm env`"
-[ -f "$HOME/.rye/env" ] && . "$HOME/.rye/env"
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 {{ end -}}

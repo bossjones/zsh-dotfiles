@@ -44,4 +44,3 @@ cat mv.txt
 echo -e " ${GREEN}[ffmpeg-mv]${NOCOLOR} ${CYAN}running${NOCOLOR} move commands\n"
 bash mv.txt
 rm mv.txt
-

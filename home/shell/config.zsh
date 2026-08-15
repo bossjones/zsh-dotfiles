@@ -36,6 +36,12 @@ setopt HIST_FIND_NO_DUPS
 # Don't write duplicate entries in the history file.
 setopt HIST_SAVE_NO_DUPS
 
+# Pattern of commands to exclude from history. The real pattern lives in
+# ~/.secret (untracked, sourced by home/shell/secrets/env.zsh before this
+# file runs) so it never gets committed; fall back to a harmless default
+# when that file/var isn't present on a given machine.
+export HISTORY_IGNORE="${HISTORY_IGNORE:-(exit|clear)}"
+
 # Move cursor to end of word if a full completion is inserted.
 setopt ALWAYS_TO_END
 # Case-insensitive globbing (used in pathname expansion)

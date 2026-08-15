@@ -62,6 +62,9 @@ mcd () { mkdir -p "$1" && cd "$1"; }        # mcd:          Makes new Dir and ju
 alias killf="kill \$(ps aux | fzf -m | awk '{print \$2}')"
 alias mkdir_cd="mcd"
 
+# opens documentation through fzf (eg: git,zsh etc.)
+alias fman="compgen -c | fzf | xargs man"
+
 prepare_story() {
     pyenv activate ffmpeg-tools399 || true
     # gallery-dl --clear-cache instagram
@@ -201,7 +204,33 @@ ffmpeg_info() {
 alias imgdupes="docker run --rm -it -v $PWD:/app knjcode/imgdupes"
 
 enable_asdf() {
+    if [ "${ZSH_DOTFILES_VERSION_MANAGER:-}" != "asdf" ]; then
+        echo "[enable_asdf] refusing — ZSH_DOTFILES_VERSION_MANAGER=${ZSH_DOTFILES_VERSION_MANAGER:-unset} (need asdf)" >&2
+        return 1
+    fi
     . "$HOME"/.asdf/asdf.sh
+}
+
+enable_mise() {
+    if [ "${ZSH_DOTFILES_VERSION_MANAGER:-}" != "mise" ]; then
+        echo "[enable_mise] refusing — ZSH_DOTFILES_VERSION_MANAGER=${ZSH_DOTFILES_VERSION_MANAGER:-unset} (need mise)" >&2
+        return 1
+    fi
+    export PATH="$HOME/.local/bin:$PATH"
+    command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
+}
+
+# Activate the version manager declared by chezmoi (ZSH_DOTFILES_VERSION_MANAGER).
+# Strict — never falls through to the inactive manager based on PATH presence.
+enable_version_manager() {
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) enable_mise ;;
+        asdf) enable_asdf ;;
+        *)
+            echo "[enable_version_manager] ZSH_DOTFILES_VERSION_MANAGER unset or unknown: '${ZSH_DOTFILES_VERSION_MANAGER:-}'" >&2
+            return 1
+            ;;
+    esac
 }
 
 alias imgdupes="docker run -it -v $PWD:/app knjcode/imgdupes"
@@ -240,7 +269,7 @@ fixprompt() {
 alias trw="tmux rename-window"
 
 alias dotfiles_provision='chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git'
-alias dotfiles_provision_branch='chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git --branch feature-rye'
+alias dotfiles_provision_branch='chezmoi init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git --branch feature-remove-rye-and-install-uv'
 # pi@boss-station ~/.zsh.d/after
 # ❯ cat custom_plugins.zsh
 # plugins+=(git-extra-commands zsh-256color zsh-peco-history pyenv rbenv fd fzf zsh-syntax-highlighting tmux conda-zsh-completion)
@@ -340,8 +369,8 @@ yt-dl-thumb () {
 	youtube-dl -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "${1}"
 }
 yt-dl-thumb-fork () {
-	echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg ${1}"
-	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg "${1}"
+	echo " [running] yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies-from-browser Firefox --convert-thumbnails jpg ${1}"
+	yt-dlp -v -f best -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies-from-browser Firefox --convert-thumbnails jpg "${1}"
 }
 
 alias dl-thumb='yt-dl-thumb'
@@ -353,8 +382,8 @@ yt-dl-best-test () {
 }
 
 yt-best-fork () {
-	echo " [running] yt-dlp -v -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio\" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json ${1}"
-	yt-dlp -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies=~/Downloads/yt-cookies.txt --convert-thumbnails jpg --write-info-json "${1}"
+	echo " [running] yt-dlp -v -f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio\" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies-from-browser Firefox --convert-thumbnails jpg --write-info-json ${1}"
+	yt-dlp -v -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio" -n --ignore-errors --restrict-filenames --write-thumbnail --no-mtime --embed-thumbnail --recode-video mp4 --cookies-from-browser Firefox --convert-thumbnails jpg --write-info-json "${1}"
 }
 
 yt-red () {
@@ -391,32 +420,29 @@ dl-safe () {
 
 }
 
-dl-safe-fork () {
-	pyenv activate yt-dlp3 || true
-	local url=${1}
+dsf() {
+	local url="$1"
+	local list_file="$HOME/.config/yt-dlp/slice-domains.txt"
+	local match=false
+	local domain
 
-	# dl-thumb
-	dl-thumb-fork "${url}"
-
-	_RETVAL=$?
-
-	if [[ "${_RETVAL}" != "0" ]]; then
-			echo "Trying yt-best instead"
-			yt-best-fork "${url}"
-
-			_RETVAL=$?
-
-			if [[ "${_RETVAL}" != "0" ]]; then
-					echo "Trying youtube-dl instead"
-					yt-dlp --convert-thumbnails jpg "${url}"
+	if [[ -f "$list_file" ]]; then
+		while IFS= read -r domain || [[ -n "$domain" ]]; do
+			# skip blank lines and #-comments
+			[[ -z "$domain" || "$domain" == \#* ]] && continue
+			if [[ "$url" == *"$domain"* ]]; then
+				match=true
+				break
 			fi
+		done < "$list_file"
 	fi
 
-
+	if [[ "$match" == true ]]; then
+		yt-dlp --config-locations ~/.config/yt-dlp/config -I "1::2" "$url"
+	else
+		yt-dlp --config-locations ~/.config/yt-dlp/config "$url"
+	fi
 }
-
-alias dlsf='dl-safe-fork'
-alias dsf='dl-safe-fork'
 
 sleep_dsf() {
 	dsf "${1}"
@@ -804,9 +830,16 @@ kubectl_get_logs_of_previous_container() {
 kubectl_use_ethos51_stage_va6(){
     local _VERSION=1.18.6
     echo "[kubectl_use_ethos51_stage_va6] switching to correct version kubectl=${_VERSION}"
-    asdf global kubectl ${_VERSION}
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) mise use -g kubectl@${_VERSION} ;;
+        asdf) asdf global kubectl ${_VERSION} ;;
+        *) echo "[kubectl_use_ethos51_stage_va6] ZSH_DOTFILES_VERSION_MANAGER unset; cannot pin kubectl" >&2; return 1 ;;
+    esac
     echo "[kubectl_use_ethos51_stage_va6] confirming kubectl=${_VERSION}"
-    asdf current
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) mise current ;;
+        asdf) asdf current ;;
+    esac
 
     echo "[kubectl_use_ethos51_stage_va6] setting up KUBECONFIG to ethos now"
     ethos_kubeconfig
@@ -821,9 +854,16 @@ kubectl_use_ethos51_stage_va6(){
 kubectl_use_ethos51_prod_va6(){
     local _VERSION=1.18.6
     echo "[kubectl_use_ethos51_prod_va6] switching to correct version kubectl=${_VERSION}"
-    asdf global kubectl ${_VERSION}
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) mise use -g kubectl@${_VERSION} ;;
+        asdf) asdf global kubectl ${_VERSION} ;;
+        *) echo "[kubectl_use_ethos51_prod_va6] ZSH_DOTFILES_VERSION_MANAGER unset; cannot pin kubectl" >&2; return 1 ;;
+    esac
     echo "[kubectl_use_ethos51_prod_va6] confirming kubectl=${_VERSION}"
-    asdf current
+    case "${ZSH_DOTFILES_VERSION_MANAGER:-}" in
+        mise) mise current ;;
+        asdf) asdf current ;;
+    esac
 
     echo "[kubectl_use_ethos51_prod_va6] setting up KUBECONFIG to ethos now"
     ethos_kubeconfig
@@ -1366,8 +1406,8 @@ generate_video_thumbnail() {
             echo "You can typically install it using your package manager:"
             echo "For Ubuntu/Debian: sudo apt-get install $1"
             echo "For macOS with Homebrew: brew install $1"
-            echo "For Ubuntu/Debian try: apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev fd-find"
-            echo "For MacOS try: brew install curl git gnupg zsh fzf perl gettext direnv vim awscli wget bash-completion ffmpeg gawk libmediainfo"
+            echo "For Ubuntu/Debian try: apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev fd-find"
+            echo "For MacOS try: brew install curl git gnupg zsh fzf perl gettext direnv vim wget bash-completion ffmpeg gawk libmediainfo"
             return 1
         fi
     }
@@ -2736,6 +2776,221 @@ ytdl_auto() {
 }
 
 alias dl_auto='ytdl_auto'
+
+docker-tail-all() {
+    docker ps -q | xargs -L 1 -P $(docker ps | wc -l) docker logs --tail 0 -f
+}
+
+# Toggle XDG_DATA_DIRS to include Homebrew's share dir, or unset it.
+# Homebrew's prefix differs by arch: /opt/homebrew on Apple Silicon, /usr/local on Intel.
+toggle_xdg_data_dirs() {
+    local brew_share
+    if [ -d /opt/homebrew/share ]; then
+        brew_share="/opt/homebrew/share"
+    else
+        brew_share="/usr/local/share"
+    fi
+    local default_dirs="/usr/local/share:/usr/share"
+
+    if [ -n "${XDG_DATA_DIRS}" ] && [[ ":${XDG_DATA_DIRS}:" == *":${brew_share}:"* ]]; then
+        unset XDG_DATA_DIRS
+        echo "[toggle_xdg_data_dirs] unset XDG_DATA_DIRS"
+    else
+        export XDG_DATA_DIRS="${brew_share}:${XDG_DATA_DIRS:-${default_dirs}}"
+        echo "[toggle_xdg_data_dirs] XDG_DATA_DIRS=${XDG_DATA_DIRS}"
+    fi
+}
+
+# Claude Code usage analytics
+alias ccusage='npx ccusage@latest'
+
+# headroom (https://github.com/headroomlabs-ai/headroom) - local compression
+# proxy for LLM API traffic. Run in proxy mode, not `headroom wrap claude` -
+# wrap mode installs an internal component also named "rtk" that shadows the
+# real Homebrew rtk (Rust Token Killer) binary on PATH.
+headroom_start() {
+    local port="${HEADROOM_PORT:-8787}"
+    local pid_file="/tmp/headroom-proxy.pid"
+    local log_file="/tmp/headroom-proxy.log"
+
+    if [[ -f "${pid_file}" ]] && kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
+        echo "[headroom_start] already running (pid $(cat "${pid_file}"), port ${port})"
+        return 0
+    fi
+
+    nohup headroom proxy --port "${port}" >"${log_file}" 2>&1 &
+    echo $! >"${pid_file}"
+    echo "[headroom_start] started headroom proxy on port ${port} (pid $!, log ${log_file})"
+}
+
+headroom_stop() {
+    local pid_file="/tmp/headroom-proxy.pid"
+
+    if [[ ! -f "${pid_file}" ]] || ! kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
+        echo "[headroom_stop] not running"
+        rm -f "${pid_file}"
+        return 0
+    fi
+
+    kill "$(cat "${pid_file}")"
+    rm -f "${pid_file}"
+    echo "[headroom_stop] stopped"
+}
+
+headroom_status() {
+    local port="${HEADROOM_PORT:-8787}"
+    local pid_file="/tmp/headroom-proxy.pid"
+
+    if [[ -f "${pid_file}" ]] && kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
+        echo "[headroom_status] running (pid $(cat "${pid_file}"), port ${port})"
+    else
+        echo "[headroom_status] not running"
+    fi
+}
+
+# Passthrough wrapper: runs claude through the local headroom compression
+# proxy. Start the proxy first with headroom_start. Usage mirrors claude
+# itself, e.g.:
+#   hclaude --model sonnet --permission-mode plan
+#   hclaude --model opus --permission-mode plan --resume
+hclaude() {
+    local port="${HEADROOM_PORT:-8787}"
+    local pid_file="/tmp/headroom-proxy.pid"
+
+    if [[ ! -f "${pid_file}" ]] || ! kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
+        echo "[hclaude] warning: headroom proxy doesn't appear to be running on port ${port} (run headroom_start)" >&2
+    fi
+
+    ANTHROPIC_BASE_URL="http://localhost:${port}" claude "$@"
+}
+
+# _ai_cli_update_claude_snapshot - print "id<TAB>version" for every installed
+# user-scoped Claude plugin, sorted and de-duplicated. Requires `claude` and
+# `jq`; prints nothing and returns non-zero if either is missing or the query
+# fails. Used to capture before/after state for ai_cli_update --debug.
+_ai_cli_update_claude_snapshot() {
+    command -v claude >/dev/null 2>&1 || return 1
+    command -v jq >/dev/null 2>&1 || return 1
+    claude plugin list --json 2>/dev/null \
+        | jq -r '.[] | select(.scope == "user") | "\(.id)\t\(.version)"' 2>/dev/null \
+        | sort -u
+}
+
+# _ai_cli_update_print_diff BEFORE AFTER - given two "id<TAB>version" snapshots
+# (as produced by _ai_cli_update_claude_snapshot), print one indented line per
+# plugin whose version changed (*), was added (+), or was removed (-). Prints
+# "(no version changes)" when the two snapshots are identical.
+_ai_cli_update_print_diff() {
+    local before="$1" after="$2"
+    awk -F'\t' '
+        NR == FNR { b[$1] = $2; next }
+        {
+            a[$1] = $2
+            if (!($1 in b))       { printf "  + %s: (new) %s\n", $1, $2; c = 1 }
+            else if (b[$1] != $2) { printf "  * %s: %s -> %s\n", $1, b[$1], $2; c = 1 }
+        }
+        END {
+            for (id in b) if (!(id in a)) { printf "  - %s: removed (was %s)\n", id, b[id]; c = 1 }
+            if (!c) print "  (no version changes)"
+        }
+    ' <(printf '%s\n' "${before}") <(printf '%s\n' "${after}")
+}
+
+# ai_cli_update [--debug] - refresh the GitHub Copilot and Claude command-line
+# tools and their plugins in one shot. Runs, in order:
+#   copilot update
+#   copilot plugin update --all
+#   claude plugin marketplace update            (refresh the catalog first)
+#   claude plugin update <id>                   (once per installed user plugin)
+# There is no `claude plugin update --all`, so each user-scoped plugin is
+# updated individually using ids from `claude plugin list --json` (needs jq).
+# With --debug, the Claude plugin versions are snapshotted before and after the
+# updates and a diff of what changed is printed.
+# Each tool is guarded: a missing binary is skipped with a warning instead of
+# aborting the run, and every step is attempted even if an earlier one fails.
+# Returns non-zero if any attempted command exits non-zero.
+ai_cli_update() {
+    local rc=0
+    local debug=0
+    local arg
+    for arg in "$@"; do
+        case "${arg}" in
+            --debug) debug=1 ;;
+            -h|--help)
+                cat <<'USAGE'
+Usage: ai_cli_update [--debug]
+
+Refresh the GitHub Copilot and Claude CLIs and their plugins.
+  --debug   Snapshot Claude plugin versions before and after updating and print
+            a diff of what changed (requires jq).
+USAGE
+                return 0
+                ;;
+            *)
+                echo "[ai_cli_update] unknown argument: ${arg}" >&2
+                echo "[ai_cli_update] usage: ai_cli_update [--debug]" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if command -v copilot >/dev/null 2>&1; then
+        echo "[ai_cli_update] copilot update"
+        copilot update || { echo "[ai_cli_update] 'copilot update' failed" >&2; rc=1; }
+
+        echo "[ai_cli_update] copilot plugin update --all"
+        copilot plugin update --all || { echo "[ai_cli_update] 'copilot plugin update --all' failed" >&2; rc=1; }
+    else
+        echo "[ai_cli_update] skipping copilot: command not found on PATH" >&2
+    fi
+
+    if command -v claude >/dev/null 2>&1; then
+        echo "[ai_cli_update] claude plugin marketplace update"
+        claude plugin marketplace update || { echo "[ai_cli_update] 'claude plugin marketplace update' failed" >&2; rc=1; }
+
+        if command -v jq >/dev/null 2>&1; then
+            local claude_before=""
+            [[ ${debug} -eq 1 ]] && claude_before="$(_ai_cli_update_claude_snapshot)"
+
+            # No `claude plugin update --all` exists; update each installed
+            # user-scoped plugin individually, keyed by its id.
+            local plugin_ids pid
+            plugin_ids="$(claude plugin list --json 2>/dev/null \
+                | jq -r '.[] | select(.scope == "user") | .id' 2>/dev/null | sort -u)"
+            if [[ -z ${plugin_ids} ]]; then
+                echo "[ai_cli_update] no user-scoped Claude plugins to update"
+            else
+                while IFS= read -r pid; do
+                    [[ -z ${pid} ]] && continue
+                    echo "[ai_cli_update] claude plugin update ${pid}"
+                    claude plugin update "${pid}" \
+                        || { echo "[ai_cli_update] 'claude plugin update ${pid}' failed" >&2; rc=1; }
+                done <<< "${plugin_ids}"
+            fi
+
+            if [[ ${debug} -eq 1 ]]; then
+                local claude_after
+                claude_after="$(_ai_cli_update_claude_snapshot)"
+                echo "[ai_cli_update] Claude plugin version changes (before -> after):"
+                _ai_cli_update_print_diff "${claude_before}" "${claude_after}"
+            fi
+        else
+            echo "[ai_cli_update] skipping Claude plugin updates: jq not found on PATH" >&2
+            echo "[ai_cli_update] install jq to enable per-plugin updates and --debug" >&2
+            rc=1
+        fi
+    else
+        echo "[ai_cli_update] skipping claude: command not found on PATH" >&2
+    fi
+
+    if [[ ${rc} -eq 0 ]]; then
+        echo "[ai_cli_update] done"
+    else
+        echo "[ai_cli_update] completed with errors" >&2
+    fi
+
+    return ${rc}
+}
 
 # ---------------------------------------------------------
 # chezmoi managed - end.zsh

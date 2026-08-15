@@ -1,0 +1,46 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+
+#!/usr/bin/env bash
+# Import iTerm2 preferences (profiles, colors, fonts, global settings) from the
+# chezmoi-managed snapshot into the com.googlecode.iterm2 defaults domain.
+# Re-runs whenever the tracked plist changes:
+# iterm2 settings hash: {{ include "private_dot_config/iterm2/private_com.googlecode.iterm2.plist" | sha256sum }}
+
+set -euo pipefail
+
+PLIST="$HOME/.config/iterm2/com.googlecode.iterm2.plist"
+
+if [ ! -f "$PLIST" ]; then
+  echo "iterm2: $PLIST not found; skipping defaults import" >&2
+  exit 0
+fi
+
+# Importing while iTerm2 is running is pointless: iTerm2 writes its in-memory
+# settings back to the plist when it quits, clobbering whatever we import.
+if pgrep -xq iTerm2; then
+  cat >&2 <<EOF
+================================================================================
+iterm2: iTerm2 is RUNNING -- SKIPPING settings import!
+iterm2: Your profiles/colors were NOT imported. To fix, quit iTerm2, then run:
+iterm2:
+iterm2:   defaults import com.googlecode.iterm2 ~/.config/iterm2/com.googlecode.iterm2.plist
+iterm2:
+iterm2: (or re-run this from Terminal.app while iTerm2 is not running)
+================================================================================
+EOF
+  exit 0
+fi
+
+defaults import com.googlecode.iterm2 "$PLIST"
+
+# Verify the import actually landed in the domain.
+expected_guid="$(/usr/libexec/PlistBuddy -c 'Print :"Default Bookmark Guid"' "$PLIST")"
+actual_guid="$(defaults read com.googlecode.iterm2 "Default Bookmark Guid" 2>/dev/null || echo MISSING)"
+if [ "$actual_guid" = "$expected_guid" ]; then
+  profile_count="$(defaults read com.googlecode.iterm2 "New Bookmarks" | grep -cE '^ *Guid = ' || true)"
+  echo "iterm2: imported preferences from $PLIST ($profile_count profiles, default guid $actual_guid)"
+else
+  echo "iterm2: ERROR: import verification failed (expected default guid $expected_guid, got $actual_guid)" >&2
+  exit 1
+fi
+{{ end -}}

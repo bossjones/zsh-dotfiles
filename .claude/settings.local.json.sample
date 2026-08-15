@@ -1,15 +1,32 @@
 {
   "permissions": {
     "allow": [
-      "mcp__sequentialthinking__sequentialthinking",
-      "WebFetch(domain:docs.mermaidchart.com)",
-      "Bash(git add:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Skill(superpowers:systematic-debugging)",
+      "Bash(make smoke:*)",
+      "Bash(docker compose build:*)",
+      "Bash(pre-commit run:*)",
+      "Bash(uvx pre-commit run:*)",
       "Bash(git commit:*)",
-      "Bash(tree:*)",
-      "Bash(mkdir:*)",
-      "WebFetch(domain:www.perplexity.ai)",
-      "WebFetch(domain:job-boards.greenhouse.io)"
+      "Bash(git add:*)",
+      "Bash(shellcheck:*)",
+      "Bash(bash -n:*)",
+      "mcp__firecrawl-mcp__firecrawl_scrape",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(python3:*)",
+      "Bash(actionlint:*)",
+      "WebFetch(domain:www.chezmoi.io)",
+      "Bash(git:*)",
+      "WebFetch(domain:docs.deno.com)",
+      "Bash(chezmoi execute-template:*)"
     ]
   },
-  "enableAllProjectMcpServers": false
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "ElevenLabs",
+    "firecrawl-mcp",
+    "perplexity-ask"
+  ]
 }

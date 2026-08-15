@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Avoid Homebrew's interactive "ask mode" confirmation for brew install below
+export HOMEBREW_NO_ASK=1
+
 # fix permissions so Homebrew and Bundler don't complain
 sudo chmod -R g-w,o-w /home/linuxbrew
 

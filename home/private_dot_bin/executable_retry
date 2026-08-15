@@ -4,7 +4,7 @@ GETOPT_BIN=$IN_GETOPT_BIN
 GETOPT_BIN=${GETOPT_BIN:-getopt}
 
 __sleep_amount() {
-  if [ -n "$constant_sleep" ]; then 
+  if [ -n "$constant_sleep" ]; then
     sleep_time=$constant_sleep
   else
     #TODO: check if user would rather use one of the other possible dependencies: python, ruby, bc, dc
@@ -97,7 +97,7 @@ EOF
 
   $GETOPT_BIN --test > /dev/null
   if [[ $? -ne 4 ]]; then
-      echo "I’m sorry, 'getopt --test' failed in this environment. Please load GNU getopt."
+      echo "I'm sorry, 'getopt --test' failed in this environment. Please load GNU getopt."
       exit 1
   fi
   if ! command -v awk &> /dev/null; then
@@ -114,7 +114,7 @@ EOF
     #  then getopt has complained about wrong arguments to stdout
     exit 2
   fi
-  # read getopt’s output this way to handle the quoting right:
+  # read getopt's output this way to handle the quoting right:
   eval set -- "$PARSED"
 
   max_tries=10

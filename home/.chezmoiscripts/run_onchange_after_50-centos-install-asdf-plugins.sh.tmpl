@@ -1,4 +1,4 @@
-{{- if (eq .chezmoi.os "linux") -}}
+{{- if and (eq .chezmoi.os "linux") (eq .version_manager "asdf") -}}
 #!/bin/bash
 
 {{ if or (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "ol") (eq .chezmoi.osRelease.id "rhel") }}
@@ -8,10 +8,21 @@ sudo dnf install -y libyaml-devel
 
 # Install asdf plugins
 
-export ASDF_DIR="${HOME}/.asdf"
-export ASDF_COMPLETIONS="$ASDF_DIR/completions"
-. $HOME/.asdf/asdf.sh
-export PATH="$HOME/.asdf/shims:$HOME/.asdf/bin:$PATH"
+# Source asdf from whichever layout is present (git-clone ~/.asdf or Homebrew formula)
+if [ -f "$HOME/.asdf/asdf.sh" ]; then
+  export ASDF_DIR="${HOME}/.asdf"
+  export ASDF_COMPLETIONS="$ASDF_DIR/completions"
+  . "$HOME/.asdf/asdf.sh"
+  export PATH="$HOME/.asdf/shims:$HOME/.asdf/bin:$PATH"
+elif command -v brew >/dev/null 2>&1 && [ -f "$(brew --prefix asdf 2>/dev/null)/libexec/asdf.sh" ]; then
+  . "$(brew --prefix asdf)/libexec/asdf.sh"
+fi
+
+# Never fail chezmoi apply if asdf still isn't usable
+if ! asdf --version >/dev/null 2>&1; then
+  echo "asdf not available - skipping asdf plugin install"
+  exit 0
+fi
 
 printf "${green}[50 - rhel-family] ${reset}"
 {{- if or (lt 31 (atoi (env "SCRIPTS_START_AT"))) (env "SKIP_ASDF_PLUGINS") }}
@@ -30,27 +41,24 @@ asdf plugin-add mkcert https://github.com/salasrod/asdf-mkcert.git || true
 asdf plugin add opa https://github.com/tochukwuvictor/asdf-opa.git || true
 asdf plugin-add helm-docs https://github.com/sudermanjr/asdf-helm-docs.git || true
 asdf plugin-add kubetail https://github.com/janpieper/asdf-kubetail.git || true
-asdf plugin add rye https://github.com/Azuki-bar/asdf-rye.git || true
-
 
 {{ $plugins := dict
-  "ruby"    (.myAsdfRubyVersion)
-  "golang"    (.myAsdfGolangVersion)
-  "tmux" (.myAsdfTmuxVersion)
-  "neovim" (.myAsdfNeovimVersion)
-  "github-cli" (.myAsdfGithubCliVersion)
-  "mkcert" (.myAsdfMkcertVersion)
-  "shellcheck" (.myAsdfShellcheckVersion)
-  "shfmt" (.myAsdfShfmtVersion)
-  "yq" (.myAsdfYqVersion)
-  "helm" (.myAsdfHelmVersion)
-  "helmfile" (.myAsdfHelmfileVersion)
-  "helm-docs" (.myAsdfHelmdocsVersion)
-  "k9s" (.myAsdfK9sVersion)
-  "kubectx" (.myAsdfKubectxVersion)
-  "opa" (.myAsdfOpaVersion)
-  "kubectl" (.myAsdfKubectlVersion)
-  "rye" (.myAsdfRyeVersion)
+  "ruby"    (.myRubyVersion)
+  "golang"    (.myGolangVersion)
+  "tmux" (.myTmuxVersion)
+  "neovim" (.myNeovimVersion)
+  "github-cli" (.myGithubCliVersion)
+  "mkcert" (.myMkcertVersion)
+  "shellcheck" (.myShellcheckVersion)
+  "shfmt" (.myShfmtVersion)
+  "yq" (.myYqVersion)
+  "helm" (.myHelmVersion)
+  "helmfile" (.myHelmfileVersion)
+  "helm-docs" (.myHelmdocsVersion)
+  "k9s" (.myK9sVersion)
+  "kubectx" (.myKubectxVersion)
+  "opa" (.myOpaVersion)
+  "kubectl" (.myKubectlVersion)
 }}
 
 # Add plugins & install versions
@@ -77,6 +85,6 @@ asdf plugin add rye https://github.com/Azuki-bar/asdf-rye.git || true
   gem install {{ . }} --no-doc
 {{ end -}}
 
-asdf reshim
+asdf reshim || true
 
 {{ end -}}

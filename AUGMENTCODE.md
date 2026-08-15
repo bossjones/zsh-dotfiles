@@ -236,7 +236,7 @@ External repositories managed via `.chezmoiexternal.yaml`:
 ### Platform-Specific Handling
 - **macOS 15**: Requires special OpenSSL 3 configuration and rbenv tap
 - **ASDF Integration**: Sets up ASDF environment variables and PATH
-- **Ruby**: Installs Ruby 3.2.1 with OpenSSL 3 support
+- **Ruby**: Installs Ruby 4.0.1 with OpenSSL 3 support
 
 ### Development Dependencies
 Key packages installed during CI:
@@ -249,7 +249,7 @@ Key packages installed during CI:
 ### Package Managers & Environment Tools
 - **asdf**: Multi-language runtime version manager
 - **sheldon**: ZSH plugin manager (compiled from source on arm64 macOS)
-- **rye**: Python project & dependency management tool with uv backend
+- **uv**: Python package and project manager (Astral)
 - **fnm**: Fast Node.js version manager
 - **pyenv**: Python version management (Ubuntu)
 
@@ -306,7 +306,7 @@ Key packages installed during CI:
 **CLI Tools:**
 - Search: `fd-find`, `ripgrep`, `silversearcher-ag`, `fzf`
 - File operations: `tree`, `parallel`, `file`, `jq`, `fdupes`
-- System: `curl`, `git`, `vim`, `direnv`, `awscli`, `ccze`, `linux-headers`
+- System: `curl`, `git`, `vim`, `direnv`, `ccze`, `linux-headers`
 - Development: `pkg-config`, `git-core`, `mercurial`, `graphviz`
 
 ### CentOS/RHEL-Specific Packages

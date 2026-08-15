@@ -153,7 +153,7 @@ install_centos_deps() {
 
   # Install additional tools
   log_info "Installing additional tools"
-  sudo dnf install -y tar vim fzf perl gettext awscli2 ffmpeg bc gawk --allowerasing
+  sudo dnf install -y tar vim fzf perl gettext ffmpeg bc gawk --allowerasing
 
   # Install retry tool
   if ! command -v retry >/dev/null 2>&1; then

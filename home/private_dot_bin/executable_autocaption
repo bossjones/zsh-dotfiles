@@ -424,6 +424,3 @@ convert $tmpA1 $tmpA3 -geometry +${xxmp}+${yymp} \
 -composite "$outfile"
 
 exit 0
-
-
-

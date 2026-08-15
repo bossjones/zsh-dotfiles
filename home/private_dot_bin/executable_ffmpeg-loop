@@ -102,6 +102,3 @@ rm "$tmpfile"
 # ffmpeg -f concat -safe 0 -i <(for i in {1..4}; do printf "file '%s'\n" ${full_path_input_file}; done) -c copy ${full_path_output_file}
 
 # return ${full_path_output_file}
-
-
-

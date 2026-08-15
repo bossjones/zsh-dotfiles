@@ -1,0 +1,20 @@
+{{- if eq .version_manager "mise" -}}
+#!/bin/bash
+
+# Migration self-heal: an asdf-era ~/.tool-versions lists tools under bare
+# names (e.g. jsonnet, kubetail) that mise can't resolve from its registry,
+# producing noisy "not found in mise tool registry" warnings on every mise
+# command. mise's source of truth is now ~/.config/mise/config.toml, so back
+# the stale file out of the way (rename, don't delete) before any mise install
+# step runs. Idempotent: never clobbers an existing backup.
+
+printf "${green}[01 - mise] ${reset}"
+
+if [ -f "$HOME/.tool-versions" ] && [ ! -e "$HOME/.tool-versions.asdf.bak" ]; then
+  mv "$HOME/.tool-versions" "$HOME/.tool-versions.asdf.bak"
+  echo "Backed up stale ~/.tool-versions -> ~/.tool-versions.asdf.bak"
+else
+  echo "No stale ~/.tool-versions to back up"
+fi
+
+{{ end -}}

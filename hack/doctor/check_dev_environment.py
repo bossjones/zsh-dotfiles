@@ -4,11 +4,11 @@ Development Environment Checker
 Verifies that all required packages and tools are properly installed.
 """
 
+import os
 import subprocess
 import sys
-import json
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 import re
 
 
@@ -22,15 +22,31 @@ class Colors:
     BOLD = '\033[1m'
 
 
+# CLI binary name for a managed tool, when it differs from the tool key. Used by
+# the PATH/brew fallback (e.g. the github-cli plugin provides the `gh` binary).
+BINARY_NAMES = {
+    'github-cli': 'gh',
+    'golang': 'go',
+    'neovim': 'nvim',
+}
+
+# mise registry name for a tool, when it differs from the asdf plugin name.
+# (tmux/kubetail need plugin namespaces under mise and may fall back to PATH.)
+MISE_TOOL_NAMES = {
+    'golang': 'go',
+}
+
+
 class EnvironmentChecker:
     def __init__(self):
         self.results = {
+            'env_and_path': None,
             'brew_packages': [],
             'sheldon': None,
             'chezmoi': None,
-            'asdf_tools': [],
-            'env_vars': [],
-            'path_dirs': []
+            'uv': None,
+            'fzf': None,
+            'managed_tools': []
         }
         self.failed_checks = []
 
@@ -128,288 +144,330 @@ class EnvironmentChecker:
         return result
 
     def check_chezmoi(self) -> Dict:
-        """Check chezmoi installation and preferred location"""
-        preferred_location = Path.home() / ".bin" / "chezmoi"
-
+        """Check chezmoi installation"""
         result = {
             'installed': False,
             'location': None,
-            'version': None,
-            'location_preferred': False
+            'version': None
         }
 
-        # Check if chezmoi exists at preferred location (~/.bin/chezmoi)
-        if preferred_location.exists():
+        # Check if chezmoi is in PATH
+        success, stdout, _ = self.run_command(['which', 'chezmoi'])
+        if success:
             result['installed'] = True
-            result['location'] = str(preferred_location)
-            result['location_preferred'] = True
+            result['location'] = stdout.strip()
 
             # Get version
-            success, stdout, _ = self.run_command([str(preferred_location), '--version'])
+            success, stdout, _ = self.run_command(['chezmoi', '--version'])
             if success:
                 # Parse version from output
                 match = re.search(r'(\d+\.\d+\.\d+)', stdout)
                 if match:
                     result['version'] = match.group(1)
-        else:
-            # Check if chezmoi is in PATH
-            success, stdout, _ = self.run_command(['which', 'chezmoi'])
-            if success:
-                result['installed'] = True
-                result['location'] = stdout.strip()
-
-                # Get version
-                success, stdout, _ = self.run_command(['chezmoi', '--version'])
-                if success:
-                    # Parse version from output
-                    match = re.search(r'(\d+\.\d+\.\d+)', stdout)
-                    if match:
-                        result['version'] = match.group(1)
 
         return result
 
-    def check_asdf_tool(self, tool: str, expected_version: str) -> Dict:
-        """Check if an asdf-managed tool is installed with correct version"""
+    @staticmethod
+    def _version_gte(actual: str, minimum: str) -> bool:
+        """Return True if actual version >= minimum version (semver-style comparison)."""
+        def _parts(v: str) -> List[int]:
+            return [int(x) for x in re.split(r'[.\-]', v) if x.isdigit()]
+        return _parts(actual) >= _parts(minimum)
+
+    def check_uv(self) -> Dict:
+        """Check uv installation and version (>= minimum)"""
+        min_version = "0.9.21"
+        result = {
+            'installed': False,
+            'location': None,
+            'version': None,
+            'version_acceptable': False,
+            'min_version': min_version
+        }
+
+        success, stdout, _ = self.run_command(['which', 'uv'])
+        if success:
+            result['installed'] = True
+            result['location'] = stdout.strip()
+
+            success, stdout, _ = self.run_command(['uv', '--version'])
+            if success:
+                # Parse version from output like "uv 0.9.21 (0dc9556ad 2025-12-30)"
+                match = re.search(r'(\d+\.\d+\.\d+)', stdout)
+                if match:
+                    result['version'] = match.group(1)
+                    result['version_acceptable'] = self._version_gte(result['version'], min_version)
+
+        return result
+
+    def check_all_uv(self):
+        """Check uv installation"""
+        self.print_header("Checking uv")
+
+        result = self.check_uv()
+        self.results['uv'] = result
+
+        if result['installed']:
+            self.print_success("uv is installed")
+            print(f"  Location: {result['location']}")
+            print(f"  Version: {result['version']}")
+
+            if result['version_acceptable']:
+                self.print_success(f"Version is acceptable (>= {result['min_version']})")
+            else:
+                self.print_warning(f"Version {result['version']} is below minimum {result['min_version']}")
+        else:
+            self.print_failure("uv is NOT installed")
+            print(f"\n  Install with:")
+            print(f"  curl -LsSf https://astral.sh/uv/install.sh | sh")
+
+    def check_fzf(self) -> Dict:
+        """Check fzf installation and version (>= minimum).
+
+        fzf is not asdf/mise-managed in this setup (brew on macOS, git clone on
+        Linux), so it gets a minimum-version check like uv rather than an exact
+        match -- brew/git fzf is frequently newer than the pin.
+        """
+        min_version = "0.73.1"
+        result = {
+            'installed': False,
+            'location': None,
+            'version': None,
+            'version_acceptable': False,
+            'min_version': min_version
+        }
+
+        success, stdout, _ = self.run_command(['which', 'fzf'])
+        if success:
+            result['installed'] = True
+            result['location'] = stdout.strip()
+
+            success, stdout, _ = self.run_command(['fzf', '--version'])
+            if success:
+                # Parse version from output like "0.73.1 (brew)"
+                match = re.search(r'(\d+\.\d+\.\d+)', stdout)
+                if match:
+                    result['version'] = match.group(1)
+                    result['version_acceptable'] = self._version_gte(result['version'], min_version)
+
+        return result
+
+    def check_all_fzf(self):
+        """Check fzf installation"""
+        self.print_header("Checking fzf")
+
+        result = self.check_fzf()
+        self.results['fzf'] = result
+
+        if result['installed']:
+            self.print_success("fzf is installed")
+            print(f"  Location: {result['location']}")
+            print(f"  Version: {result['version']}")
+
+            if result['version_acceptable']:
+                self.print_success(f"Version is acceptable (>= {result['min_version']})")
+            else:
+                self.print_warning(f"Version {result['version']} is below minimum {result['min_version']}")
+        else:
+            self.print_failure("fzf is NOT installed")
+            print("\n  Install with:")
+            print("  brew install fzf")
+
+    def check_env_and_path(self) -> Dict:
+        """Check CI environment variables and PATH precedence from setup_initial_environment."""
+        import os
+
+        home = str(Path.home())
+        result = {
+            'env_vars': {},
+            'path_dirs': {},
+            'path_precedence_ok': False,
+        }
+
+        # Expected env vars from setup_initial_environment
+        env_checks = {
+            'ZSH_DOTFILES_PREP_CI': '1',
+            'ZSH_DOTFILES_PREP_DEBUG': '1',
+            'ZSH_DOTFILES_PREP_GITHUB_USER': 'bossjones',
+            'ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE': '1',
+            'SHELDON_CONFIG_DIR': os.path.join(home, '.sheldon'),
+            'SHELDON_DATA_DIR': os.path.join(home, '.sheldon'),
+        }
+
+        for var, expected in env_checks.items():
+            actual = os.environ.get(var)
+            result['env_vars'][var] = {
+                'expected': expected,
+                'actual': actual,
+                'ok': actual == expected if actual else False,
+                'set': actual is not None,
+            }
+
+        # Check that key directories exist on PATH and appear before system dirs
+        priority_dirs = [
+            os.path.join(home, '.bin'),
+            os.path.join(home, 'bin'),
+            os.path.join(home, '.local', 'bin'),
+        ]
+
+        path_entries = os.environ.get('PATH', '').split(':')
+
+        # Find index of /usr/bin as a reference "system" baseline
+        system_idx = None
+        for i, p in enumerate(path_entries):
+            if p in ('/usr/bin', '/bin'):
+                system_idx = i
+                break
+
+        all_precedence_ok = True
+        for d in priority_dirs:
+            present = d in path_entries
+            idx = path_entries.index(d) if present else None
+            before_system = (idx is not None and system_idx is not None and idx < system_idx) if present else False
+            if not before_system:
+                all_precedence_ok = False
+            result['path_dirs'][d] = {
+                'present': present,
+                'index': idx,
+                'before_system': before_system,
+            }
+
+        result['path_precedence_ok'] = all_precedence_ok
+
+        # Check if gnu-getopt bin dir is on PATH
+        gnu_getopt_on_path = False
+        success, stdout, _ = self.run_command(['brew', '--prefix', 'gnu-getopt'])
+        if success and stdout.strip():
+            gnu_getopt_bin = os.path.join(stdout.strip(), 'bin')
+            gnu_getopt_on_path = gnu_getopt_bin in path_entries
+        result['gnu_getopt_on_path'] = gnu_getopt_on_path
+
+        return result
+
+    def check_all_env_and_path(self):
+        """Check environment variables and PATH precedence."""
+        self.print_header("Checking Environment & PATH Precedence")
+
+        result = self.check_env_and_path()
+        self.results['env_and_path'] = result
+
+        # Environment variables
+        for var, info in result['env_vars'].items():
+            if not info['set']:
+                self.print_warning(f"${var} is not set (expected: {info['expected']})")
+            elif info['ok']:
+                self.print_success(f"${var} = {info['actual']}")
+            else:
+                self.print_warning(f"${var} = {info['actual']} (expected: {info['expected']})")
+
+        # PATH directories
+        print()
+        for d, info in result['path_dirs'].items():
+            short = d.replace(str(Path.home()), '~')
+            if info['present'] and info['before_system']:
+                self.print_success(f"{short} is on PATH (index {info['index']}, before system dirs)")
+            elif info['present']:
+                self.print_warning(f"{short} is on PATH (index {info['index']}) but AFTER system dirs")
+            else:
+                self.print_failure(f"{short} is NOT on PATH")
+
+        if result['path_precedence_ok']:
+            self.print_success("PATH precedence is correct (user dirs before system dirs)")
+        else:
+            self.print_warning("PATH precedence: some user dirs are missing or after system dirs")
+
+        # GNU getopt PATH check
+        print()
+        if result.get('gnu_getopt_on_path'):
+            self.print_success("GNU getopt bin dir is on PATH")
+        else:
+            self.print_warning(
+                "GNU getopt bin dir is NOT on PATH. "
+                "Add $(brew --prefix gnu-getopt)/bin to PATH for scripts requiring GNU getopt."
+            )
+
+    def _detect_version_manager(self) -> Optional[str]:
+        """Pick the active version manager: env var, else mise, else asdf, else None.
+
+        Mirrors the runtime idiom (ZSH_DOTFILES_VERSION_MANAGER exported by
+        dot_zshrc.tmpl). Auto-detect prefers mise to match the repo's
+        mise-preferred stance for mid-migration boxes that have both.
+        """
+        env = os.environ.get('ZSH_DOTFILES_VERSION_MANAGER', '').strip()
+        if env in ('asdf', 'mise'):
+            return env
+        if self.run_command(['which', 'mise'])[0]:
+            return 'mise'
+        if self.run_command(['which', 'asdf'])[0]:
+            return 'asdf'
+        return None
+
+    def _binary_version(self, binary: str) -> Optional[str]:
+        """Return a parsed version from `<binary> --version`/`-V`, or None if absent."""
+        if not self.run_command(['which', binary])[0]:
+            return None
+        for flag in ('--version', '-V'):
+            _ok, out, err = self.run_command([binary, flag])
+            text = (out or '') + (err or '')
+            # Tolerant: matches 2.93.0, 0.11.0, v3.13.1, and tmux-style 3.5a.
+            match = re.search(r'(\d+\.\d+(?:\.\d+)?[a-z]?)', text)
+            if match:
+                return match.group(1)
+        return None
+
+    def check_managed_tool(self, manager: Optional[str], tool: str, expected_version: str) -> Dict:
+        """Check a version-managed tool.
+
+        Resolution order matches "PATH/brew satisfies it": query the active
+        manager's `current`; if it reports a concrete version, compare it exactly
+        to the pin. If it reports `system` (a PATH/brew binary), is empty, or no
+        manager is active, fall back to probing the binary on PATH and accept it
+        when its version is >= the pin.
+        """
         result = {
             'tool': tool,
             'expected_version': expected_version,
             'installed': False,
             'current_version': None,
-            'version_correct': False
+            'version_correct': False,
+            'source': None,  # 'asdf' | 'mise' | 'path'
         }
 
-        # Check asdf current for this tool
-        success, stdout, _ = self.run_command(['asdf', 'current', tool])
-        if success:
-            # Parse output like "golang          1.20.5          /Users/bossjones/.tool-versions"
-            parts = stdout.strip().split()
-            if len(parts) >= 2:
-                result['installed'] = True
-                result['current_version'] = parts[1]
-                result['version_correct'] = result['current_version'] == expected_version
+        current = None
+        if manager == 'asdf':
+            success, stdout, _ = self.run_command(['asdf', 'current', tool])
+            if success:
+                # Output like "golang  1.20.5  /Users/bossjones/.tool-versions"
+                parts = stdout.strip().split()
+                if len(parts) >= 2:
+                    current = parts[1]
+        elif manager == 'mise':
+            mise_tool = MISE_TOOL_NAMES.get(tool, tool)
+            success, stdout, _ = self.run_command(['mise', 'current', mise_tool])
+            if success:
+                # Output is just the version, e.g. "2.93.0" or "system".
+                tokens = stdout.strip().split()
+                if tokens:
+                    current = tokens[0]
+
+        # A concrete VM-pinned version: exact-match against the pin.
+        if current and current != 'system':
+            result['installed'] = True
+            result['current_version'] = current
+            result['source'] = manager
+            result['version_correct'] = current == expected_version
+            return result
+
+        # PATH/brew fallback ('system', empty, or no manager active).
+        binary = BINARY_NAMES.get(tool, tool)
+        path_version = self._binary_version(binary)
+        if path_version is not None:
+            result['installed'] = True
+            result['current_version'] = path_version
+            result['source'] = 'path'
+            result['version_correct'] = self._version_gte(path_version, expected_version)
 
         return result
-
-    def parse_shell_config_for_var(self, var_name: str) -> Dict[str, str]:
-        """Parse shell configuration files to find where a variable is defined
-
-        Checks common shell configuration files for export statements or variable
-        assignments. Returns a dictionary mapping file paths to the defined values.
-        """
-        import os
-        import re
-
-        # Common shell configuration files to check
-        config_files = [
-            Path.home() / '.zshrc',
-            Path.home() / '.zprofile',
-            Path.home() / '.bashrc',
-            Path.home() / '.profile',
-            Path.home() / '.bash_profile',
-        ]
-
-        found_in_files = {}
-
-        # Regex patterns to match variable definitions
-        # Matches: export VAR=value, export VAR="value", VAR=value
-        patterns = [
-            re.compile(rf'^\s*export\s+{var_name}=(["\']?)(.+?)\1\s*$', re.MULTILINE),
-            re.compile(rf'^\s*{var_name}=(["\']?)(.+?)\1\s*$', re.MULTILINE),
-        ]
-
-        for config_file in config_files:
-            if not config_file.exists():
-                continue
-
-            try:
-                content = config_file.read_text()
-
-                for pattern in patterns:
-                    matches = pattern.findall(content)
-                    if matches:
-                        # Get the last match (in case variable is set multiple times)
-                        value = matches[-1][1] if isinstance(matches[-1], tuple) else matches[-1]
-                        found_in_files[str(config_file)] = value
-                        break  # Found in this file, move to next file
-
-            except (IOError, PermissionError):
-                # Skip files we can't read
-                continue
-
-        return found_in_files
-
-    def check_env_var(self, var_name: str, expected_value: Optional[str] = None) -> Dict:
-        """Check if an environment variable is set and optionally verify its value
-
-        This method checks both:
-        1. The current live environment (os.environ) - what's actually active
-        2. Shell configuration files - where the variable should be defined
-
-        Returns a comprehensive result showing both the current state and config state.
-        """
-        import os
-
-        result = {
-            'var_name': var_name,
-            'expected_value': expected_value,
-            'is_set': False,
-            'current_value': None,
-            'value_correct': False,
-            'defined_in_configs': {},  # Maps file path to defined value
-            'in_config_files': False,
-            'config_value_correct': False
-        }
-
-        # Check current live environment
-        current_value = os.environ.get(var_name)
-
-        if current_value is not None:
-            result['is_set'] = True
-            result['current_value'] = current_value
-
-            if expected_value is not None:
-                # Handle $HOME expansion in expected value
-                if '$HOME' in expected_value or '~' in expected_value:
-                    home = os.path.expanduser('~')
-                    expanded_expected = expected_value.replace('$HOME', home).replace('~', home)
-                    result['value_correct'] = current_value == expanded_expected
-                else:
-                    result['value_correct'] = current_value == expected_value
-            else:
-                # If no expected value specified, just being set is correct
-                result['value_correct'] = True
-
-        # Check shell configuration files
-        config_definitions = self.parse_shell_config_for_var(var_name)
-        result['defined_in_configs'] = config_definitions
-        result['in_config_files'] = len(config_definitions) > 0
-
-        # Check if any config file has the correct value
-        if expected_value is not None and config_definitions:
-            for file_path, config_value in config_definitions.items():
-                # Handle $HOME expansion for comparison
-                if '$HOME' in expected_value or '~' in expected_value:
-                    home = os.path.expanduser('~')
-                    expanded_expected = expected_value.replace('$HOME', home).replace('~', home)
-                    # Also check if config file has unexpanded version
-                    if config_value == expected_value or config_value == expanded_expected:
-                        result['config_value_correct'] = True
-                        break
-                else:
-                    if config_value == expected_value:
-                        result['config_value_correct'] = True
-                        break
-
-        return result
-
-    def check_path_directory(self, directory: str) -> Dict:
-        """Check if a directory is in the PATH environment variable
-
-        Args:
-            directory: Path to check (can use ~ for home directory)
-
-        Returns:
-            Dictionary containing check results
-        """
-        import os
-
-        result = {
-            'directory': directory,
-            'expanded_path': None,
-            'exists': False,
-            'in_path': False,
-            'path_entries': []
-        }
-
-        # Expand ~ to home directory
-        expanded_dir = os.path.expanduser(directory)
-        result['expanded_path'] = expanded_dir
-
-        # Check if directory exists
-        dir_path = Path(expanded_dir)
-        result['exists'] = dir_path.exists() and dir_path.is_dir()
-
-        # Get PATH and split into entries
-        path_env = os.environ.get('PATH', '')
-        path_entries = path_env.split(':')
-        result['path_entries'] = path_entries
-
-        # Check if directory is in PATH (check both unexpanded and expanded versions)
-        result['in_path'] = any(
-            entry == expanded_dir or entry == directory
-            for entry in path_entries
-        )
-
-        return result
-
-    def check_all_path_dirs(self):
-        """Check that critical directories are in PATH"""
-        self.print_header("Checking PATH Configuration")
-
-        # Critical directories that should be in PATH
-        critical_dirs = [
-            '~/.bin',
-            '~/.local/bin',
-            '/usr/local/bin',
-            '/opt/homebrew/bin',
-        ]
-
-        in_path_count = 0
-        exists_count = 0
-
-        for directory in critical_dirs:
-            result = self.check_path_directory(directory)
-            self.results['path_dirs'].append(result)
-
-            # Show detailed status
-            if result['in_path']:
-                if result['exists']:
-                    self.print_success(f"{directory} is in PATH and exists")
-                    in_path_count += 1
-                    exists_count += 1
-                else:
-                    self.print_warning(f"{directory} is in PATH but directory doesn't exist")
-                    in_path_count += 1
-            else:
-                if result['exists']:
-                    self.print_failure(f"{directory} exists but is NOT in PATH")
-                    exists_count += 1
-                else:
-                    self.print_warning(f"{directory} is NOT in PATH and doesn't exist")
-
-        print(f"\n{Colors.BOLD}Summary:{Colors.ENDC} {in_path_count}/{len(critical_dirs)} critical directories in PATH")
-        print(f"{Colors.BOLD}Existing:{Colors.ENDC} {exists_count}/{len(critical_dirs)} directories exist on filesystem")
-
-        # Show current PATH for debugging
-        import os
-        current_path = os.environ.get('PATH', '')
-        print(f"\n{Colors.BOLD}Current PATH:{Colors.ENDC}")
-        for entry in current_path.split(':'):
-            # Highlight our critical directories
-            short_entry = entry.replace(str(Path.home()), '~')
-            if any(d.replace('~', str(Path.home())) == entry or d == short_entry for d in critical_dirs):
-                print(f"  {Colors.GREEN}✓{Colors.ENDC} {short_entry}")
-            else:
-                print(f"    {short_entry}")
-
-        # Provide recommendations if directories are missing from PATH
-        missing_from_path = [
-            r for r in self.results['path_dirs']
-            if not r['in_path'] and r['exists']
-        ]
-
-        if missing_from_path:
-            print(f"\n{Colors.YELLOW}{Colors.BOLD}Recommendations:{Colors.ENDC}")
-            print(f"\n{Colors.YELLOW}Add these to your ~/.zshrc or ~/.bashrc:{Colors.ENDC}")
-            print()
-            for result in missing_from_path:
-                print(f'export PATH="{result["directory"]}:$PATH"')
-
-            print(f"\n{Colors.YELLOW}Or add them temporarily:{Colors.ENDC}")
-            print()
-            for result in missing_from_path:
-                print(f'export PATH="{result["directory"]}:$PATH"')
-            print(f"\n{Colors.YELLOW}Then reload your shell or run: source ~/.zshrc{Colors.ENDC}")
 
     def check_all_brew_packages(self):
         """Check all brew packages from the requirements"""
@@ -451,7 +509,7 @@ class EnvironmentChecker:
             'curl', 'diff-so-fancy', 'direnv', 'fd', 'fnm', 'fpp', 'fzf',
             'gcc', 'gh', 'git', 'gnu-indent', 'grep', 'gzip',
             'hub', 'jq', 'less', 'lesspipe', 'libxml2', 'lsof',
-            'luarocks', 'luv', 'moreutils', 'neofetch', 'neovim', 'nnn', 'node',
+            'luarocks', 'luv', 'moreutils', 'fastfetch', 'neovim', 'nnn', 'node',
             'pyenv', 'pyenv-virtualenv', 'pyenv-virtualenvwrapper',
             'ruby-build', 'rbenv', 'reattach-to-user-namespace',
             'ripgrep', 'rsync', 'screen', 'screenfetch', 'shellcheck',
@@ -520,25 +578,31 @@ class EnvironmentChecker:
             self.print_success(f"Chezmoi is installed")
             print(f"  Location: {result['location']}")
             print(f"  Version: {result['version']}")
-
-            if result['location_preferred']:
-                self.print_success(f"Location is correct (~/.bin/chezmoi)")
-            else:
-                self.print_warning(f"Location is not ~/.bin/chezmoi")
-                print(f"\n  {Colors.YELLOW}Note: ~/.bin/chezmoi is the preferred location{Colors.ENDC}")
-                print(f"  {Colors.YELLOW}Make sure ~/.bin is in your PATH{Colors.ENDC}")
         else:
             self.print_failure("Chezmoi is NOT installed")
             print(f"\n  Install with:")
             print(f"  sh -c \"$(curl -fsLS chezmoi.io/get)\" -- init -R --debug -v --apply https://github.com/bossjones/zsh-dotfiles.git")
 
-    def check_all_asdf_tools(self):
-        """Check all asdf-managed tools"""
-        self.print_header("Checking ASDF-Managed Tools")
+    def check_all_managed_tools(self):
+        """Check all version-managed tools (asdf or mise), with a PATH/brew fallback."""
+        manager = self._detect_version_manager()
+        label = {'asdf': 'ASDF', 'mise': 'mise'}.get(manager, 'PATH/brew only')
+        self.print_header(f"Checking Version-Managed Tools ({label})")
 
-        # Expected tools and versions from asdf current output
+        if manager is None:
+            self.print_warning(
+                "No version manager active (ZSH_DOTFILES_VERSION_MANAGER unset and "
+                "neither mise nor asdf on PATH) — checking PATH/brew only."
+            )
+        elif manager == 'mise':
+            self.print_warning(
+                "tmux/kubetail use plugin namespaces under mise and may report via "
+                "PATH fallback instead of `mise current`."
+            )
+
+        # Expected tools and versions (shared across managers).
         tools = {
-            'github-cli': '2.35.0',
+            'github-cli': '2.93.0',
             'golang': '1.20.5',
             'helm-docs': '1.13.1',
             'helm': '3.14.2',
@@ -550,28 +614,28 @@ class EnvironmentChecker:
             'mkcert': '1.4.4',
             'neovim': '0.11.3',
             'opa': '0.62.1',
-            'ruby': '3.2.1',
-            'rye': '0.33.0',
-            'shellcheck': '0.10.0',
-            'shfmt': '3.7.0',
+            'ruby': '4.0.1',
+            'shellcheck': '0.11.0',
+            'shfmt': '3.13.1',
             'tmux': '3.5a',
-            'yq': '4.34.1'
+            'yq': '4.53.2'
         }
 
         installed_count = 0
         correct_version_count = 0
 
         for tool, expected_version in tools.items():
-            result = self.check_asdf_tool(tool, expected_version)
-            self.results['asdf_tools'].append(result)
+            result = self.check_managed_tool(manager, tool, expected_version)
+            self.results['managed_tools'].append(result)
 
+            suffix = ' (PATH/brew)' if result.get('source') == 'path' else ''
             if result['installed']:
                 if result['version_correct']:
-                    self.print_success(f"{tool} @ {result['current_version']}")
+                    self.print_success(f"{tool} @ {result['current_version']}{suffix}")
                     installed_count += 1
                     correct_version_count += 1
                 else:
-                    self.print_warning(f"{tool} @ {result['current_version']} (expected: {expected_version})")
+                    self.print_warning(f"{tool} @ {result['current_version']}{suffix} (expected: {expected_version})")
                     installed_count += 1
             else:
                 self.print_failure(f"{tool} - NOT INSTALLED (expected: {expected_version})")
@@ -579,189 +643,26 @@ class EnvironmentChecker:
         print(f"\n{Colors.BOLD}Summary:{Colors.ENDC} {installed_count}/{len(tools)} tools installed")
         print(f"{Colors.BOLD}Correct versions:{Colors.ENDC} {correct_version_count}/{len(tools)}")
 
-    def check_all_envs(self):
-        """Check all required environment variables
-
-        This function verifies that all necessary environment variables for the
-        zsh-dotfiles development environment are properly set with correct values.
-        It checks each variable in TWO places:
-        1. Current live environment (what's actively loaded in this shell session)
-        2. Shell configuration files (~/.zshrc, ~/.zprofile, ~/.bashrc, ~/.profile)
-
-        This dual-check ensures variables are both currently active AND persisted
-        in config files for future shell sessions.
-        """
-        # Print a formatted header to clearly identify this section of checks
-        self.print_header("Checking Environment Variables")
-
-        # Define required environment variables with their expected values
-        # These variables control various aspects of the zsh-dotfiles environment:
-        # - ZSH_DOTFILES_PREP_CI: Enables CI mode for automated testing
-        # - ZSH_DOTFILES_PREP_DEBUG: Enables debug output for troubleshooting
-        # - ZSH_DOTFILES_PREP_GITHUB_USER: Sets the GitHub username for repo operations
-        # - ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE: Skips brew bundle installation (for speed)
-        # - SHELDON_CONFIG_DIR: Directory where Sheldon plugin manager stores configs
-        # - SHELDON_DATA_DIR: Directory where Sheldon plugin manager stores data
-        env_vars = {
-            'ZSH_DOTFILES_PREP_CI': '1',
-            'ZSH_DOTFILES_PREP_DEBUG': '1',
-            'ZSH_DOTFILES_PREP_GITHUB_USER': 'bossjones',
-            'ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE': '1',
-            'SHELDON_CONFIG_DIR': '$HOME/.sheldon',
-            'SHELDON_DATA_DIR': '$HOME/.sheldon'
-        }
-
-        # Initialize the results storage for environment variables if not already present
-        # This ensures we have a place to store the check results for later use
-        if 'env_vars' not in self.results:
-            self.results['env_vars'] = []
-
-        # Initialize counters to track the status of environment variables
-        # live_set_count: How many variables are set in current environment
-        # live_correct_count: How many have correct values in current environment
-        # config_count: How many are defined in shell config files
-        # config_correct_count: How many have correct values in config files
-        live_set_count = 0
-        live_correct_count = 0
-        config_count = 0
-        config_correct_count = 0
-
-        # Iterate through each environment variable and check its status
-        for var_name, expected_value in env_vars.items():
-            # Check the individual environment variable and get detailed result
-            # This checks BOTH live environment AND config files
-            result = self.check_env_var(var_name, expected_value)
-
-            # Store the result for later reference and reporting
-            self.results['env_vars'].append(result)
-
-            # Display live environment status
-            if result['is_set']:
-                # Variable is set in live environment
-                live_set_count += 1
-
-                if result['value_correct']:
-                    # Variable has the correct value in live environment
-                    self.print_success(f"{var_name} = {result['current_value']} (live)")
-                    live_correct_count += 1
-                else:
-                    # Variable is set but has wrong value in live environment
-                    self.print_warning(f"{var_name} = {result['current_value']} (live, expected: {expected_value})")
-            else:
-                # Variable is not set in live environment
-                self.print_failure(f"{var_name} - NOT SET in live environment (expected: {expected_value})")
-
-            # Display config file status
-            if result['in_config_files']:
-                config_count += 1
-                # Show where the variable is defined in config files
-                for config_file, config_value in result['defined_in_configs'].items():
-                    short_path = config_file.replace(str(Path.home()), '~')
-
-                    if result['config_value_correct']:
-                        print(f"  {Colors.GREEN}↳{Colors.ENDC} Defined in {short_path}: {config_value}")
-                        if var_name not in [r['var_name'] for r in self.results['env_vars'][:-1]]:
-                            config_correct_count += 1
-                    else:
-                        print(f"  {Colors.YELLOW}↳{Colors.ENDC} Defined in {short_path}: {config_value} (expected: {expected_value})")
-            else:
-                # Variable not found in any config file
-                print(f"  {Colors.RED}↳{Colors.ENDC} NOT defined in shell config files")
-
-            print()  # Add blank line between variables for readability
-
-        # Properly count config correct values
-        config_correct_count = sum(1 for var in self.results['env_vars'] if var['config_value_correct'])
-
-        # Print summary statistics showing status in both live and config
-        print(f"{Colors.BOLD}Live Environment Summary:{Colors.ENDC}")
-        print(f"  Variables set: {live_set_count}/{len(env_vars)}")
-        print(f"  Correct values: {live_correct_count}/{len(env_vars)}")
-
-        print(f"\n{Colors.BOLD}Config Files Summary:{Colors.ENDC}")
-        print(f"  Variables defined: {config_count}/{len(env_vars)}")
-        print(f"  Correct values: {config_correct_count}/{len(env_vars)}")
-
-        # If any variables are missing or incorrect, provide helpful export commands
-        # This gives the user ready-to-use commands to fix their environment
-        if live_correct_count < len(env_vars) or config_correct_count < len(env_vars):
-            print(f"\n{Colors.YELLOW}{Colors.BOLD}Recommendations:{Colors.ENDC}")
-
-            # Show which variables need attention
-            needs_live_fix = []
-            needs_config_fix = []
-
-            for result in self.results['env_vars']:
-                if not result['value_correct']:
-                    needs_live_fix.append(result)
-                if not result['config_value_correct']:
-                    needs_config_fix.append(result)
-
-            # If variables are missing from config files, show how to add them permanently
-            if needs_config_fix:
-                print(f"\n{Colors.YELLOW}Add these to your ~/.zshrc or ~/.bashrc for persistence:{Colors.ENDC}")
-                print()
-
-                for result in needs_config_fix:
-                    expected = result['expected_value']
-                    # Add quotes around values containing $HOME to preserve the variable reference
-                    if '$HOME' in expected:
-                        print(f'export {result["var_name"]}="{expected}"')
-                    else:
-                        print(f'export {result["var_name"]}={expected}')
-
-            # If variables are missing from live environment, show how to set them temporarily
-            if needs_live_fix:
-                print(f"\n{Colors.YELLOW}Set these temporarily in your current shell (until next shell restart):{Colors.ENDC}")
-                print()
-
-                for result in needs_live_fix:
-                    expected = result['expected_value']
-                    # Add quotes around values containing $HOME to preserve the variable reference
-                    if '$HOME' in expected:
-                        print(f'export {result["var_name"]}="{expected}"')
-                    else:
-                        print(f'export {result["var_name"]}={expected}')
-
-                print(f"\n{Colors.YELLOW}Then reload your shell or run: source ~/.zshrc{Colors.ENDC}")
-
-
     def generate_report(self):
         """Generate a summary report"""
         self.print_header("Final Report")
-
-        # PATH directories statistics
-        path_in_path = 0
-        path_exists = 0
-        path_total = 0
-        if 'path_dirs' in self.results:
-            path_in_path = sum(1 for dir_info in self.results['path_dirs'] if dir_info['in_path'])
-            path_exists = sum(1 for dir_info in self.results['path_dirs'] if dir_info['exists'])
-            path_total = len(self.results['path_dirs'])
 
         # Count statistics
         brew_installed = sum(1 for pkg in self.results['brew_packages'] if pkg['installed'])
         brew_total = len(self.results['brew_packages'])
 
-        asdf_installed = sum(1 for tool in self.results['asdf_tools'] if tool['installed'])
-        asdf_correct = sum(1 for tool in self.results['asdf_tools'] if tool['version_correct'])
-        asdf_total = len(self.results['asdf_tools'])
+        managed_installed = sum(1 for tool in self.results['managed_tools'] if tool['installed'])
+        managed_correct = sum(1 for tool in self.results['managed_tools'] if tool['version_correct'])
+        managed_total = len(self.results['managed_tools'])
 
-        # Environment variables statistics
-        env_set = 0
-        env_correct = 0
-        env_total = 0
-        if 'env_vars' in self.results:
-            env_set = sum(1 for var in self.results['env_vars'] if var['is_set'])
-            env_correct = sum(1 for var in self.results['env_vars'] if var['value_correct'])
-            env_total = len(self.results['env_vars'])
-
-        print(f"PATH Directories: {path_in_path}/{path_total} in PATH ({path_exists} exist)")
+        env_path = self.results.get('env_and_path', {})
+        print(f"PATH Precedence: {'✓' if env_path.get('path_precedence_ok') else '✗'}")
         print(f"Brew Packages: {brew_installed}/{brew_total} installed")
-        print(f"ASDF Tools: {asdf_installed}/{asdf_total} installed ({asdf_correct} correct versions)")
-        print(f"Environment Variables: {env_set}/{env_total} set ({env_correct} correct values)")
+        print(f"Managed Tools: {managed_installed}/{managed_total} installed ({managed_correct} correct versions)")
         print(f"Sheldon: {'✓' if self.results['sheldon'].get('installed') else '✗'}")
         print(f"Chezmoi: {'✓' if self.results['chezmoi'].get('installed') else '✗'}")
+        print(f"uv: {'✓' if self.results['uv'].get('installed') else '✗'}")
+        print(f"fzf: {'✓' if (self.results['fzf'] or {}).get('installed') else '✗'}")
 
         if self.failed_checks:
             print(f"\n{Colors.RED}{Colors.BOLD}Issues Found: {len(self.failed_checks)}{Colors.ENDC}")
@@ -775,12 +676,13 @@ class EnvironmentChecker:
         print(f"{Colors.BOLD}Development Environment Checker{Colors.ENDC}")
         print(f"Checking installation status of packages and tools...\n")
 
-        self.check_all_path_dirs()
+        self.check_all_env_and_path()
         self.check_all_brew_packages()
         self.check_all_sheldon()
         self.check_all_chezmoi()
-        # self.check_all_asdf_tools()
-        self.check_all_envs()
+        self.check_all_uv()
+        self.check_all_fzf()
+        self.check_all_managed_tools()
 
         return self.generate_report()
 

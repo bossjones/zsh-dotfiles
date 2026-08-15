@@ -5,39 +5,6 @@
 # SOURCE: https://www.binpress.com/generate-video-previews-ffmpeg/
 # SOURCE: https://gist.github.com/martinsik/5237977560ea7d60ad11#file-video_preview-sh
 
-
-# is_docker() {
-#     [ -f /.dockerenv ] ||
-#     grep -q docker /proc/1/cgroup ||
-#     [ -n "$container" ] ||
-#     [[ "$(hostname)" == *"docker"* ]]
-# }
-
-# export DEBIAN_FRONTEND=noninteractive
-# export LANG=C.UTF-8
-# export ZSH_DOTFILES_PREP_CI=1
-# export ZSH_DOTFILES_PREP_DEBUG=1
-# export ZSH_DOTFILES_PREP_GITHUB_USER=bossjones
-# export ZSH_DOTFILES_PREP_SKIP_BREW_BUNDLE=1
-# apt update
-# apt install -y curl git gnupg zsh tar software-properties-common vim fzf perl gettext direnv vim awscli wget build-essential bash-completion sudo ffmpeg bc gawk libmediainfo-dev
-
-# # Install chezmoi
-# sh -c "$(curl -fsLS get.chezmoi.io)" -- -b $HOME/bin -t v2.31.1
-
-# # Set PATH
-# export PATH="/root/bin:/root/.bin:/root/.local/bin:$PATH"
-# # sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
-
-# if is_docker; then
-#     sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
-# else
-#     sudo sh -c "curl https://raw.githubusercontent.com/kadwanev/retry/master/retry -o /usr/local/bin/retry && chmod +x /usr/local/bin/retry"
-# fi
-# curl -fsSL https://raw.githubusercontent.com/bossjones/zsh-dotfiles-prep/main/bin/zsh-dotfiles-prereq-installer | bash -s -- --debug
-
-
-
 set -x
 
 # Check for required binaries
@@ -120,7 +87,7 @@ echo "capture every ${NTH_FRAME}th frame out of $NB_FRAMES frames"
 mkdir -p $OUT_DIR
 
 FFMPEG_CMD="ffmpeg -loglevel panic -i \"$MOVIE\" -y -frames 1 -q:v 1 -vf \"select=not(mod(n\,$NTH_FRAME)),scale=-1:${HEIGHT},tile=${COLS}x${ROWS}:padding=2:margin=4\" \"$OUT_FILEPATH\""
-# `-loglevel panic` We don’t want to see any output. You can remove this option if you’re having any problem to see what went wrong
+# `-loglevel panic` We don't want to see any output. You can remove this option if you're having any problem to see what went wrong
 # `-i "$MOVIE"` Input file
 # `-y` Override any existing output file
 # `-frames 1` Tell `ffmpeg` that output from this command is just a single image (one frame).

@@ -1,0 +1,59 @@
+# syntax=docker/dockerfile:1.4
+# CUDA shell-module verification container (no GPU required).
+#
+# Verifies home/shell/cuda/custom.zsh and home/shell/cuda/posix-env.sh against
+# REAL NVIDIA apt packages, real update-alternatives, and real
+# /etc/ld.so.conf.d -- none of which the pytest suite or CI can cover, because
+# CI runs on macOS only and the cuda sheldon plugin is Linux-gated.
+#
+# No GPU and no nvidia-container-toolkit needed: the code under test only
+# inspects the filesystem. For driver/runtime checks that DO need a GPU, use
+# Dockerfile.gpu instead.
+#
+# Deliberately jammy, not the ubuntu:24.04 of Dockerfile: NVIDIA's apt repos are
+# per-distro (ubuntu2204 vs ubuntu2404), and boss-deeplearning is 22.04. Adding a
+# repo that installs a priority-600 apt pin to the standard smoke image would
+# also be undesirable.
+#
+# Usage:
+#   make smoke-cuda                                          # build + run the matrix
+#   make smoke-cuda-shell                                    # interactive poking
+#   docker build -f Dockerfile.cuda -t zsh-dotfiles-cuda .
+#   docker run --rm zsh-dotfiles-cuda
+#   docker run --rm -v "$PWD:/tmp/dotfiles:ro" zsh-dotfiles-cuda   # iterate w/o rebuild
+#
+ARG UBUNTU_VERSION=22.04
+FROM ubuntu:${UBUNTU_VERSION}
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TERM=xterm-256color
+
+# NVIDIA repo slug, derived from UBUNTU_VERSION (22.04 -> ubuntu2204).
+ARG CUDA_REPO_DISTRO=ubuntu2204
+ARG CUDA_REPO_ARCH=x86_64
+# Which toolkit series the happy-path stages install. Only a real nvcc is pulled
+# (~25 MB); the symlink/alternatives machinery lives in the 16 KB
+# cuda-toolkit-<series>-config-common package.
+ARG CUDA_SERIES=13-0
+ENV CUDA_SERIES=${CUDA_SERIES}
+
+# zsh: the module under test. dash + bash: the POSIX snippet's real consumers
+# (~/.profile runs under dash on Ubuntu, ~/.bashrc under bash). g++: nvcc's host
+# compiler.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        zsh dash bash g++ curl wget ca-certificates gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Same network repo the install docs use. Note this also installs NVIDIA's
+# /etc/apt/preferences.d/cuda-repository-pin-600, which pins their whole repo
+# above Ubuntu's default 500 -- the verification script asserts on that.
+RUN wget -q "https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_REPO_DISTRO}/${CUDA_REPO_ARCH}/cuda-keyring_1.1-1_all.deb" \
+        -O /tmp/cuda-keyring.deb \
+    && dpkg -i /tmp/cuda-keyring.deb \
+    && rm -f /tmp/cuda-keyring.deb \
+    && apt-get update
+
+COPY . /tmp/dotfiles
+WORKDIR /tmp/dotfiles
+
+CMD ["/tmp/dotfiles/scripts/cuda-verify-config.sh"]
