@@ -2869,6 +2869,7 @@ hclaude() {
 #   copilot update
 #   copilot plugin update --all
 #   claude plugin marketplace update
+#   claude plugin update --all
 # Each tool is guarded: a missing binary is skipped with a warning instead of
 # aborting the run, and every step is attempted even if an earlier one fails.
 # Returns non-zero if any attempted command exits non-zero.
@@ -2888,6 +2889,9 @@ ai_cli_update() {
     if command -v claude >/dev/null 2>&1; then
         echo "[ai_cli_update] claude plugin marketplace update"
         claude plugin marketplace update || { echo "[ai_cli_update] 'claude plugin marketplace update' failed" >&2; rc=1; }
+
+        echo "[ai_cli_update] claude plugin update --all"
+        claude plugin update --all || { echo "[ai_cli_update] 'claude plugin update --all' failed" >&2; rc=1; }
     else
         echo "[ai_cli_update] skipping claude: command not found on PATH" >&2
     fi
