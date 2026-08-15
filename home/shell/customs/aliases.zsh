@@ -2864,17 +2864,75 @@ hclaude() {
     ANTHROPIC_BASE_URL="http://localhost:${port}" claude "$@"
 }
 
-# ai_cli_update - refresh the GitHub Copilot and Claude command-line tools and
-# their plugins in one shot. Runs, in order:
+# _ai_cli_update_claude_snapshot - print "id<TAB>version" for every installed
+# user-scoped Claude plugin, sorted and de-duplicated. Requires `claude` and
+# `jq`; prints nothing and returns non-zero if either is missing or the query
+# fails. Used to capture before/after state for ai_cli_update --debug.
+_ai_cli_update_claude_snapshot() {
+    command -v claude >/dev/null 2>&1 || return 1
+    command -v jq >/dev/null 2>&1 || return 1
+    claude plugin list --json 2>/dev/null \
+        | jq -r '.[] | select(.scope == "user") | "\(.id)\t\(.version)"' 2>/dev/null \
+        | sort -u
+}
+
+# _ai_cli_update_print_diff BEFORE AFTER - given two "id<TAB>version" snapshots
+# (as produced by _ai_cli_update_claude_snapshot), print one indented line per
+# plugin whose version changed (*), was added (+), or was removed (-). Prints
+# "(no version changes)" when the two snapshots are identical.
+_ai_cli_update_print_diff() {
+    local before="$1" after="$2"
+    awk -F'\t' '
+        NR == FNR { b[$1] = $2; next }
+        {
+            a[$1] = $2
+            if (!($1 in b))       { printf "  + %s: (new) %s\n", $1, $2; c = 1 }
+            else if (b[$1] != $2) { printf "  * %s: %s -> %s\n", $1, b[$1], $2; c = 1 }
+        }
+        END {
+            for (id in b) if (!(id in a)) { printf "  - %s: removed (was %s)\n", id, b[id]; c = 1 }
+            if (!c) print "  (no version changes)"
+        }
+    ' <(printf '%s\n' "${before}") <(printf '%s\n' "${after}")
+}
+
+# ai_cli_update [--debug] - refresh the GitHub Copilot and Claude command-line
+# tools and their plugins in one shot. Runs, in order:
 #   copilot update
 #   copilot plugin update --all
-#   claude plugin marketplace update
-#   claude plugin update --all
+#   claude plugin marketplace update            (refresh the catalog first)
+#   claude plugin update <id>                   (once per installed user plugin)
+# There is no `claude plugin update --all`, so each user-scoped plugin is
+# updated individually using ids from `claude plugin list --json` (needs jq).
+# With --debug, the Claude plugin versions are snapshotted before and after the
+# updates and a diff of what changed is printed.
 # Each tool is guarded: a missing binary is skipped with a warning instead of
 # aborting the run, and every step is attempted even if an earlier one fails.
 # Returns non-zero if any attempted command exits non-zero.
 ai_cli_update() {
     local rc=0
+    local debug=0
+    local arg
+    for arg in "$@"; do
+        case "${arg}" in
+            --debug) debug=1 ;;
+            -h|--help)
+                cat <<'USAGE'
+Usage: ai_cli_update [--debug]
+
+Refresh the GitHub Copilot and Claude CLIs and their plugins.
+  --debug   Snapshot Claude plugin versions before and after updating and print
+            a diff of what changed (requires jq).
+USAGE
+                return 0
+                ;;
+            *)
+                echo "[ai_cli_update] unknown argument: ${arg}" >&2
+                echo "[ai_cli_update] usage: ai_cli_update [--debug]" >&2
+                return 2
+                ;;
+        esac
+    done
 
     if command -v copilot >/dev/null 2>&1; then
         echo "[ai_cli_update] copilot update"
@@ -2890,8 +2948,37 @@ ai_cli_update() {
         echo "[ai_cli_update] claude plugin marketplace update"
         claude plugin marketplace update || { echo "[ai_cli_update] 'claude plugin marketplace update' failed" >&2; rc=1; }
 
-        echo "[ai_cli_update] claude plugin update --all"
-        claude plugin update --all || { echo "[ai_cli_update] 'claude plugin update --all' failed" >&2; rc=1; }
+        if command -v jq >/dev/null 2>&1; then
+            local claude_before=""
+            [[ ${debug} -eq 1 ]] && claude_before="$(_ai_cli_update_claude_snapshot)"
+
+            # No `claude plugin update --all` exists; update each installed
+            # user-scoped plugin individually, keyed by its id.
+            local plugin_ids pid
+            plugin_ids="$(claude plugin list --json 2>/dev/null \
+                | jq -r '.[] | select(.scope == "user") | .id' 2>/dev/null | sort -u)"
+            if [[ -z ${plugin_ids} ]]; then
+                echo "[ai_cli_update] no user-scoped Claude plugins to update"
+            else
+                while IFS= read -r pid; do
+                    [[ -z ${pid} ]] && continue
+                    echo "[ai_cli_update] claude plugin update ${pid}"
+                    claude plugin update "${pid}" \
+                        || { echo "[ai_cli_update] 'claude plugin update ${pid}' failed" >&2; rc=1; }
+                done <<< "${plugin_ids}"
+            fi
+
+            if [[ ${debug} -eq 1 ]]; then
+                local claude_after
+                claude_after="$(_ai_cli_update_claude_snapshot)"
+                echo "[ai_cli_update] Claude plugin version changes (before -> after):"
+                _ai_cli_update_print_diff "${claude_before}" "${claude_after}"
+            fi
+        else
+            echo "[ai_cli_update] skipping Claude plugin updates: jq not found on PATH" >&2
+            echo "[ai_cli_update] install jq to enable per-plugin updates and --debug" >&2
+            rc=1
+        fi
     else
         echo "[ai_cli_update] skipping claude: command not found on PATH" >&2
     fi
