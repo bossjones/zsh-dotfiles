@@ -451,7 +451,7 @@ chezmoi status --source=./home
 - If this still errors with `map has no entry for key "version_manager"`, that is expected
   **until** Task 5 regenerates the config.
 
-### 5. Regenerate the chezmoi config and apply
+### 5. Regenerate the chezmoi config
 
 This is the command to run. It uses `--source=.` against the **existing working tree** —
 it does **not** re-clone, so local commits are preserved:
@@ -473,13 +473,14 @@ chezmoi init --source=. --debug -v \
   --promptBool   "fnm=true" \
   --promptBool   "opencv=true" \
   --promptBool   "fzf_tab=false"
-
-chezmoi diff --source=.        # review — nothing has been written yet
-chezmoi apply -v --source=.    # only after the diff looks right
 ```
 
-- **Do not add `--apply` to the `init` line.** Keeping `init` and `apply` separate preserves
-  the review gate; the repo's own Tutorial 04 recommends this ordering.
+- **Do not run `chezmoi diff`/`chezmoi apply` yet.** Tasks 6–8 still have to land the
+  third-party shell blocks, the git identity routing, and the gitignore fix in the source
+  tree; applying now would write the pre-fix config to `$HOME` — including removing the
+  current `includeIf` routing before its replacement exists — and nothing later in this
+  document re-applies it. The single reviewed init/diff/apply sequence is Task 8h, run only
+  after every source change is in place.
 - Non-interactive runs ignore the `if $interactive` prompts, so **run this in a real TTY**
   or the boolean flags silently fall back to `false` (verified during analysis).
 - `--debug -v` is retained from the reference command for a full activity log.
@@ -663,7 +664,7 @@ unconditional). The `[init]` section already exists at ~L217 — add one line:
   path = ~/.gitconfig-adobe-ghec
 
 # Personal repos on the work machine
-[includeIf "gitdir:~/dev/bossjones"]
+[includeIf "gitdir:~/dev/bossjones/"]
   path = ~/.gitconfig-personal
 {{ end -}}
 ```
@@ -719,6 +720,19 @@ done
 Expected — the first four `malcolm@adobe.com`, the last two
 `bossjones@theblacktonystark.com`. All six confirmed passing against the rendered template.
 
+`user.email` alone doesn't prove the `bossjones` include actually matched — the global
+default is already the personal address, so `dev/unrelated` shows the same value with or
+without the include firing. `.gitconfig-personal` is the only file that defines the
+`github.com` URL rewrite (7c), so assert on that instead to tell the two cases apart:
+
+```sh
+for d in dev/bossjones dev/unrelated; do
+  printf '%-32s %s\n' "$d" "$(git -C ~/"$d/_probe" config --get 'url.git@github.com:.insteadOf' || echo NONE)"
+done
+```
+
+Expected — `dev/bossjones` → `https://github.com/`; `dev/unrelated` → `NONE`.
+
 #### 7f. Decide `core.editor`
 
 `main` sets `vim`; this machine had `nano`. `vim` is adopted (unconditional, both machines).
@@ -753,6 +767,22 @@ If you want `nano` back it is a personal preference, not a profile split — cha
 
 - Append `**/.claude/settings.local.json` to `home/dot_gitignore_global`.
 - This belongs on **both** machines, so it is an unconditional edit.
+
+### 8h. Review and apply every source change
+
+Tasks 6–8 have now made every source-tree change for this migration — the third-party shell
+modules, the `profile`-gated git identity routing, and the gitignore fix. Run the single
+reviewed init/diff/apply sequence:
+
+```sh
+cd ~/.local/share/chezmoi
+chezmoi diff --source=.        # review — this now includes the Task 6-8 changes
+chezmoi apply -v --source=.    # only after the diff looks right
+```
+
+- **Do not add `--apply` to the Task 5 `init` line, and do not apply before this point.**
+  Keeping `init` and `apply` separate preserves the review gate; the repo's own Tutorial 04
+  recommends this ordering. This is the only `chezmoi apply` in this workflow.
 
 ### 9. Verify the migration
 
@@ -881,9 +911,18 @@ git config --file ~/.gitconfig --get init.defaultbranch      # expect: main
 for d in dev/malcolm dev/adobe-platform dev/adobe-aifoundations dev/malcolm_adobe dev/bossjones dev/unrelated; do
   mkdir -p ~/"$d/_probe" && git -C ~/"$d/_probe" init -q
   printf '%-30s %s\n' "$d" "$(git -C ~/"$d/_probe" config --get user.email)"
+  # user.email alone doesn't prove the bossjones/unrelated include actually matched — the
+  # global default is already the personal address. .gitconfig-personal is the only file
+  # that defines this URL rewrite (7c), so check it too for those two directories.
+  case "$d" in
+    dev/bossjones|dev/unrelated)
+      printf '%-30s %s\n' "  ($d insteadOf)" \
+        "$(git -C ~/"$d/_probe" config --get 'url.git@github.com:.insteadOf' || echo NONE)" ;;
+  esac
   rmdir ~/"$d/_probe/.git" 2>/dev/null; find ~/"$d/_probe" -delete 2>/dev/null
 done
 # expect: first four -> malcolm@adobe.com, last two -> bossjones@theblacktonystark.com
+# expect: dev/bossjones insteadOf -> https://github.com/ ; dev/unrelated insteadOf -> NONE
 
 # The personal machine must NOT receive any of this.
 chezmoi execute-template --init --promptString profile=personal < home/.chezmoi.yaml.tmpl | grep 'profile:'
@@ -914,7 +953,11 @@ print('hooks present:', 'hooks' in d)"    # expect: False
 cd ~/.local/share/chezmoi && copilot --help >/dev/null 2>&1 && echo "PASS: copilot loads settings"
 
 # --- 8. No unintended deletions ---------------------------------------------
-diff -rq "$BK/files" ~ 2>/dev/null | grep -v "^Only in" | head -40
+# "$BK/files" is the first operand, so a file deleted from $HOME since the backup shows up
+# as "Only in $BK/files: ...", not "Only in ~: ...". Filter out only the noisy
+# ~-only entries (new files $HOME always accumulates); keep backup-only ("deleted") entries
+# and content diffs.
+diff -rq "$BK/files" ~ 2>/dev/null | grep -v "^Only in $HOME:" | head -40
 ```
 
 ### Rollback
@@ -926,10 +969,15 @@ BK=~/.backup/dotfiles/20260815-192156
 cp "$BK/files/.gitconfig" ~/.gitconfig
 
 # Restore everything
-tar -xzf "$BK"/dotfiles-*.tar.gz -C /tmp/restore && cp -a /tmp/restore/files/. ~/
+RESTORE_DIR=$(mktemp -d)
+tar -xzf "$BK"/dotfiles-*.tar.gz -C "$RESTORE_DIR" && cp -a "$RESTORE_DIR"/files/. ~/
 
-# Roll back the version manager (asdf data was never deleted)
-cd ~/.local/share/chezmoi && chezmoi init --source=. --promptString "version_manager=asdf"
+# Roll back the version manager (asdf data was never deleted).
+# `version_manager` is sticky after Task 5 (hasKey short-circuits `--promptString`) — edit
+# ~/.config/chezmoi/chezmoi.yaml directly, then re-render and apply before restoring
+# .tool-versions:
+sed -i '' 's/^\(\s*version_manager:\).*/\1 "asdf"/' ~/.config/chezmoi/chezmoi.yaml
+cd ~/.local/share/chezmoi && chezmoi init --source=. && chezmoi apply --source=.
 mv ~/.tool-versions.asdf.bak ~/.tool-versions
 
 # Roll back the chezmoi binary
