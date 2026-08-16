@@ -232,7 +232,21 @@ dev/bossjones/oh-my-tmux:
 …and `~/.tmux.conf` is a symlink into that clone — but a **manually created, unmanaged**
 one. So the repo already has this exact gap for tmux; vim just makes it visible.
 
-**Proposed fix (NOT implemented — for the unified plan):** replace `home/dot_vimrc` with
+**Proposed fix (NOT implemented — for the unified plan).** Upstream's README documents the
+install as:
+
+```sh
+cd && rm -rf .vim && git clone https://github.com/gpakosz/.vim.git && ln -s .vim/.vimrc
+```
+
+Each step has an exact chezmoi equivalent:
+
+| README step | chezmoi equivalent |
+|---|---|
+| `git clone …/.vim.git` | a `type: git-repo` entry for `.vim` in `home/.chezmoiexternal.yaml` |
+| `ln -s .vim/.vimrc` | `home/symlink_dot_vimrc` containing the single line `.vim/.vimrc` |
+| `rm -rf .vim` | **not needed** — chezmoi runs `git clone` when the target is absent and `git pull` when it exists |
+| *(implicit)* | `git rm home/dot_vimrc` — **mandatory**, see below |
 
 ```yaml
 # home/.chezmoiexternal.yaml
@@ -241,16 +255,37 @@ one. So the repo already has this exact gap for tmux; vim just makes it visible.
   url: https://github.com/gpakosz/.vim.git
 ```
 
-plus `home/symlink_dot_vimrc` containing the single line `.vim/.vimrc`. chezmoi's
-`symlink_` attribute creates a symlink whose target is the file's contents (trailing
-newline stripped).
+```
+# home/symlink_dot_vimrc   (no trailing newline needed; chezmoi strips one)
+.vim/.vimrc
+```
 
-> ⚠️ **Two caveats verified during analysis.** (1) The local clone is on branch `vanilla`,
-> but a `git-repo` external clones the default branch — the external must pin the branch
-> via `clone.args` or the setup is not reproducible. (2) `git-repo` externals do **not**
-> support `refreshPeriod`; chezmoi runs `git pull` on every apply, and because
-> `.vimrc.local` is *tracked upstream* (not gitignored), any future local edit to it would
-> become a pull conflict.
+chezmoi's `symlink_` attribute creates a symlink whose *target* is the file's contents. The
+relative path `.vim/.vimrc` reproduces upstream's relative `ln -s` exactly.
+
+**Verified end-to-end** during analysis against an isolated `--destination`, so `$HOME` was
+never touched:
+
+- `.vimrc -> .vim/.vimrc`, resolving to the full **764 lines**
+- the created symlink's git blob hash is `e4eb84d4…` — **identical** to the live
+  `~/.vimrc`, i.e. byte-for-byte reproduction of the current state
+- the external cloned to branch `vanilla` at `d801d51`, matching the live clone
+- a second `apply` produced no diff (**idempotent**)
+
+> ⚠️ **`home/dot_vimrc` must be removed in the same change.** With both `dot_vimrc` and
+> `symlink_dot_vimrc` present, chezmoi refuses to run at all:
+> `chezmoi: .vimrc: inconsistent state (…/dot_vimrc, …/symlink_dot_vimrc)`, exit 1.
+> Verified.
+
+> ⚠️ **One real caveat.** `git-repo` externals do **not** support `refreshPeriod`, so
+> chezmoi runs `git pull` on **every apply**. `.vimrc.local` is *tracked upstream* (not
+> gitignored), so any future local edit to it becomes a pull conflict. If per-machine vim
+> overrides are wanted, they need a different home than `~/.vim/.vimrc.local`.
+
+> ✅ **No branch pin is required.** An earlier draft of this finding claimed the external
+> had to pin `vanilla` via `clone.args`. That was wrong: `vanilla` **is** gpakosz/.vim's
+> default branch (`gh api repos/gpakosz/.vim --jq .default_branch`), so a plain clone lands
+> on it — as the end-to-end test confirmed.
 
 - **Restore:** `~/.backup/dotfiles/20260815-213326/unmanaged-but-referenced/vim-dot-vimrc`
   (and `vim-dot-vimrc.local`); re-create with `ln -sfn .vim/.vimrc ~/.vimrc`
