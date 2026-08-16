@@ -80,7 +80,11 @@ before mutating anything:
 - `home/.chezmoi.yaml.tmpl` — data schema; source of the `version_manager` / `fzf_tab`
   prompts and all pinned tool versions. The stale branch's copy is what broke chezmoi.
 - `home/dot_zshrc.tmpl` — emits `ZSH_DOTFILES_VERSION_MANAGER`; the seam where asdf/mise is chosen.
-- `home/dot_gitconfig` — target for the highest-risk loss (the `includeIf` blocks).
+- `home/dot_gitconfig` — target for the highest-risk loss (the `includeIf` blocks). A plain
+  file on `main`; Task 7 converts it to `home/dot_gitconfig.tmpl`. Also unconditionally sets
+  `hub.host = git.corp.adobe.com` (L8) — Adobe config leaking onto the personal machine.
+- `home/.chezmoiignore.tmpl` — already gates on `.version_manager`; Task 7d reuses that
+  shape to gate the identity files on `.profile`.
 - `home/dot_gitignore_global` — one-line loss.
 - `home/dot_sheldon/plugins.toml.tmpl` — conditionally emits the asdf plugin; also defines
   the glob-based module loader (`**/env.zsh` L37, `**/path.zsh` L41,
@@ -100,6 +104,10 @@ before mutating anything:
 - `specs/work-dotfiles-gap-analysis.md` — this document.
 - `home/shell/scout/completion.zsh` — **proposed**; existence-gated `scout` completion (Task 6).
 - `home/shell/awesome-cli/path.zsh` — **proposed**; existence-gated `awesome-cli` PATH entry (Task 6).
+- `home/dot_gitconfig.tmpl` — **proposed**; replaces `home/dot_gitconfig` via `git mv` (Task 7b).
+- `home/dot_gitconfig-adobe-corp` — **proposed**; Adobe on-premise identity, ignored unless `profile=work`.
+- `home/dot_gitconfig-adobe-ghec` — **proposed**; Adobe GHEC identity, ignored unless `profile=work`.
+- `home/dot_gitconfig-personal` — **proposed**; personal identity override, ignored unless `profile=work`.
 
 ### Backup artifacts (restore sources)
 
@@ -174,6 +182,20 @@ The 3 referenced files are **unmanaged** and exist only on this machine:
 -rw-r--r--  135  /Users/malcolm/.gitconfig-adobe-ghec
 -rw-r--r--  139  /Users/malcolm/.gitconfig-personal
 ```
+
+**Related leak, found while designing the fix:** `main`'s `home/dot_gitconfig` sets
+`hub.host = git.corp.adobe.com` **unconditionally** (L8), so the *personal* machine is also
+being handed Adobe's internal GitHub Enterprise host. Task 7 gates this on the new `profile`
+key, fixing a pre-existing bug in the same change.
+
+The two GHEC/personal identity files also **both** rewrite `https://github.com/` — to
+`git@github.com-adobe:` and `git@github.com:` respectively. Only `includeIf` scoping keeps
+them from colliding, and the `github.com-adobe` SSH alias does not exist on the personal
+machine. They must therefore stay per-directory scoped and profile-gated, never global.
+
+**Resolution:** a new `profile` chezmoi data key (`personal` default, `work` opt-in) — see
+Task 7. Hostname gating was considered and rejected: `profile` states *why* the block exists
+and survives a machine rename.
 
 Conversely `main` **gains** 10 genuinely good settings, which is a strong argument for
 adopting `main`'s file and re-adding the includes on top:
@@ -442,6 +464,7 @@ chezmoi init --source=. --debug -v \
   --promptString "Computer name=adobetop" \
   --promptString "Host name=adobetop" \
   --promptString "version_manager=mise" \
+  --promptString "profile=work" \
   --promptBool   "ruby=true" \
   --promptBool   "pyenv=true" \
   --promptBool   "nodejs=true" \
@@ -460,6 +483,14 @@ chezmoi apply -v --source=.    # only after the diff looks right
 - Non-interactive runs ignore the `if $interactive` prompts, so **run this in a real TTY**
   or the boolean flags silently fall back to `false` (verified during analysis).
 - `--debug -v` is retained from the reference command for a full activity log.
+- **`profile=work` must be correct on this first init.** It is written into
+  `~/.config/chezmoi/chezmoi.yaml`, after which `hasKey` short-circuits the prompt and
+  re-passing `--promptString profile=…` is a no-op (see Task 7). Verify immediately:
+
+  ```sh
+  chezmoi data --source=. | grep -E '"(profile|version_manager|ruby|opencv)"'
+  # expect: profile=work, version_manager=mise, and the booleans NOT all false
+  ```
 
 ### 6. Re-home the third-party `~/.zshrc` blocks (fixes Finding 4)
 
@@ -537,46 +568,186 @@ zsh -n home/shell/awesome-cli/path.zsh home/shell/scout/completion.zsh   # synta
 # scout: second source -> mtime unchanged                       (cache reused)
 ```
 
-### 7. Restore the git identity routing (fixes Finding 3)
+### 7. Restore the git identity routing via a new `profile` param (fixes Finding 3)
 
-`main`'s `home/dot_gitconfig` is a plain file, not a template, and the `includeIf` paths are
-**work-machine-specific** — so appending them to the shared file would wrongly apply them on
-the personal machine. Two options; decide in the unified plan:
+**Decided.** Introduce a new chezmoi data key `profile` (`"personal"` | `"work"`), defaulting
+to `personal`, and gate the work-only git configuration on it. Hostname gating was considered
+and rejected: `profile` states *why* the block exists, survives a machine rename, and is
+reusable by any future work-vs-personal divergence.
 
-- **Option A (recommended, portable):** convert `home/dot_gitconfig` → `home/dot_gitconfig.tmpl`
-  and guard the work block on hostname:
+Every snippet below was rendered and behaviourally tested before being written here
+(15/15 assertions passed — see Testing Strategy).
 
-  ```gotemplate
-  [init]
-      defaultBranch = main
+#### 7a. Add the `profile` key to `home/.chezmoi.yaml.tmpl`
 
-  {{- if eq .chezmoi.hostname "adobetop" }}
+Declare the default alongside the other feature defaults:
 
-  # Adobe on-premise repos
-  [includeIf "gitdir:~/dev/malcolm/"]
-      path = ~/.gitconfig-adobe-corp
-  [includeIf "gitdir:~/dev/adobe-platform/"]
-      path = ~/.gitconfig-adobe-corp
+```gotemplate
+{{/* Machine profile: "personal" (default) or "work" */}}
+{{- $profile := "personal" -}}
+```
 
-  # Adobe GHEC repos
-  [includeIf "gitdir:~/dev/adobe-aifoundations/"]
-      path = ~/.gitconfig-adobe-ghec
-  [includeIf "gitdir:~/dev/malcolm_adobe/"]
-      path = ~/.gitconfig-adobe-ghec
+Add the prompt **immediately above** the `version_manager` block, and **outside**
+`if $interactive` for exactly the same reason that block is:
 
-  # Personal repos
-  [includeIf "gitdir:~/dev/bossjones"]
-      path = ~/.gitconfig-personal
-  {{- end }}
-  ```
+```gotemplate
+{{- /* profile: prompt key MUST be "profile" so non-TTY `--promptString profile=…`
+       matches. Kept outside `if $interactive` for the same reason version_manager is:
+       in non-TTY runs promptString returns the --promptString value or the default,
+       so CI/Docker safely resolve to "personal". */ -}}
+{{- if hasKey . "profile" -}}
+{{-   $profile = .profile -}}
+{{- else -}}
+{{-   $profile = promptString "profile" $profile -}}
+{{- end -}}
+```
 
-- **Option B (simplest):** leave `dot_gitconfig` alone and add a machine-local
-  `[include] path = ~/.gitconfig-local` that chezmoi never manages.
+Emit it into `data:` directly after `hostname`:
 
-- Either way, bring the 3 referenced files under management (they contain no secrets —
-  name/email only, 135–139 bytes each), or document that they must be recreated by hand.
-- Restore `init.defaultBranch = main`.
-- Decide explicitly on `core.editor`: `main` sets `vim`, this machine had `nano`.
+```yaml
+  profile: {{ $profile | quote }}
+```
+
+Verified:
+
+```
+$ chezmoi execute-template --init < home/.chezmoi.yaml.tmpl | grep profile
+  profile: "personal"
+$ chezmoi execute-template --init --promptString profile=work < home/.chezmoi.yaml.tmpl | grep profile
+  profile: "work"
+```
+
+#### 7b. Convert `home/dot_gitconfig` → `home/dot_gitconfig.tmpl`
+
+Use `git mv` so history follows the file. Three edits:
+
+**(1) Gate the Adobe-only `hub.host`.** `main` sets this *unconditionally*, so the personal
+machine is currently being handed `git.corp.adobe.com` — a pre-existing bug this fixes:
+
+```gotemplate
+{{ if eq .profile "work" -}}
+# ── Hub (GitHub CLI wrapper) ──────────────────────────────────────────────────
+[hub]
+  host = git.corp.adobe.com                  # Point the `hub` CLI at Adobe's internal GitHub Enterprise instance
+                                             # instead of github.com (used by aliases like `pr` below)
+{{ end -}}
+```
+
+**(2) Restore `init.defaultBranch`** (a Finding 3 loss; wanted on **both** machines, so it is
+unconditional). The `[init]` section already exists at ~L217 — add one line:
+
+```ini
+[init]
+  defaultBranch = main                       # New repos start on `main`, not `master`
+  templateDir = ~/.git-template
+```
+
+**(3) Append the routing block at the very end of the file:**
+
+```gotemplate
+{{ if eq .profile "work" }}
+# ── Per-directory identity routing (work profile only) ────────────────────────
+# Overrides the [user] block above for repos under these paths. Order matters:
+# git evaluates includeIf in file order and last-wins, so this block stays last.
+
+# Adobe on-premise (git.corp.adobe.com)
+[includeIf "gitdir:~/dev/malcolm/"]
+  path = ~/.gitconfig-adobe-corp
+[includeIf "gitdir:~/dev/adobe-platform/"]
+  path = ~/.gitconfig-adobe-corp
+
+# Adobe GHEC (github.com via the github.com-adobe ssh alias)
+[includeIf "gitdir:~/dev/adobe-aifoundations/"]
+  path = ~/.gitconfig-adobe-ghec
+[includeIf "gitdir:~/dev/malcolm_adobe/"]
+  path = ~/.gitconfig-adobe-ghec
+
+# Personal repos on the work machine
+[includeIf "gitdir:~/dev/bossjones"]
+  path = ~/.gitconfig-personal
+{{ end -}}
+```
+
+> **Placement is load-bearing.** `includeIf` is applied in file order with last-wins
+> semantics. If this block is inserted before `[user]`, the global email silently wins and
+> the routing appears to do nothing. Keep it last, and assert on resolved behaviour (7e)
+> rather than on the file's contents.
+
+#### 7c. Bring the three identity files under management
+
+They contain no secrets — a username, an email, and an SSH URL rewrite each:
+
+```sh
+cp ~/.gitconfig-adobe-corp  home/dot_gitconfig-adobe-corp
+cp ~/.gitconfig-adobe-ghec  home/dot_gitconfig-adobe-ghec
+cp ~/.gitconfig-personal    home/dot_gitconfig-personal
+```
+
+> **Why they must stay per-directory scoped.** `.gitconfig-adobe-ghec` and
+> `.gitconfig-personal` **both** rewrite `https://github.com/` — to `git@github.com-adobe:`
+> and `git@github.com:` respectively. Only the `includeIf` scoping keeps them from
+> colliding, and the `github.com-adobe` SSH alias does not exist on the personal machine.
+> This is why they are ignored rather than shipped everywhere.
+
+#### 7d. Gate those files in `home/.chezmoiignore.tmpl`
+
+The file already gates on `.version_manager`; add the same shape above that block:
+
+```gotemplate
+{{ if ne .profile "work" -}}
+.gitconfig-adobe-corp
+.gitconfig-adobe-ghec
+.gitconfig-personal
+{{ end -}}
+```
+
+Verified with `chezmoi managed`: **0** identity files under `profile=personal`, **3** under
+`profile=work`.
+
+#### 7e. Prove the routing resolves (this is the Task 2 regression test)
+
+Assert on *resolved identity*, not file contents. `includeIf "gitdir:~/…"` expands against
+`$HOME`, so the test must override it:
+
+```sh
+for d in dev/malcolm dev/adobe-platform dev/adobe-aifoundations dev/malcolm_adobe dev/bossjones dev/unrelated; do
+  mkdir -p ~/"$d/_probe" && git -C ~/"$d/_probe" init -q
+  printf '%-32s %s\n' "$d" "$(git -C ~/"$d/_probe" config --get user.email)"
+done
+```
+
+Expected — the first four `malcolm@adobe.com`, the last two
+`bossjones@theblacktonystark.com`. All six confirmed passing against the rendered template.
+
+#### 7f. Decide `core.editor`
+
+`main` sets `vim`; this machine had `nano`. `vim` is adopted (unconditional, both machines).
+If you want `nano` back it is a personal preference, not a profile split — change it in
+`home/dot_gitconfig.tmpl` directly.
+
+#### 7g. Update the documentation
+
+`profile` is a new public knob, so it must be documented alongside the existing ones:
+
+- `docs/feature-flags.md` — add a `profile` row. It is a **string** prompted outside
+  `if $interactive`, so it belongs in the *Version Manager Selection*-style table, not the
+  `promptBool` table:
+
+  | Flag | Default | Prompt Key | What It Does | Notes |
+  |------|---------|-----------|--------------|-------|
+  | `profile` | `"personal"` | `profile` | Selects machine profile (`personal` or `work`); gates work-only git identity routing and `hub.host` | Prompted **outside** `if $interactive` so `--promptString profile=work` matches in non-TTY runs. Sticky after first init (`hasKey`). |
+
+- `Makefile` — `CHEZMOI_GOOD_DEFAULTS` (~L160–171) should pass
+  `--promptString "profile=personal"` so local smoke tests stay deterministic and never
+  render the work block.
+- `docs/architecture.md` — the section describing `version_manager` as the special-cased
+  outside-`if $interactive` prompt now applies to `profile` too; mention both.
+
+> ⚠️ **The `hasKey` short-circuit.** Once `profile` is written into
+> `~/.config/chezmoi/chezmoi.yaml`, re-running `chezmoi init --promptString profile=work` is a
+> **no-op** — `hasKey` short-circuits the prompt (the same trap documented for `fzf_tab` in
+> `specs/fzf-tab.md`). To flip it later, edit `~/.config/chezmoi/chezmoi.yaml` directly or run
+> `chezmoi init --data=false`. Set it correctly on the **first** init in Task 5.
 
 ### 8. Restore the `~/.gitignore_global` line (fixes Finding 5)
 
@@ -592,6 +763,13 @@ Run every command in **Validation Commands** below.
 - Note anything that differed from this document's predictions.
 - Confirm the same analysis has been produced for the personal machine before writing
   `specs/unified-dotfiles-gap-analysis.md`.
+- **`profile` is shared infrastructure, not a work-machine patch.** The personal machine
+  needs the same `home/.chezmoi.yaml.tmpl`, `dot_gitconfig.tmpl` and `.chezmoiignore.tmpl`
+  changes; it simply resolves `profile=personal` and renders the work block away. Verify
+  there with `chezmoi data | grep profile` (expect `"personal"`) and
+  `chezmoi managed | grep -c gitconfig-` (expect `0`).
+- Record whether the personal machine has its own `includeIf` blocks. If it does, they are a
+  *second* profile-gated block, not a reason to abandon the default.
 
 ---
 
@@ -606,21 +784,45 @@ after, comparing against artifacts captured in Task 2.
 - `git diff --diff-filter=A` guard is clean (Task 3).
 
 **Post-apply assertions:**
-1. **Git identity routing** — the highest-consequence item. `git -C ~/dev/malcolm config
-   user.email` must match `identity-baseline.txt`.
-2. **Shell starts cleanly** — `zsh -i -c exit` exits 0 with no errors.
-3. **Third-party integrations survive** — `scout` completion and the `awesome-cli` PATH entry
+1. **Git identity routing** — the highest-consequence item. Assert on *resolved* identity in
+   all six directories (Task 7e), diffed against `identity-baseline.txt`:
+   `~/dev/{malcolm,adobe-platform,adobe-aifoundations,malcolm_adobe}` → `malcolm@adobe.com`;
+   `~/dev/bossjones` and any unrelated dir → `bossjones@theblacktonystark.com`.
+2. **`profile` resolved correctly** — `chezmoi data | grep profile` is `"work"`, and
+   `chezmoi managed | grep -c gitconfig-` is `3`.
+3. **Shell starts cleanly** — `zsh -i -c exit` exits 0 with no errors.
+4. **Third-party integrations survive** — `scout` completion and the `awesome-cli` PATH entry
    are still present in a fresh interactive shell.
-4. **Version manager switched** — `mise --version` works and
+5. **Version manager switched** — `mise --version` works and
    `ZSH_DOTFILES_VERSION_MANAGER` is `mise`.
-5. **No unintended deletions** — diff the post-apply tree against the backup and confirm
+6. **No unintended deletions** — diff the post-apply tree against the backup and confirm
    every difference is expected.
+
+**Already proven during analysis** (rendered against a scratch copy of the source tree, so
+the build session inherits working code rather than untested snippets) — 15/15 assertions:
+
+| # | Assertion | Result |
+|---|---|---|
+| 1–2 | `profile` renders `"personal"` by default and `"work"` with `--promptString` | pass |
+| 3–4 | `dot_gitconfig.tmpl` parses as valid git config under **both** profiles | pass |
+| 5–6 | `init.defaultBranch=main` restored under both profiles | pass |
+| 7–8 | `user.email` global default unchanged under both profiles | pass |
+| 9 | `profile=personal` emits **0** `includeIf` entries and no `hub.host` | pass |
+| 10 | `profile=work` emits **5** `includeIf` entries and `hub.host=git.corp.adobe.com` | pass |
+| 11 | `profile=personal` contains **no** `adobe` references anywhere | pass |
+| 12–13 | `chezmoi managed` lists 0 identity files (personal) / 3 (work) | pass |
+| 14 | All 6 directories resolve to the correct email under `profile=work` | pass |
+| 15 | `includeIf` block renders **last**, so last-wins ordering holds | pass |
 
 **Edge cases to watch:**
 - Ruby 4.0.1 install is the most likely failure. If `mise install ruby` fails, confirm
   `mise settings get ruby.compile` is `false`.
 - `~/.tool-versions.asdf.bak` must exist afterwards; if `~/.tool-versions` is *gone* with no
   `.bak`, restore it from the backup.
+- `profile` set wrong on first init is **sticky** — `hasKey` short-circuits the prompt
+  thereafter. Fix by editing `~/.config/chezmoi/chezmoi.yaml` or `chezmoi init --data=false`.
+- `includeIf` matches on the **resolved** path. If `~/dev` is a symlink the `gitdir:` patterns
+  may not match; use `gitdir:` with a trailing `/` as written, and assert behaviourally.
 - A **non-TTY** run of Task 5 silently produces all-`false` booleans — verify
   `chezmoi data` afterwards rather than trusting the exit code.
 
@@ -630,10 +832,14 @@ after, comparing against artifacts captured in Task 2.
 
 - [ ] Backup verified by checksum and restorable.
 - [ ] `chezmoi status` and `chezmoi diff` run without template errors.
-- [ ] `chezmoi data` reports `version_manager: mise`, `fzf_tab: false`, and
+- [ ] `chezmoi data` reports `profile: work`, `version_manager: mise`, `fzf_tab: false`, and
       `ruby/pyenv/nodejs/k8s/cuda/opencv/fnm` all `true`.
-- [ ] All 5 `includeIf` blocks present in `~/.gitconfig`; work repos still resolve to the
-      work identity (matches `identity-baseline.txt`).
+- [ ] All 5 `includeIf` blocks present in `~/.gitconfig`, and all six probe directories
+      resolve to the correct identity (matches `identity-baseline.txt`) — behaviour, not bytes.
+- [ ] `~/.gitconfig-{adobe-corp,adobe-ghec,personal}` are chezmoi-managed and `chezmoi diff`
+      reports no drift for them.
+- [ ] Rendering `dot_gitconfig.tmpl` with `profile=personal` yields **zero** `includeIf`
+      entries, no `hub.host`, and no `adobe` reference anywhere.
 - [ ] `init.defaultBranch = main` present.
 - [ ] `**/.claude/settings.local.json` present in `~/.gitignore_global`.
 - [ ] `scout` completion and `awesome-cli` PATH survive a fresh shell.
@@ -657,7 +863,9 @@ chezmoi doctor
 cd ~/.local/share/chezmoi && chezmoi status --source=. && chezmoi diff --source=.
 
 # --- 2. Config data is correct (catches the non-TTY all-false trap) ----------
-chezmoi data | grep -E '"(version_manager|fzf_tab|ruby|pyenv|nodejs|k8s|cuda|opencv|fnm)"'
+chezmoi data | grep -E '"(profile|version_manager|fzf_tab|ruby|pyenv|nodejs|k8s|cuda|opencv|fnm)"'
+# profile MUST be "work" here; it is sticky after the first init (hasKey short-circuit)
+chezmoi managed | grep -c 'gitconfig-'                       # expect 3 (0 on the personal machine)
 
 # --- 3. Git identity routing — THE critical assertion ------------------------
 for d in ~/dev/malcolm ~/dev/adobe-platform ~/dev/adobe-aifoundations ~/dev/malcolm_adobe ~/dev/bossjones; do
@@ -667,6 +875,19 @@ diff "$BK/identity-baseline.txt" /tmp/identity-after.txt && echo "PASS: identity
 
 git config --file ~/.gitconfig --list | grep -c includeif   # expect 5
 git config --file ~/.gitconfig --get init.defaultbranch      # expect: main
+
+# Behavioural probe in a scratch dir (proves routing, not just presence).
+# includeIf "gitdir:~/..." expands against $HOME, so do NOT override HOME here.
+for d in dev/malcolm dev/adobe-platform dev/adobe-aifoundations dev/malcolm_adobe dev/bossjones dev/unrelated; do
+  mkdir -p ~/"$d/_probe" && git -C ~/"$d/_probe" init -q
+  printf '%-30s %s\n' "$d" "$(git -C ~/"$d/_probe" config --get user.email)"
+  rmdir ~/"$d/_probe/.git" 2>/dev/null; find ~/"$d/_probe" -delete 2>/dev/null
+done
+# expect: first four -> malcolm@adobe.com, last two -> bossjones@theblacktonystark.com
+
+# The personal machine must NOT receive any of this.
+chezmoi execute-template --init --promptString profile=personal < home/.chezmoi.yaml.tmpl | grep 'profile:'
+grep -ci adobe <(chezmoi cat ~/.gitconfig) || true          # work: >0, personal: 0
 
 # --- 4. gitignore_global -----------------------------------------------------
 grep -q '\*\*/.claude/settings.local.json' ~/.gitignore_global && echo "PASS: gitignore line"
@@ -731,6 +952,12 @@ cp "$BK/chezmoi-2.31.1.bin" ~/.bin/chezmoi
   checkout, never from a worktree. Worth parameterising — a candidate for the unified plan.
 - **No new libraries required.** Only `chezmoi`, `git`, `gh` and `mise` (installed by the
   chezmoi scripts themselves).
+- **The `profile` key is deliberately a string, not a boolean.** `is_work: true` would have
+  been shorter, but a string leaves room for a third value (e.g. `ci`, `vm`) without another
+  flag, and it matches the `version_manager` precedent already in the template.
+- **Resolved since the first draft:** how to restore the `includeIf` blocks. The choice was
+  between hostname gating and an unmanaged `~/.gitconfig-local` include; both were rejected
+  in favour of the `profile` key (Task 7), which was implemented and tested during analysis.
 - **Open questions deferred to the unified plan:** `cuda`/`opencv` flags on macOS
   (Finding 13); porting the `hack/doctor` divergence (Finding 12); whether
   `dot_zshrc.local.tmpl` should be sourced or deleted (Finding 11).
