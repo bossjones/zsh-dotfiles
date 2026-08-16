@@ -100,8 +100,9 @@ before mutating anything:
 ### Proposed files (NOT created — for the unified plan to decide)
 
 - `home/shell/libpcap/path.zsh` — **proposed**; the only genuinely-uncovered injection (Finding 7).
-- `home/symlink_dot_vimrc` + a `.vim` entry in `home/.chezmoiexternal.yaml` — **proposed**;
-  replaces `home/dot_vimrc` (Finding 4).
+- `home/symlink_dot_vimrc` + a `.vim` entry in `home/.chezmoiexternal.yaml` +
+  `home/dot_vimrc.local` — **decided** (Finding 4); together these replace `home/dot_vimrc`,
+  which is deleted.
 
 ### Backup artifacts (restore sources)
 
@@ -277,10 +278,53 @@ never touched:
 > `chezmoi: .vimrc: inconsistent state (…/dot_vimrc, …/symlink_dot_vimrc)`, exit 1.
 > Verified.
 
-> ⚠️ **One real caveat.** `git-repo` externals do **not** support `refreshPeriod`, so
-> chezmoi runs `git pull` on **every apply**. `.vimrc.local` is *tracked upstream* (not
-> gitignored), so any future local edit to it becomes a pull conflict. If per-machine vim
-> overrides are wanted, they need a different home than `~/.vim/.vimrc.local`.
+#### Decision (2026-08-15): adopt `gpakosz/.vim`, keep personal settings in `~/.vimrc.local`
+
+`home/dot_vimrc` is **retired** in favour of upstream. Customisation goes in
+`~/.vimrc.local`, which upstream's README documents as the supported override hook —
+managed here as `home/dot_vimrc.local`.
+
+`~/.vim/.vimrc` sources it **last**:
+
+```vim
+762: if filereadable(expand("~/.vimrc.local"))
+763:   source ~/.vimrc.local
+```
+
+> ✅ **Correction to an earlier draft.** That draft warned that `.vimrc.local` is tracked
+> upstream and would become a `git pull` conflict on every apply. **That was wrong, and the
+> distinction matters:** the override vim actually loads is **`~/.vimrc.local`** — in
+> `$HOME`, *outside* the external clone. The 179-byte `~/.vim/.vimrc.local` is merely
+> upstream's shipped **example**; nothing ever sources it, and `~/.vimrc.local` does not
+> currently exist on this machine. So the external stays pristine, `git pull` never
+> conflicts, and there is no reason to avoid the `git-repo` type.
+
+**What to carry over.** `main`'s `home/dot_vimrc` is 93 lines / 42 settings, and gpakosz's
+764-line config already covers nearly all of them (`encoding`, `ruler`, `laststatus`,
+`incsearch`, `ignorecase`, `smartcase`, `hlsearch`, `wildmenu`, `hidden`, `autoread`,
+`number`, `cursorline`, `showcmd`, `title`, `showmatch`, `syntax`, `filetype`…). Only the
+genuine deltas need migrating into `home/dot_vimrc.local` — the `Pmenu` highlight group, the
+custom `statusline`, and preferences such as `nobackup` / `noswapfile` / `noundofile`,
+`listchars=tab:>-` and `ambiwidth=double`.
+
+**Full design verified end-to-end** against an isolated `--destination`:
+
+| Assertion | Result |
+|---|---|
+| `~/.vimrc` → `.vim/.vimrc`, 764 lines | pass |
+| vim sources `~/.vimrc` as script **1** and `~/.vimrc.local` as script **12** (last → wins) | pass |
+| upstream settings apply: `ignorecase=1`, `hlsearch=1`, `encoding=utf-8` | pass |
+| overrides win: `colorcolumn=81`, `backup=0`, `swapfile=0`, `listchars=tab:>-` | pass |
+| second `apply` is a no-op | pass |
+
+> ⚠️ **Remaining caveat.** `git-repo` externals do not support `refreshPeriod`, so chezmoi
+> runs `git pull` on **every apply**. That is now harmless (nothing local lives in the
+> clone), but it does mean an apply needs network access, and upstream changes arrive
+> unpinned. Pin with `clone.args: ["--branch", "<tag>"]` if that is not wanted.
+
+> **Note on `.pathogen_disabled`.** The README's plugin-disabling hook applies to the
+> **`heavenly`** branch only. This machine is on **`vanilla`** (the default branch), which
+> ships no plugins, so it is not applicable unless the branch changes.
 
 > ✅ **No branch pin is required.** An earlier draft of this finding claimed the external
 > had to pin `vanilla` via `clone.args`. That was wrong: `vanilla` **is** gpakosz/.vim's
@@ -601,17 +645,21 @@ test -f "$BK/unmanaged-but-referenced/vim-dot-vimrc" && echo "vimrc backed up"
 `$BK/behaviour-baseline.txt` is the expected "before" state. Re-capture and diff it
 immediately before any apply, so a stale baseline never silently passes.
 
-### 3. Decide Finding 4 (`~/.vimrc`) — **blocking**
+### 3. Land Finding 4 (`~/.vimrc`) — **DECIDED 2026-08-15**
 
-This is the only finding that destroys working configuration with no in-repo replacement.
-Choose one:
+Adopt `gpakosz/.vim` as the source of truth and retire `home/dot_vimrc`. Four changes, all
+verified end-to-end (Finding 4):
 
-- **(a)** Adopt the external + `symlink_dot_vimrc` proposal (Finding 4).
-- **(b)** Add `.vimrc` to `home/.chezmoiignore.tmpl` so chezmoi stops managing it and the
-  symlink survives untouched.
-- **(c)** Accept `main`'s 93-line vimrc and merge anything wanted from the backup by hand.
+- [ ] Add the `.vim` `git-repo` external to `home/.chezmoiexternal.yaml`
+- [ ] Add `home/symlink_dot_vimrc` containing `.vim/.vimrc`
+- [ ] `git rm home/dot_vimrc` — **mandatory**; leaving both makes chezmoi refuse to run with
+      `.vimrc: inconsistent state` (exit 1)
+- [ ] Add `home/dot_vimrc.local` carrying only the genuine deltas from the retired
+      `dot_vimrc` (Pmenu highlights, custom statusline, `nobackup`/`noswapfile`/`noundofile`,
+      `listchars`, `ambiwidth`)
 
-Do not run `apply` until this is decided.
+Options (b) `.chezmoiignore` and (c) accept main's vimrc were considered and **rejected** —
+(b) keeps the setup unreproducible, (c) discards 764 lines of working configuration.
 
 ### 4. Regenerate the chezmoi config — **in a real TTY**
 
@@ -727,7 +775,8 @@ artifacts captured before any change.
 - [ ] `chezmoi status` and `chezmoi diff` run without template errors.
 - [ ] `chezmoi data` reports `version_manager: mise`, `fzf_tab: false`,
       `ruby/pyenv/nodejs/k8s/fnm` **true**, `cuda/opencv` **false**.
-- [ ] Finding 4 decided explicitly, and `~/.vimrc` matches that decision.
+- [ ] `~/.vimrc` is a symlink to `.vim/.vimrc` resolving to 764 lines; `home/dot_vimrc` is
+      deleted; `~/.vimrc.local` renders and is sourced **after** upstream (Finding 4).
 - [ ] `init.defaultBranch = main` present in `~/.gitconfig`.
 - [ ] `**/.claude/settings.local.json` present in `~/.gitignore_global`.
 - [ ] **(Only once Finding 13 lands)** no `adobe` reference in the rendered `~/.gitconfig`
@@ -873,8 +922,9 @@ The point of running this twice. **Do not assume the work machine's conclusions.
   Worth parameterising; a candidate for the unified plan.
 - **No new libraries required.** Only `chezmoi`, `git`, `gh` and `mise`.
 - **Open questions for the unified plan:**
-  - Finding 4 — the `.vim` external + `symlink_dot_vimrc` proposal, and whether `~/.tmux.conf`
-    should get the same treatment (it has the identical unmanaged-symlink shape today).
+  - Finding 4 is **decided** (adopt `gpakosz/.vim`); what remains is whether `~/.tmux.conf`
+    should get the same treatment — it has the identical unmanaged-symlink shape today, and
+    `~/.tmux.conf.local` (19.1K) is the analogous override hook.
   - Finding 13 — implement `profile`, and confirm it renders away cleanly here.
   - Finding 5 — union the two machines' orphan lists (13 vs 11) before dropping anything.
   - Whether `core.editor` should be `vim` (main) or `nano` (this machine's current value).
