@@ -257,7 +257,7 @@ Where the two machines genuinely disagree.
 | `cuda` | `true` | `false` | **Moot**; `false` is the honest value |
 | `opencv` | `true` | `false` | Per-machine; inert on macOS, live on Linux |
 | `pyenv` | `true` | `false` | **Genuine conflict — personal should be `true`** |
-| `fzf_tab` | *(absent)* | *(absent)* | **`true` on all three** — revised 2026-08-31 |
+| `fzf_tab` | *(absent)* | *(absent)* | **`false` on all three** — settled 2026-08-31 |
 
 **The conflict mostly dissolves under verification.** `docs/feature-flags.md` states that
 `ruby`, `nodejs`, `k8s`, `fnm` and `cuda` are **inert**, and this was re-verified fresh:
@@ -286,11 +286,15 @@ This was confirmed empirically: flipping all five booleans on the personal machi
 **change nothing structurally** — removing the dead prompts belongs to #101, which already owns
 repo cleanup. Do not duplicate that scope here.
 
-> **Revision 2026-08-31 — `fzf_tab` is now `true`, and `cuda`/`opencv` have a reason.**
+> **Settled 2026-08-31 — `fzf_tab` stays `false`, and `cuda`/`opencv` have a reason.**
 >
-> The fleet default is **`fzf_tab: true`**, not `false`. This reverses the row above, both `init`
-> commands, and the acceptance criteria — and it promotes C3 from latent hygiene to an active
-> Phase 1 concern, because `true` is the first value that ever dereferences `myFzfTabRev`.
+> `fzf_tab: false` is the fleet default on all three machines. It was briefly revised to `true`
+> earlier the same day and then **reverted** — the original row stands.
+>
+> The consequence is that **C3 stays latent and stays in Phase 6.** `false` never dereferences
+> `myFzfTabRev` (`plugins.toml.tmpl:3` guards on
+> `and (hasKey . "fzf_tab") .fzf_tab`), so the tripwire is not armed by the fleet default. It
+> remains a real trap for anyone who later opts in — see C3 — but it does not gate the migration.
 >
 > `cuda` and `opencv` are **Linux concerns, not macOS ones** (owner, 2026-08-31). `false` on every
 > macOS host is therefore the correct value on the merits, not merely the honest one; they are
@@ -329,10 +333,17 @@ the `{{ if $fzfTab }}` block, so it is never evaluated while the flag is false.
 **This is a latent tripwire, not a resolved issue:** enabling `fzf_tab` without regenerating the
 config fails with `map has no entry for key "myFzfTabRev"`. #129.
 
-> **Update 2026-08-31 — no longer latent; promoted to Phase 1.**
+> **Update 2026-08-31 — still latent, and the missing-key problem is far larger than recorded.**
 >
-> The fleet default is now `fzf_tab: true` (C1), which makes this the **first configuration that
-> actually exercises the dereference**. #129 moves out of Phase 6 hygiene.
+> The fleet default stays `fzf_tab: false` (C1), so the `myFzfTabRev` dereference is **not**
+> armed and this stays in Phase 6. It is a live trap only for someone who later opts in.
+>
+> But the *missing-key* half of C3 is not latent at all, and it is much worse than "one key".
+> The doctor's first run on `adobetop` found **22 keys absent** from the live config: the
+> template renamed `myAsdf*Version` → `my*Version` (19 keys) and added `myPyenvPythonVersion`,
+> `myWtpVersion` and `myFzfTabRev`. With `missingkey=error` that is why **`chezmoi status`
+> exits 1 on the work machine today** — the complete mechanism behind "totally non-functional".
+> Tracked as drift; see [`specs/migration-doctor.md`](./migration-doctor.md).
 >
 > Live `chezmoi data` from the work machine confirms the diagnosis directly: `adobetop` has **no
 > `version_manager`, no `fzf_tab` and no `profile` key at all**. That absence — not a wrong value
@@ -342,7 +353,7 @@ config fails with `map has no entry for key "myFzfTabRev"`. #129.
 > plain re-run of `chezmoi init` sets all three. Stickiness only bites where a key already exists
 > with the wrong value (personal's `hostname: bossworkstation`).
 >
-> ⚠️ **Two traps when enabling it:**
+> ⚠️ **Two traps for whoever opts in later** (not on the migration path today):
 > 1. **Never hand-edit `~/.config/chezmoi/chezmoi.yaml` to add `fzf_tab: true`.**
 >    `plugins.toml.tmpl:135` reads `.myFzfTabRev`, which only `.chezmoi.yaml.tmpl:147` emits, and
 >    `missingkey=error` turns the omission into a failed `apply`. Re-running `init` regenerates
@@ -387,8 +398,16 @@ remain reachable via `~/.tool-versions.asdf.bak` and an untouched `~/.asdf`). #1
 > not evidence either way.
 >
 > **This changes the shape of #126** — from "ratify the drops" to "re-pin 10 tools at current
-> versions". Q5 closes; **Q15 opens**: is `vault 1.11.3+ent` deliberate? A `+ent` build may have
-> no latest-version equivalent available.
+> versions". Q5 closes.
+>
+> **`vault` resolved (Q15, 2026-08-31): re-pin to OSS `2.0.4`,** dropping the `+ent` suffix.
+> Verified against the release history — Vault **2.0.0 shipped 2026-04-14** and the 1.x line
+> ended at `1.21.4` (2026-03-05), so `2.0.4` (2026-08-04) is current.
+>
+> ⚠️ **That is two changes at once.** `+ent` → OSS loses Enterprise-only features (namespaces,
+> replication, HSM seals), and 1.11 → 2.0 is a **major** version bump across roughly four years.
+> Neither is a like-for-like upgrade; if any workflow depended on Enterprise behaviour it will
+> stop working.
 
 ### C5 — `git remote` / `gh`
 
@@ -514,7 +533,7 @@ Recorded so the three documents can be reconciled during review.
 | 3 | personal, Finding 4 (first draft) | `.vimrc.local` is tracked upstream ⇒ pull conflicts | The loaded override is **`~/.vimrc.local`**, outside the clone. *(Already fixed in #115.)* |
 | 4 | work, Finding 12 | `hack/doctor` diverged 796 vs 698 lines | Already reconciled to 698/698 on the pushed branch; only 2 dead files remain (C6) |
 | 5 | work, Finding 3 | `hub.host` is an Adobe *leak* on personal | Understated — it **breaks** the personal `git pr` alias (M2) |
-| 6 | **this doc**, C1 | `fzf_tab` should be `false` on both | **Reversed 2026-08-31** — the fleet default is `true`; promotes C3 to Phase 1 |
+| 6 | **this doc**, C1 | `fzf_tab` should be `false` on both | **Stands.** Briefly revised to `true` on 2026-08-31 and reverted the same day; C3 therefore stays in Phase 6 |
 | 7 | **this doc**, C4 | Accept the orphan drops | **Reversed 2026-08-31** — keep 10 of 12 at latest versions; only `jsonnet`/`poetry` drop |
 | 8 | **this doc**, header | A two-machine fleet | It is **three**; `supertop` and `minitop` are unsurveyed (Part 4) |
 | 9 | **this doc**, C1 | `cuda`/`opencv` values are "cosmetic honesty" | They are **Linux-only concerns**; `false` on macOS is correct on the merits (Q8) |
@@ -529,8 +548,9 @@ Maps 1:1 onto epic #116. Dependencies are real.
 - [ ] Review and agree this spec (#117)
 
 ### Phase 1 — shared infrastructure (strictly ordered)
-- [ ] **C3 — regenerate each config via `chezmoi init` so `fzf_tab`/`myFzfTabRev` land together**
-      (#129, promoted from Phase 6 on 2026-08-31 — `fzf_tab: true` exercises the dereference)
+- [ ] **C3 (missing-key half) — regenerate each config via `chezmoi init`.** `adobetop` is 22
+      keys short and `chezmoi status` exits 1 there, so nothing else in this phase can be
+      verified until it is regenerated (#129). The `myFzfTabRev` half stays in Phase 6.
 - [ ] S3 — `profile` key + docs + `Makefile` defaults (#118)
 - [ ] S4/S5/S2/M2 — `dot_gitconfig.tmpl`: gate `hub.host`, restore `init.defaultBranch`,
       settle `core.editor`, append the routing block **last** (#119)
@@ -554,8 +574,8 @@ Maps 1:1 onto epic #116. Dependencies are real.
 
 ### Phase 6 — hygiene (no ordering constraint, coordinate with #101)
 - [ ] S7 — delete `dot_zshrc.local.tmpl`
-- [x] ~~C3 — `myFzfTabRev` tripwire~~ → **moved to Phase 1** (2026-08-31): `fzf_tab: true` is now
-      the fleet default, so this is exercised on first apply rather than latent
+- [ ] C3 — `myFzfTabRev` tripwire (**stays here**: the fleet default is `fzf_tab: false`, so the
+      dereference is never evaluated. Arms only if someone opts in) rather than latent
 - [ ] C7 — sheldon hardcoded path
 - [ ] C1 — inert-flag cleanup (**owned by #101**)
 - [ ] C6 — closed, port nothing
@@ -583,7 +603,7 @@ chezmoi init --source=. --debug -v \
   --promptString "profile=work" \
   --promptBool "ruby=true"  --promptBool "pyenv=true" --promptBool "nodejs=true" \
   --promptBool "k8s=true"   --promptBool "cuda=false" --promptBool "fnm=true" \
-  --promptBool "opencv=false" --promptBool "fzf_tab=true"
+  --promptBool "opencv=false" --promptBool "fzf_tab=false"
 ```
 
 **Personal:**
@@ -598,7 +618,7 @@ chezmoi init --source=. --debug -v \
   --promptString "profile=personal" \
   --promptBool "ruby=true"   --promptBool "pyenv=true" --promptBool "nodejs=true" \
   --promptBool "k8s=true"    --promptBool "cuda=false" --promptBool "fnm=true" \
-  --promptBool "opencv=false" --promptBool "fzf_tab=true"
+  --promptBool "opencv=false" --promptBool "fzf_tab=false"
 ```
 
 **Personal — `supertop`** (Apple Silicon laptop). ⚠️ **Provisional — do not run before the
@@ -615,12 +635,13 @@ chezmoi init --source=. --debug -v \
   --promptString "profile=personal" \
   --promptBool "ruby=true"   --promptBool "pyenv=true" --promptBool "nodejs=true" \
   --promptBool "k8s=true"    --promptBool "cuda=false" --promptBool "fnm=true" \
-  --promptBool "opencv=false" --promptBool "fzf_tab=true"
+  --promptBool "opencv=false" --promptBool "fzf_tab=false"
 ```
 
-> ⚠️ **`--promptBool "fzf_tab=true"` only works in a real TTY.** It is consumed inside the
-> `$interactive` branch (`.chezmoi.yaml.tmpl:111–121`); a non-TTY run needs `CM_fzf_tab=true` in
-> the environment instead. See C3.
+> ⚠️ **Every `--promptBool` above needs a real TTY.** They are consumed inside the `$interactive`
+> branch (`.chezmoi.yaml.tmpl:111–121`), so a non-TTY run silently yields all-`false` — exactly
+> how the personal machine's config broke. Verify with `chezmoi data`, never by exit code.
+> `fzf_tab` additionally accepts `CM_fzf_tab=true` in the environment for non-TTY opt-in.
 
 Then, on each machine, only after every source change has landed:
 
@@ -688,7 +709,7 @@ machine and 15 on the work machine — see the respective specs. Plus, fresh for
 
 - [ ] Both machines: `chezmoi status`/`diff` run without template errors
 - [ ] All three: `chezmoi data` reports `version_manager: mise`, correct `profile`,
-      **`fzf_tab: true`**, `cuda: false`, `opencv: false`, and **no missing keys**
+      **`fzf_tab: false`**, `cuda: false`, `opencv: false`, and **no missing keys**
 - [ ] All three: `hack/doctor/doctor.py --state target` exits `0` (see `specs/migration-doctor.md`)
 - [ ] Work: 5 `includeIf` blocks present; all six probe dirs resolve correctly; 3 identity files managed
 - [ ] Personal: **0** `includeIf`, **0** managed identity files, **0** `adobe` references
@@ -746,14 +767,16 @@ cp "$BK"/chezmoi-*.bin ~/.bin/chezmoi
 
 ### Still open
 
-- **Q15 — Is `vault 1.11.3+ent` deliberate?** Kept in the C4 list, but a `+ent` build may have no
-  latest-version equivalent to re-pin to.
 - **Q16 — What belongs in a shared ssh `Host *` block?** Cannot be authored from one machine.
   Blocked on both surveys capturing `~/.ssh/config`. See
   [`specs/migration-doctor.md`](./migration-doctor.md#ssh-config-consolidation).
-- **Q17 — Does `fzf_tab: true` hold up in practice?** It is the new default (C1) and the first
-  configuration to exercise the `myFzfTabRev` dereference (C3). Nothing has run with it enabled on
-  any machine yet.
+
+### Resolved 2026-08-31 (second round)
+
+| # | Question | Resolution |
+|---|---|---|
+| **Q15** | Is `vault 1.11.3+ent` deliberate? | **No — re-pin to the latest OSS build, `2.0.4`.** Two changes in one: `+ent` → OSS (loses Enterprise-only namespaces, replication, HSM seals) and a **major** 1.11 → 2.0 bump. Verified against the release history: Vault 2.0.0 shipped 2026-04-14; the 1.x line ended at 1.21.4 on 2026-03-05. |
+| **Q17** | Does `fzf_tab: true` hold up? | **Moot — the default reverts to `false`.** Nothing exercises `myFzfTabRev`, so C3's tripwire stays latent and stays in Phase 6. |
 - **Q10 — Is `minitop` = `mac-mini` = `Mac.scarlettlab.home`?** Two chained, unverified
   assumptions. If false, this document's entire "personal machine" evidence base belongs to a
   machine not yet identified. See Part 4.

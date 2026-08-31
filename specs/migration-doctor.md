@@ -865,7 +865,7 @@ discovers these):
 | Key | Target | Note |
 |---|---|---|
 | `version_manager` | `mise` | S6 |
-| `fzf_tab` | **`true`** | **Changed** — the unified spec still says `false`; see C1/C3 |
+| `fzf_tab` | `false` | Off by default. Must be **present**, not absent — see C1/C3 |
 | `profile` | per purpose | `work` for adobetop, `personal` for supertop/minitop |
 | `cuda`, `opencv` | `false` | Linux-only concerns (Q8); revisit in the Linux phase |
 | `computer_name` / `hostname` | the machine's real name | now consumed by the setter script (Q12) |
@@ -1027,14 +1027,14 @@ Carried in from the unified spec and closed by direct measurement on `adobetop`:
   verified. If false, the unified spec's entire "personal machine" evidence base belongs to a
   machine not yet identified. `doctor.py --identity` is the instrument; **P0 of the minitop survey
   is the answer.**
-- **Q15 — Is `vault 1.11.3+ent` deliberate?** An enterprise build pinned at a 2022 version, kept in
-  the Q5 list. Latest-version re-pin may not be available for `+ent`.
 - **Q16 — What belongs in the shared `Host *` block?** Cannot be authored from one machine; blocked
   on the two surveys capturing `~/.ssh/config`. See
   [SSH config consolidation](#ssh-config-consolidation).
-- **Q17 — Does `fzf_tab: true` hold up in practice?** It is the new fleet default (see the unified
-  spec's C1/C3), and it is the first configuration that actually exercises the `myFzfTabRev`
-  dereference. Nothing has run with it enabled yet on any machine.
+- **Q15 — RESOLVED.** `vault` re-pins to OSS `2.0.4` (latest; 2.0.0 shipped 2026-04-14). Dropping
+  `+ent` and jumping 1.11 → 2.0 are two separate breaking changes — see the unified spec's C4.
+- **Q17 — RESOLVED.** `fzf_tab` stays `false` fleet-wide, so nothing exercises the `myFzfTabRev`
+  dereference and C3's tripwire remains latent. The doctor asserts the key is **present and
+  false**, because *absent* is a different failure with a different fix.
 
 ---
 

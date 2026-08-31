@@ -74,14 +74,20 @@ common:
       key: version_manager
       want: mise
 
-    - id: chezmoi-fzf-tab-enabled
-      title: fzf_tab is enabled fleet-wide
+    - id: chezmoi-fzf-tab-present-and-false
+      title: fzf_tab is present in the config and off by default
       type: chezmoi_data
       phase: post
-      traces: [C1, C3, Q17, "#129"]
+      traces: [C1, C3, "#129"]
       key: fzf_tab
-      want: true
-      fix: Enable via `chezmoi init --promptBool fzf_tab=true` in a real TTY only.
+      want: false
+      fix: |
+        The key must be PRESENT and false -- absent is what leaves plugins.toml.tmpl
+        guarding on hasKey. Set it with `chezmoi init --promptBool fzf_tab=false`
+        in a real TTY.
+        To opt in later, use init again -- NEVER hand-edit chezmoi.yaml to set it
+        true, because plugins.toml.tmpl:135 then dereferences .myFzfTabRev, which
+        only .chezmoi.yaml.tmpl:147 emits, and missingkey=error fails the apply.
 
     - id: chezmoi-cuda-false-on-macos
       title: cuda is false on macOS
