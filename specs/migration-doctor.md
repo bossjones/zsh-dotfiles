@@ -56,7 +56,7 @@ known drift still only the drift we already accepted?*
 | Name | Profile | User | Arch | Identity status |
 |---|---|---|---|---|
 | `adobetop` | work | `malcolm` | arm64 | **Confirmed** — macOS 15.7.9 (24G830) |
-| `supertop` | personal *(assumed)* | `bossjones` | arm64 *(assumed)* | **Hypothesis** — in `~/.ssh/config`, never surveyed |
+| `supertop` | **personal** *(confirmed)* | `bossjones` | arm64 *(assumed)* | Apple Silicon laptop; in `~/.ssh/config`, never surveyed |
 | `minitop` | personal *(assumed)* | `bossjones` | arm64 *(assumed)* | **Hypothesis** — see below |
 
 ### The `minitop` hypothesis
@@ -77,14 +77,29 @@ values commented `# HYPOTHESIS`.
 
 ### macOS has three hostnames, and one is normally unset
 
-Measured on `adobetop`, 2026-08-31:
+Every source enumerated on `adobetop`, 2026-08-31. This is the canonical surface — `doctor.py
+--identity` probes all of it:
 
-```
-scutil --get ComputerName    adobetop
-scutil --get LocalHostName   adobetop
-scutil --get HostName        HostName: not set     ← macOS default
-hostname                     adobetop.local        (LocalHostName + .local fallback)
-```
+| Command | `adobetop` | Kind |
+|---|---|---|
+| `scutil --get ComputerName` | `adobetop` | **settable** — UI name; allows spaces/unicode |
+| `scutil --get LocalHostName` | `adobetop` | **settable** — Bonjour/mDNS; DNS-safe charset only |
+| `scutil --get HostName` | *not set* | **settable** — usually unset |
+| `sysctl -n kern.hostname` | `adobetop.local` | derived — what `hostname` reads |
+| `hostname` / `uname -n` | `adobetop.local` | derived from `kern.hostname` |
+| `hostname -s` / `hostname -f` | `adobetop` / `adobetop.local` | derived |
+| `networksetup -getcomputername` | `adobetop` | mirror of `ComputerName` |
+| `hostinfo` | — | **not a hostname source** on modern macOS (kernel info only) |
+| `smbutil status` | timed out | SMB off; unusable |
+| `ipconfig getpacket en0` | empty | no DHCP `host_name` option here |
+| `/etc/hosts` | loopback only | not a source |
+
+**Three settable values; everything else derives.** When `HostName` is unset, macOS synthesises
+`kern.hostname` as `LocalHostName + .local` — which is why `Mac.scarlettlab.home` on the mini was
+never `scutil HostName`. It came from DNS.
+
+The failure mode worth detecting is not any single value but **disagreement between the three
+settable ones**, which is what `--identity` reports.
 
 `HostName` is unset on a machine that works correctly. Nothing sets it unless
 `sudo scutil --set HostName` is run explicitly. It follows that `Mac.scarlettlab.home` on the mini
@@ -99,6 +114,36 @@ was never `scutil HostName` either — it is DHCP/DNS-derived.
 This is not cosmetic. See [Host specialization](#host-specialization-and-the-answer-to-q9) — a
 correct `LocalHostName` is the **prerequisite** for the templating mechanism that handles genuine
 host differences.
+
+### The setter script (Q12)
+
+The doctor detects hostname drift; a companion **templated chezmoi script** fixes it at bootstrap.
+The two chezmoi data keys that already exist map onto macOS's constraints exactly:
+
+```
+computer_name  →  ComputerName                 (spaces/unicode legal)
+hostname       →  LocalHostName + HostName     (DNS-safe charset required)
+```
+
+That is why the personal machine carries `"boss workstation"` / `"bossworkstation"` — the space is
+legal in one and not the other. **The keys were designed for this and nothing was consuming them.**
+
+```gotemplate
+{{- if eq .chezmoi.os "darwin" -}}
+sudo scutil --set ComputerName  "{{ .computer_name }}"
+sudo scutil --set LocalHostName "{{ .hostname }}"
+sudo scutil --set HostName      "{{ .hostname }}"
+{{- end }}
+```
+
+Consequences:
+
+- **Q6 is answered.** The personal machine's stale `computer_name`/`hostname` stop being
+  decorative and become the source of truth — so they must be corrected before this runs.
+- Needs `sudo`, so it is a `run_onchange_` script the operator reviews, not a silent apply.
+- `hostname` must be validated DNS-safe (no spaces) or `scutil --set LocalHostName` fails.
+- The doctor's `identity.assert` block and this script read the **same** two keys, so they cannot
+  disagree by construction.
 
 ---
 
@@ -236,6 +281,43 @@ on the personal machines.
 
 The doctor's own job with respect to specialization is to keep the number of such conditionals as
 small as the evidence allows — every one is a divergence that has to justify itself.
+
+---
+
+## SSH config consolidation
+
+Same convergence problem, different file. `~/.ssh/config` on `adobetop` repeats an identical
+eight-line block across every LAN host entry. The mechanism, verified on macOS 15.7.9:
+
+```
+/etc/ssh/ssh_config:22        Include /etc/ssh/ssh_config.d/*        ← already present
+/etc/ssh/ssh_config.d/        exists; contains 100-macos.conf
+precedence:  1. CLI   2. ~/.ssh/config   3. /etc/ssh/ssh_config      (FIRST value wins)
+```
+
+**The precedence is exactly right for this.** `~/.ssh/config` is read *before* the system file and
+first-match-wins, so any hand-edit on a machine automatically beats the shared default. Manual
+edits cannot be overwritten — they win structurally, not by luck.
+
+> ⚠️ **ssh_config is FIRST-match-wins; gitconfig is LAST-match-wins.** They are opposite. An
+> `Include` belongs at the **top** of an ssh config, while M1's `includeIf` block must be **last**
+> in the gitconfig. Getting this backwards yields a file that silently ignores local overrides.
+
+> ⚠️ **Never hoist `StrictHostKeyChecking no` or `UserKnownHostsFile /dev/null` to `Host *`.**
+> They are per-host today, which is defensible for LAN boxes that get reimaged. As a global
+> default they would disable host-key verification **for `github.com` and `git.corp.adobe.com`
+> too** — a real security regression. This is the one line in the shared block that must stay
+> per-host.
+
+> ⚠️ **`/etc/ssh/ssh_config.d/` is root-owned and outside `$HOME`,** which is chezmoi's entire
+> domain. This needs a `run_onchange_` script with `sudo`, or a documented manual step. Number the
+> file deliberately: `100-macos.conf` already exists and lower numbers win, so
+> `200-zsh-dotfiles.conf` yields to Apple's file on conflict.
+
+**Sequencing:** the shared block cannot be authored until `supertop`'s and `minitop`'s configs have
+been compared against `adobetop`'s — otherwise "common" is a guess from one machine. Capturing
+`~/.ssh/config` is therefore a **P1 item in both survey prompts**, and this work is blocked on
+them.
 
 ---
 
@@ -388,6 +470,31 @@ A drift entry's assertion describes **the deviation as it exists today**, so it 
 `--state target` (confirming it has not yet been eliminated). A drift check that stops passing
 under `--state today` is also a finding: the machine changed underneath us.
 
+### Sunset policy (Q14, decided)
+
+**Drift is a valid accepted deviation only while its tracking issue is open.**
+
+```
+tracked issue OPEN    + drift present  →  KNOWN   (accepted, has a plan)
+tracked issue CLOSED  + drift present  →  FAIL    (the fix did not take)
+tracked issue OPEN    + drift ABSENT   →  FAIL    (stale register entry; delete it)
+no tracked issue                       →  schema error
+```
+
+Chosen over a `review_by:` date because a self-set deadline on personal dotfiles has no external
+forcing function and becomes a rubber stamp. Issue state is a signal already maintained as part of
+normal work, so the register stays honest with **no new discipline**. The middle row is the
+valuable one: closing #123 while the drift is still present is exactly the silent failure a date
+would never catch.
+
+Mechanics: `gh` issue states are fetched in **one batched `gh api graphql` call**, cached to
+`~/.cache/dotfiles-doctor/issues.json` with a TTL. **Offline degrades to `WARN`, never `FAIL`** —
+no network means no verdict, not a bad verdict. Runs when `gh` is authenticated or under
+`DOCTOR_LIVE=1`.
+
+Reporting keeps age visible without gating on it: the drift register prints oldest-`observed`
+first with a day count, so a quietly ageing entry is obvious without a build failing over it.
+
 ### `phase` semantics
 
 | `phase` | Runs when | Meaning |
@@ -455,6 +562,23 @@ with a reason rather than failing.
 `pattern` (regex per line of `chezmoi managed`), and `count` (exact) or `min` / `max`.
 Covers the 3-managed-`gitconfig-`-files-on-work / 0-on-personal criterion.
 
+### `chezmoi_data_complete`
+
+No fields. Diffs the keys emitted by the current `home/.chezmoi.yaml.tmpl` `data:` block against
+the keys present in live `chezmoi data`; any missing key is a finding.
+
+This exists because "a flag was introduced after your last `apply`" is a **recurring class**, not
+three incidents. `adobetop` is missing `version_manager`, `fzf_tab` **and** `profile` today —
+which is the direct cause of C3. A generic check catches the next flag automatically, with no one
+remembering to add an assertion for it.
+
+Distinguishes the two stickiness cases, because they have different fixes:
+
+| Situation | Fix |
+|---|---|
+| Key **absent** | `hasKey` is false ⇒ the prompt fires ⇒ re-run `chezmoi init` |
+| Key **present but wrong** | `hasKey` short-circuits ⇒ hand-edit `~/.config/chezmoi/chezmoi.yaml` |
+
 ### `hostname`
 `which: computer | local | host`, `want` or `want_any_of: [...]`, `allow_unset` (default `false`).
 
@@ -486,6 +610,7 @@ doctor.py --state today|target     tolerate known drift, or demand convergence
 doctor.py --phase pre|post|always|all
 doctor.py --profile <name>         override resolution
 doctor.py --list-profiles          show hosts and which matches here
+doctor.py --identity               probe every macOS hostname source; flag disagreement
 doctor.py --drift                  print only the drift register, with tracking issues
 doctor.py --only <id>[,...]        run a subset
 doctor.py --skip <id>[,...]        exclude a subset (CLI only; no config equivalent)
@@ -601,6 +726,32 @@ every check passes or is on an explicit documented known-failure list. This is w
 the current machine" refers to: the `adobetop` entry is authored against observed reality, not
 guessed.
 
+### `make smoke-doctor` — the CI gate (Q13, decided)
+
+No CI runner is in the fleet, so `--phase pre|post` can never assert anything real there. The
+smoke test asserts something different and more valuable: **that the script runs at all on a clean
+machine.** It follows the repo's existing `make smoke-cuda` / `make smoke-gpu` idiom.
+
+|  | Unit layers 1–6 | `make smoke-doctor` |
+|---|---|---|
+| Proves | the logic is correct | the script **executes** from scratch |
+| Catches | bad regex, bad resolution, broken `traces:` | PEP-723 bootstrap failure, `uv` missing, pyyaml/jsonschema drift, a `profiles.yaml` that parses but won't load |
+| Needs | pytest + stubs | a real macOS runner, no fleet host |
+
+Three exit-code assertions, no host resolution required:
+
+```sh
+doctor.py --validate                                            # → 0, real profiles.yaml
+doctor.py --config tests/fixtures/ci.yaml --profile fake \
+          --state target                                        # → 1, known-failing fixture
+doctor.py --profile nonesuch                                    # → 3
+doctor.py --validate --format json | python3 -m json.tool       # → parseable
+```
+
+Runs on **both `macos-14` and `macos-latest`**. The identity probe is the most OS-sensitive code
+in the design — `scutil`, `sysctl` and `networksetup` behaviour is exactly what shifts between
+macOS releases — so a single-version job would miss the failure this is meant to catch.
+
 ---
 
 ## Traceability to the unified spec
@@ -675,7 +826,14 @@ Mirrors the unified spec's evidence categories:
 - `~/.gitignore_global`; `init.defaultBranch`; `core.editor`; `hub.host`; is the `pr` alias used?
 - `chezmoi data`, `chezmoi status`, `chezmoi diff --no-pager`, `chezmoi managed`, `chezmoi --version`
 - Version manager: `asdf`/`mise` presence, `~/.tool-versions`, the orphaned-tool list
-- `~/.vimrc` and `~/.tmux.conf` — regular file, symlink, or absent? `readlink`, not `realpath`
+- `~/.vimrc` and `~/.tmux.conf` — regular file, symlink, or absent? `readlink`, not `realpath`.
+  On `adobetop` both are symlinks and `~/.tmux.conf`'s target is an **absolute path containing the
+  username** — check whether this machine has the same shape or a portable one
+- **`~/.ssh/config` verbatim**, plus `/etc/ssh/ssh_config.d/` contents — needed to author the
+  shared `Host *` block (Q16). Redact nothing; the comparison needs the real file, but **only
+  machine names reach the committed tree**
+- Every hostname source: run the full `--identity` command set from
+  [the hostname table](#macos-has-three-hostnames-and-one-is-normally-unset)
 - Third-party `zshrc`/`zprofile` injections, found by **diffing rendered-vs-live**
 - `zsh -i -c exit` exit code and full stderr — the baseline
 - Source-repo state: branch, divergence from `origin/main`, the C2 resurrection guard
@@ -700,11 +858,28 @@ So the values must be *decided*, in the open, before anything is written. The in
 
 only answerable once P1 has established X. Hence P1 → P2, never the reverse.
 
-Two traps the interview must surface rather than assume:
+**The target defaults to steer toward** (decided 2026-08-31 — the interview confirms rather than
+discovers these):
+
+| Key | Target | Note |
+|---|---|---|
+| `version_manager` | `mise` | S6 |
+| `fzf_tab` | **`true`** | **Changed** — the unified spec still says `false`; see C1/C3 |
+| `profile` | per purpose | `work` for adobetop, `personal` for supertop/minitop |
+| `cuda`, `opencv` | `false` | Linux-only concerns (Q8); revisit in the Linux phase |
+| `computer_name` / `hostname` | the machine's real name | now consumed by the setter script (Q12) |
+
+Three traps the interview must surface rather than assume:
 
 - **The prompts sit inside `if $interactive`.** A non-TTY `chezmoi init` silently yields
   all-`false` — precisely how the personal machine's config broke. Verify with `chezmoi data`,
-  never by exit code.
+  never by exit code. For `fzf_tab` specifically, `--promptBool fzf_tab=true` is consumed *inside*
+  the interactive branch, so a non-TTY run needs `CM_fzf_tab=true` in the environment instead
+  (`home/.chezmoi.yaml.tmpl:111–121`).
+- **Never enable `fzf_tab` by hand-editing `~/.config/chezmoi/chezmoi.yaml`.**
+  `plugins.toml.tmpl:135` dereferences `.myFzfTabRev`, which only
+  `.chezmoi.yaml.tmpl:147` emits — and `missingkey=error` turns the omission into a failed
+  `apply`. Re-running `chezmoi init` regenerates both keys together and is the only safe path.
 - **A value that differs from the rest of the profile is a decision, not a fact.** If this machine
   has `pyenv=false` and the other personal machine has `pyenv=true`, the interview must ask which
   is right rather than recording the difference.
@@ -767,7 +942,9 @@ it depends on.
 - [ ] Test layer 4 (state semantics) — red
 - [ ] Drift evaluation + `--state` — green
 - [ ] Test layer 1 (handlers) — red, one type at a time
-- [ ] Handlers — green, one type at a time
+- [ ] Handlers — green, one type at a time (incl. `chezmoi_data_complete`)
+- [ ] `--identity` probe: all 11 hostname sources, disagreement detection
+- [ ] Issue-state lookup for `tracked:` — batched, cached, offline ⇒ `WARN`
 - [ ] `render()` text + json; exit codes
 
 **Phase B — the `adobetop` profile**
@@ -776,7 +953,8 @@ it depends on.
 - [ ] `hosts.adobetop` from **observed** state, with any drift tracked
 - [ ] Test layer 5 (traceability) — green
 - [ ] Test layer 6 (live) — green, or every failure documented
-- [ ] `make doctor-test` + `make doctor`
+- [ ] `make doctor-test` + `make doctor` + `make smoke-doctor`
+- [ ] Wire `smoke-doctor` + layers 1–5 into CI on **both** macOS runners (Q13)
 
 **Phase C — fleet expansion**
 - [ ] `hosts.supertop` / `hosts.minitop` stubs, identity commented `# HYPOTHESIS`
@@ -788,6 +966,8 @@ it depends on.
 **Phase D — after the surveys return**
 - [ ] Merge findings, classified per P3
 - [ ] Reconcile any value that differs *within* a profile — the alignment work
+- [ ] Author the hostname setter script; correct `computer_name`/`hostname` first (Q12/Q6)
+- [ ] Compare the three `~/.ssh/config`s; author `200-zsh-dotfiles.conf` (Q16)
 - [ ] Re-run `--state today` on all three; only then does epic #116 Phase 1 start
 - [ ] `--state target` becomes the definition of done for #116
 
@@ -806,6 +986,10 @@ it depends on.
 - [ ] Every `traces:` entry resolves to a real finding in either spec (layer 5)
 - [ ] `--format json` carries `status`, `traces`, `tracked` and `fix` per check
 - [ ] `hostname` checks report `adobetop`'s unset `HostName` as **`WARN`**, never `ERROR`
+- [ ] `--identity` reports all three settable names and flags disagreement between them
+- [ ] `chezmoi_data_complete` flags `adobetop`'s missing `version_manager`/`fzf_tab`/`profile`
+- [ ] Drift whose `tracked:` issue is **closed** fails; offline degrades to `WARN`, never `FAIL`
+- [ ] `make smoke-doctor` passes on both `macos-14` and `macos-latest`
 - [ ] `profiles.yaml` contains no IP address, credential, or key path
 - [ ] `check_dev_environment.py` and every existing `Makefile` target still work unchanged
 - [ ] Both prompt issues exist, labelled `prompt`, authored by `bossjones`
@@ -814,26 +998,41 @@ it depends on.
 
 ## Open questions
 
-- **Q9 — RESOLVED.** Two-valued `profile` is sufficient. `supertop` and `minitop` both resolving to
-  `personal` is intended. Genuine host specialization uses a chezmoi template conditional, which
-  depends on `LocalHostName` being correct — see
-  [Host specialization](#host-specialization-and-the-answer-to-q9).
-- **Q10 — Is `minitop` actually `mac-mini`, and is `mac-mini` actually `Mac.scarlettlab.home`?**
-  Two chained assumptions, neither verified. If false, the unified spec's entire "personal machine"
-  evidence base belongs to a machine not yet identified.
-- **Q11 — Is `supertop` `profile=work` or `profile=personal`?** Assumed `personal` from its
-  `bossjones` ssh user, never surveyed. If work repos are cloned there, M1's identity routing
-  applies and the assumption is wrong.
-- **Q12 — Should `HostName` be set fleet-wide?** Unset is the macOS default and harmless. Setting
-  it would make all three names agree and simplify resolution rule 4, at the cost of a `sudo` step
-  per machine. Currently `warn`-only; a preference, not evidence.
-- **Q13 — Where does `doctor.py` run in CI?** The Actions matrix is macOS-only and none of these
-  machines exists there, so `--phase pre|post` is meaningless in CI. Layers 1–5 are CI-safe; layer
-  6 is not. Worth wiring the first five into the existing workflow.
-- **Q14 — What is the sunset policy for a drift entry?** `tracked` is required, but nothing yet
-  forces an entry to *expire*. Options: a required `review_by:` date that fails the build once
-  passed, or a soft report of drift older than N days. Deferring — the register needs real entries
-  before the policy can be calibrated.
+### Resolved 2026-08-31
+
+| # | Question | Resolution |
+|---|---|---|
+| **Q9** | Does two-valued `profile` suffice for three machines? | **Yes.** `supertop`+`minitop` both `personal` is intended. Host specialization uses a template conditional, gated on a correct `LocalHostName`. |
+| **Q11** | Is `supertop` work or personal? | **`personal`.** |
+| **Q12** | Should `HostName` be set fleet-wide? | **Yes, via a templated setter script** driven by the `computer_name`/`hostname` chezmoi data keys. See [the setter script](#the-setter-script-q12). |
+| **Q13** | Where does the doctor run in CI? | **As `make smoke-doctor`**, on both macOS runners. See [the CI gate](#make-smoke-doctor--the-ci-gate-q13-decided). |
+| **Q14** | Drift sunset policy? | **Tied to GitHub issue state**, not a date. See [Sunset policy](#sunset-policy-q14-decided). |
+
+Carried in from the unified spec and closed by direct measurement on `adobetop`:
+
+| # | Question | Answer |
+|---|---|---|
+| **Q1** | Work machine's `~/.vimrc`? | Symlink → `.vim/.vimrc`, `~/.vim` a git repo — **same shape as personal**. M4's side-effect risk retired. `~/.vimrc.local` is *absent* here but present on personal. |
+| **Q2** | Work machine's `~/.tmux.conf`? | Also an unmanaged symlink, but to `/Users/malcolm/dev/bossjones/oh-my-tmux/.tmux.conf` — **absolute, and contains the username**, so it cannot work on a `bossjones` machine. #125 is wider than "personal only". |
+| **Q3** | Is `hub` vestigial? | **No.** On work: `hub` installed, `alias.pr` wired to it, `hub.host = git.corp.adobe.com`. M2's gate-don't-remove is correct. |
+| **Q4** | Are the `~/.gitconfig-*` files secret-free? | **Yes — read and confirmed.** 139/135/139 bytes; each is a GitHub username, an email, and a URL rewrite. No tokens or key paths. Safe for a public repo; exposes nothing not already in the committed spec. |
+| **Q7** | Is a Linux box in the fleet? | **Yes** (`boss-deeplearning`, Ubuntu), **but out of scope.** macOS alignment first; Linux is a later phase. |
+| **Q8** | Was work's `cuda: true` deliberate? | **No — `cuda` is a Linux concern.** Target state is `false` on every macOS host; revisit in the Linux phase. Same for `opencv`. |
+
+### Still open
+
+- **Q10 — Is `minitop` = `mac-mini` = `Mac.scarlettlab.home`?** Two chained assumptions, neither
+  verified. If false, the unified spec's entire "personal machine" evidence base belongs to a
+  machine not yet identified. `doctor.py --identity` is the instrument; **P0 of the minitop survey
+  is the answer.**
+- **Q15 — Is `vault 1.11.3+ent` deliberate?** An enterprise build pinned at a 2022 version, kept in
+  the Q5 list. Latest-version re-pin may not be available for `+ent`.
+- **Q16 — What belongs in the shared `Host *` block?** Cannot be authored from one machine; blocked
+  on the two surveys capturing `~/.ssh/config`. See
+  [SSH config consolidation](#ssh-config-consolidation).
+- **Q17 — Does `fzf_tab: true` hold up in practice?** It is the new fleet default (see the unified
+  spec's C1/C3), and it is the first configuration that actually exercises the `myFzfTabRev`
+  dereference. Nothing has run with it enabled yet on any machine.
 
 ---
 

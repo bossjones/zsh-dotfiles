@@ -1,8 +1,10 @@
 # Plan: Unified Two-Machine Dotfiles Reconciliation
 
-> **Machines:** `adobetop` (work — macOS, arm64, user `malcolm`) and
-> `Mac.scarlettlab.home` (personal — macOS 26.5.2, arm64, user `bossjones`)
-> **Analysis date:** 2026-08-15
+> **Machines:** `adobetop` (work — macOS 15.7.9, arm64, user `malcolm`),
+> `supertop` and `minitop` (personal, user `bossjones`) — **see [Part 4](#part-4--fleet-expansion-this-is-a-three-machine-problem);
+> Parts 1–3 were written against a two-machine model**
+> **Analysis date:** 2026-08-15, revised 2026-08-31
+> **Companion:** [`specs/migration-doctor.md`](./migration-doctor.md)
 > **Baseline:** `origin/main` @ `41d8a98`
 > **Inputs:** `specs/work-dotfiles-gap-analysis.md` (PR #114),
 > `specs/personal-dotfiles-gap-analysis.md` (PR #115)
@@ -255,7 +257,7 @@ Where the two machines genuinely disagree.
 | `cuda` | `true` | `false` | **Moot**; `false` is the honest value |
 | `opencv` | `true` | `false` | Per-machine; inert on macOS, live on Linux |
 | `pyenv` | `true` | `false` | **Genuine conflict — personal should be `true`** |
-| `fzf_tab` | `false` | *(absent)* | Set `false` on both |
+| `fzf_tab` | *(absent)* | *(absent)* | **`true` on all three** — revised 2026-08-31 |
 
 **The conflict mostly dissolves under verification.** `docs/feature-flags.md` states that
 `ruby`, `nodejs`, `k8s`, `fnm` and `cuda` are **inert**, and this was re-verified fresh:
@@ -283,6 +285,21 @@ This was confirmed empirically: flipping all five booleans on the personal machi
 (`pyenv=true` on personal because it is installed; `cuda=false`/`opencv=false` on macOS), and
 **change nothing structurally** — removing the dead prompts belongs to #101, which already owns
 repo cleanup. Do not duplicate that scope here.
+
+> **Revision 2026-08-31 — `fzf_tab` is now `true`, and `cuda`/`opencv` have a reason.**
+>
+> The fleet default is **`fzf_tab: true`**, not `false`. This reverses the row above, both `init`
+> commands, and the acceptance criteria — and it promotes C3 from latent hygiene to an active
+> Phase 1 concern, because `true` is the first value that ever dereferences `myFzfTabRev`.
+>
+> `cuda` and `opencv` are **Linux concerns, not macOS ones** (owner, 2026-08-31). `false` on every
+> macOS host is therefore the correct value on the merits, not merely the honest one; they are
+> revisited when the Linux machine (`boss-deeplearning`, Ubuntu) enters scope in a later phase.
+> This closes Q8: work's `cuda: true` was noise, not intent.
+>
+> Note the work machine's flags read `cuda: true`, `opencv: true` in live `chezmoi data` — so
+> under the new target state **both are drift**, tracked by the doctor. See
+> [`specs/migration-doctor.md`](./migration-doctor.md).
 
 ### C2 — Source-repo state
 
@@ -312,6 +329,32 @@ the `{{ if $fzfTab }}` block, so it is never evaluated while the flag is false.
 **This is a latent tripwire, not a resolved issue:** enabling `fzf_tab` without regenerating the
 config fails with `map has no entry for key "myFzfTabRev"`. #129.
 
+> **Update 2026-08-31 — no longer latent; promoted to Phase 1.**
+>
+> The fleet default is now `fzf_tab: true` (C1), which makes this the **first configuration that
+> actually exercises the dereference**. #129 moves out of Phase 6 hygiene.
+>
+> Live `chezmoi data` from the work machine confirms the diagnosis directly: `adobetop` has **no
+> `version_manager`, no `fzf_tab` and no `profile` key at all**. That absence — not a wrong value
+> — is why v2.72 was non-functional there while personal only warned.
+>
+> **The good news is that absence is recoverable.** `hasKey` is false, so the prompt fires and a
+> plain re-run of `chezmoi init` sets all three. Stickiness only bites where a key already exists
+> with the wrong value (personal's `hostname: bossworkstation`).
+>
+> ⚠️ **Two traps when enabling it:**
+> 1. **Never hand-edit `~/.config/chezmoi/chezmoi.yaml` to add `fzf_tab: true`.**
+>    `plugins.toml.tmpl:135` reads `.myFzfTabRev`, which only `.chezmoi.yaml.tmpl:147` emits, and
+>    `missingkey=error` turns the omission into a failed `apply`. Re-running `init` regenerates
+>    both keys together and is the only safe path.
+> 2. `--promptBool fzf_tab=true` is consumed **inside** the `$interactive` branch
+>    (`.chezmoi.yaml.tmpl:111–121`). A non-TTY run needs `CM_fzf_tab=true` in the environment
+>    instead.
+>
+> **The hand-edit is asymmetric — off is safe, on is not.** `specs/fzf-tab.md:445–455` correctly
+> tells you to edit `data.fzf_tab: false` directly to disable it, because `$fzfTab` false means
+> `plugins.toml.tmpl:135` is never evaluated. **Do not generalise that to enabling it.**
+
 ### C4 — Orphaned tools under mise
 
 | Machine | Pinned | Orphaned |
@@ -324,6 +367,28 @@ either.** Both specs independently decided to accept the drops (all are years st
 remain reachable via `~/.tool-versions.asdf.bak` and an untouched `~/.asdf`). #126.
 
 `rye` needs no decision — it is already dead on the personal machine and `main` removed it.
+
+> **Revision 2026-08-31 — the drops are reversed. Keep 10 of 12, at latest versions.**
+>
+> Measured on `adobetop`: `~/.tool-versions` has **30 entries**, `~/.asdf/plugins` has **18
+> installed** ⇒ **12 orphans**. Owner's decision (2026-08-31):
+>
+> | Verdict | Tools |
+> |---|---|
+> | **Keep** (10) | `rclone`, `fd`, `terraform`, `ag`, `packer`, `vault`, `argocd`, `velero`, `kompose`, `dive` |
+> | **Drop** (2) | `jsonnet` (0.17.0, 2020), `poetry` (1.1.8 — repo standardised on `uv`) |
+>
+> **Re-pin at latest, do not port the stale pins.** This dissolves the original "all are years
+> stale" objection entirely — they are fresh installs under mise, not migrations of 2021-era
+> versions.
+>
+> k8s tooling (`argocd`, `velero`, `kompose`, `dive`) is retained deliberately: k8s remains
+> supported for **work requirements and homelab use**. The `k8s` feature flag being inert (C1) is
+> not evidence either way.
+>
+> **This changes the shape of #126** — from "ratify the drops" to "re-pin 10 tools at current
+> versions". Q5 closes; **Q15 opens**: is `vault 1.11.3+ent` deliberate? A `+ent` build may have
+> no latest-version equivalent available.
 
 ### C5 — `git remote` / `gh`
 
@@ -373,6 +438,71 @@ Deferred to #129 / #101. **Not** a blocker for the migration.
 
 ---
 
+## Part 4 — Fleet expansion: this is a three-machine problem
+
+> Added 2026-08-31. Everything above was written against a two-machine model. It is not wrong, but
+> it is **incomplete**.
+
+### The fleet
+
+| Name | Profile | User | Identity status |
+|---|---|---|---|
+| `adobetop` | work | `malcolm` | **Confirmed** — macOS 15.7.9 (24G830), arm64 |
+| `supertop` | **personal** | `bossjones` | Apple Silicon laptop. In `~/.ssh/config`; **never surveyed** |
+| `minitop` | **personal** | `bossjones` | Hypothesised = `mac-mini` = `Mac.scarlettlab.home`. **Never surveyed** |
+
+`~/.ssh/config` on `adobetop` contains hosts `adobetop`, `supertop` and **`mac-mini`** — there is
+no host named `minitop`. A Mac mini at the factory-default `ComputerName` of `Mac` produces
+exactly the `.chezmoi.hostname` → `"Mac"` this document already recorded. Hence Q10; hence the
+surveys.
+
+### The target shape
+
+**Every work machine should look like every other work machine; every personal machine like every
+other personal machine.** Divergence within a profile is drift to eliminate, not configuration to
+preserve. Where a machine genuinely needs something its profile does not, the mechanism is a
+**chezmoi template with a conditional** — not a third `profile` value.
+
+That settles the question this expansion raises: **`profile` stays two-valued.** `supertop` and
+`minitop` both resolving to `personal` is the intended outcome.
+
+### The hostname prerequisite
+
+Host-conditional templating needs a trustworthy host key — and this document already established
+that `.chezmoi.hostname` is the collision-prone bare `"Mac"` on the personal machine. Measured on
+`adobetop`, macOS exposes **three settable hostnames** and everything else derives from them:
+
+```
+scutil --get ComputerName    adobetop        ← settable; spaces/unicode legal
+scutil --get LocalHostName   adobetop        ← settable; DNS-safe charset only
+scutil --get HostName        not set         ← settable; unset is the macOS DEFAULT
+sysctl -n kern.hostname      adobetop.local  ← derived (LocalHostName + .local)
+hostname / uname -n          adobetop.local  ← derived
+```
+
+`HostName` being unset on a healthy machine means `Mac.scarlettlab.home` was never `scutil
+HostName` either — it came from DNS. So:
+
+> **Setting `ComputerName`/`LocalHostName` correctly is a prerequisite for the host-specialization
+> mechanism, not cosmetic hygiene.** This upgrades Q6 from "misleading but harmless" to
+> load-bearing, and gives the `computer_name`/`hostname` data keys their first real consumer.
+
+### What happens next
+
+Two things, both specified in [`specs/migration-doctor.md`](./migration-doctor.md):
+
+1. **`hack/doctor/doctor.py`** — a uv-scripted, YAML-driven convergence doctor. Makes this
+   document's Testing Strategy executable, per-machine, and traceable back to the finding that
+   motivated each assertion. `--state target` becomes the definition of done for #116.
+2. **Two survey prompts**, filed as GitHub issues labelled `prompt`, one per unsurveyed machine.
+   Each is a six-phase runnable prompt: confirm identity → observe → **interview** → classify →
+   validate → stop. Read-only; no `chezmoi init`, no `chezmoi apply`.
+
+**Nothing in Phases 1–5 below should execute on `supertop` or `minitop` until their surveys
+return.** `adobetop` is not blocked.
+
+---
+
 ## Corrections to the input specs
 
 Recorded so the three documents can be reconciled during review.
@@ -384,6 +514,10 @@ Recorded so the three documents can be reconciled during review.
 | 3 | personal, Finding 4 (first draft) | `.vimrc.local` is tracked upstream ⇒ pull conflicts | The loaded override is **`~/.vimrc.local`**, outside the clone. *(Already fixed in #115.)* |
 | 4 | work, Finding 12 | `hack/doctor` diverged 796 vs 698 lines | Already reconciled to 698/698 on the pushed branch; only 2 dead files remain (C6) |
 | 5 | work, Finding 3 | `hub.host` is an Adobe *leak* on personal | Understated — it **breaks** the personal `git pr` alias (M2) |
+| 6 | **this doc**, C1 | `fzf_tab` should be `false` on both | **Reversed 2026-08-31** — the fleet default is `true`; promotes C3 to Phase 1 |
+| 7 | **this doc**, C4 | Accept the orphan drops | **Reversed 2026-08-31** — keep 10 of 12 at latest versions; only `jsonnet`/`poetry` drop |
+| 8 | **this doc**, header | A two-machine fleet | It is **three**; `supertop` and `minitop` are unsurveyed (Part 4) |
+| 9 | **this doc**, C1 | `cuda`/`opencv` values are "cosmetic honesty" | They are **Linux-only concerns**; `false` on macOS is correct on the merits (Q8) |
 
 ---
 
@@ -395,6 +529,8 @@ Maps 1:1 onto epic #116. Dependencies are real.
 - [ ] Review and agree this spec (#117)
 
 ### Phase 1 — shared infrastructure (strictly ordered)
+- [ ] **C3 — regenerate each config via `chezmoi init` so `fzf_tab`/`myFzfTabRev` land together**
+      (#129, promoted from Phase 6 on 2026-08-31 — `fzf_tab: true` exercises the dereference)
 - [ ] S3 — `profile` key + docs + `Makefile` defaults (#118)
 - [ ] S4/S5/S2/M2 — `dot_gitconfig.tmpl`: gate `hub.host`, restore `init.defaultBranch`,
       settle `core.editor`, append the routing block **last** (#119)
@@ -418,7 +554,8 @@ Maps 1:1 onto epic #116. Dependencies are real.
 
 ### Phase 6 — hygiene (no ordering constraint, coordinate with #101)
 - [ ] S7 — delete `dot_zshrc.local.tmpl`
-- [ ] C3 — `myFzfTabRev` tripwire
+- [x] ~~C3 — `myFzfTabRev` tripwire~~ → **moved to Phase 1** (2026-08-31): `fzf_tab: true` is now
+      the fleet default, so this is exercised on first apply rather than latent
 - [ ] C7 — sheldon hardcoded path
 - [ ] C1 — inert-flag cleanup (**owned by #101**)
 - [ ] C6 — closed, port nothing
@@ -445,8 +582,8 @@ chezmoi init --source=. --debug -v \
   --promptString "version_manager=mise" \
   --promptString "profile=work" \
   --promptBool "ruby=true"  --promptBool "pyenv=true" --promptBool "nodejs=true" \
-  --promptBool "k8s=true"   --promptBool "cuda=true"  --promptBool "fnm=true" \
-  --promptBool "opencv=true" --promptBool "fzf_tab=false"
+  --promptBool "k8s=true"   --promptBool "cuda=false" --promptBool "fnm=true" \
+  --promptBool "opencv=false" --promptBool "fzf_tab=true"
 ```
 
 **Personal:**
@@ -461,8 +598,29 @@ chezmoi init --source=. --debug -v \
   --promptString "profile=personal" \
   --promptBool "ruby=true"   --promptBool "pyenv=true" --promptBool "nodejs=true" \
   --promptBool "k8s=true"    --promptBool "cuda=false" --promptBool "fnm=true" \
-  --promptBool "opencv=false" --promptBool "fzf_tab=false"
+  --promptBool "opencv=false" --promptBool "fzf_tab=true"
 ```
+
+**Personal — `supertop`** (Apple Silicon laptop). ⚠️ **Provisional — do not run before the
+`supertop` survey returns.** `Computer name`/`Host name` are proposals, and the flags are the
+profile defaults rather than observed values:
+```sh
+cd ~/.local/share/chezmoi
+chezmoi init --source=. --debug -v \
+  --promptString "Name=Malcolm Jones" \
+  --promptString "Email=bossjones@theblacktonystark.com" \
+  --promptString "Computer name=supertop" \
+  --promptString "Host name=supertop" \
+  --promptString "version_manager=mise" \
+  --promptString "profile=personal" \
+  --promptBool "ruby=true"   --promptBool "pyenv=true" --promptBool "nodejs=true" \
+  --promptBool "k8s=true"    --promptBool "cuda=false" --promptBool "fnm=true" \
+  --promptBool "opencv=false" --promptBool "fzf_tab=true"
+```
+
+> ⚠️ **`--promptBool "fzf_tab=true"` only works in a real TTY.** It is consumed inside the
+> `$interactive` branch (`.chezmoi.yaml.tmpl:111–121`); a non-TTY run needs `CM_fzf_tab=true` in
+> the environment instead. See C3.
 
 Then, on each machine, only after every source change has landed:
 
@@ -529,7 +687,9 @@ machine and 15 on the work machine — see the respective specs. Plus, fresh for
 ## Acceptance Criteria
 
 - [ ] Both machines: `chezmoi status`/`diff` run without template errors
-- [ ] Both: `chezmoi data` reports `version_manager: mise`, correct `profile`, `fzf_tab: false`
+- [ ] All three: `chezmoi data` reports `version_manager: mise`, correct `profile`,
+      **`fzf_tab: true`**, `cuda: false`, `opencv: false`, and **no missing keys**
+- [ ] All three: `hack/doctor/doctor.py --state target` exits `0` (see `specs/migration-doctor.md`)
 - [ ] Work: 5 `includeIf` blocks present; all six probe dirs resolve correctly; 3 identity files managed
 - [ ] Personal: **0** `includeIf`, **0** managed identity files, **0** `adobe` references
 - [ ] Both: `init.defaultBranch = main`; `**/.claude/settings.local.json` in `~/.gitignore_global`
@@ -571,32 +731,32 @@ cp "$BK"/chezmoi-*.bin ~/.bin/chezmoi
 
 ## Open questions
 
-Things this document could **not** settle from evidence available on the personal machine.
-Mirrored in epic #116 for discussion. **These are the places where a wrong assumption would do
-the most damage.**
+### Resolved 2026-08-31 — measured on `adobetop`
 
-- **Q1 — What is `~/.vimrc` on the work machine?** Not recorded in the work spec. If it is also
-  a `gpakosz/.vim` symlink, M4 fixes both machines. If it is `main`'s regular file, M4 *changes*
-  the work machine's vim setup as a side effect. **Must be checked before M4 lands.**
-- **Q2 — Does `~/.tmux.conf` have the same shape on the work machine?** Personal has an
-  unmanaged symlink into the `oh-my-tmux` external. Unknown for work (#125).
-- **Q3 — Is the `git pr` alias actually used?** M2's severity assumes it matters. If `hub` is
-  vestigial on both machines, the cleaner fix may be to **remove `hub.host` and the `pr` alias
-  entirely** rather than gate them.
-- **Q4 — Are the three `~/.gitconfig-*` files really secret-free?** The work spec says so
-  (139/135/139 bytes: a username, an email, a URL rewrite). They cannot be read from the
-  personal machine. **Confirm before committing them to a public repo.**
-- **Q5 — Should any of the 13 orphaned tools be ported to mise?** Both specs lean "drop all",
-  but that is a preference, not evidence. `rclone`, `fd`, `poetry` and `terraform` are the
-  plausible keepers.
-- **Q6 — Should the personal machine's `computer_name`/`hostname` data be corrected?**
-  Currently `boss workstation`/`bossworkstation` versus a real hostname of
-  `Mac.scarlettlab.home`. Harmless today (nothing gates on them), but misleading.
-- **Q7 — Is there a Linux machine in this fleet?** `opencv` is live only on Linux and the `cuda`
-  module is gated on `.chezmoi.os`. If a Linux box exists, C1's "inert on macOS" conclusion is
-  only half the story.
-- **Q8 — Was the work machine's `cuda: true` deliberate?** It is inert, so it changed nothing;
-  the question is whether it signals an *intent* that should be implemented rather than removed.
+| # | Question | Answer |
+|---|---|---|
+| **Q1** | Work machine's `~/.vimrc`? | **Symlink → `.vim/.vimrc`**, `~/.vim` a git repo — the *same shape as personal*. M4 fixes both; **the side-effect risk is retired.** Caveat: `~/.vimrc.local` is **absent** here but present on personal, so M4's `dot_vimrc.local` would *create* a file the work machine never had. A decision, not a no-op. |
+| **Q2** | Work machine's `~/.tmux.conf`? | **Also an unmanaged symlink** — but to `/Users/malcolm/dev/bossjones/oh-my-tmux/.tmux.conf`: **absolute, and containing the username**, so it cannot work on a `bossjones` machine. `~/.tmux.conf.local` is 533 lines. **#125 is wider than "personal only"** and is a genuine within-profile divergence. |
+| **Q3** | Is the `git pr` alias vestigial? | **No.** On work: `hub` at `/opt/homebrew/bin/hub`, `alias.pr` wired to it, `hub.host = git.corp.adobe.com`. M2's *gate it*, not *remove it*, is correct. |
+| **Q4** | Are the `~/.gitconfig-*` files secret-free? | **Yes — read and confirmed.** 139/135/139 bytes exactly as claimed; each is a GitHub username, an email, and a URL rewrite. No tokens, no key paths. **Safe to commit to the public repo**; exposes nothing not already in this document. **#120 unblocked.** |
+| **Q5** | Port any orphaned tools to mise? | **Keep 10 of 12, at latest versions.** See the C4 revision. |
+| **Q6** | Correct the personal `computer_name`/`hostname`? | **Yes — they stop being decorative.** They become the input to the hostname setter script (`computer_name` → `ComputerName`; `hostname` → `LocalHostName`+`HostName`). `hostname` must be DNS-safe. |
+| **Q7** | Is there a Linux machine in the fleet? | **Yes** — `boss-deeplearning` (Ubuntu), among 11 non-Mac ssh hosts. **Explicitly out of scope for now:** get macOS aligned first; Linux is a later phase. C1's "inert on macOS" stands for this phase. |
+| **Q8** | Was work's `cuda: true` deliberate? | **No.** `cuda`/`opencv` are Linux concerns. `false` on every macOS host; revisit in the Linux phase. |
+
+### Still open
+
+- **Q15 — Is `vault 1.11.3+ent` deliberate?** Kept in the C4 list, but a `+ent` build may have no
+  latest-version equivalent to re-pin to.
+- **Q16 — What belongs in a shared ssh `Host *` block?** Cannot be authored from one machine.
+  Blocked on both surveys capturing `~/.ssh/config`. See
+  [`specs/migration-doctor.md`](./migration-doctor.md#ssh-config-consolidation).
+- **Q17 — Does `fzf_tab: true` hold up in practice?** It is the new default (C1) and the first
+  configuration to exercise the `myFzfTabRev` dereference (C3). Nothing has run with it enabled on
+  any machine yet.
+- **Q10 — Is `minitop` = `mac-mini` = `Mac.scarlettlab.home`?** Two chained, unverified
+  assumptions. If false, this document's entire "personal machine" evidence base belongs to a
+  machine not yet identified. See Part 4.
 
 ---
 
