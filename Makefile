@@ -218,6 +218,23 @@ macos-init-fzf-tab-dry-run:  ## Preview good defaults + fzf-tab init from --sour
 	@echo "\033[0;34mDry-running chezmoi init with fzf-tab from --source=. (host: $(CHEZMOI_HOSTNAME))...\033[0m"
 	chezmoi init -R --debug -v --dry-run $(CHEZMOI_GOOD_DEFAULTS) $(CHEZMOI_FZF_TAB_DEFAULTS) --source=.
 
+# ---------------------------------------------------------------------------
+# Link checking (lychee)
+#
+# lychee scrapes github.com HTML unauthenticated by default, which rate-limits
+# into spurious 404s. Passing a token makes lychee use the GitHub API instead.
+# Falls back to `gh auth token`, then to empty (unauthenticated) if neither.
+# ---------------------------------------------------------------------------
+.PHONY: link-check link-check-verbose
+
+link-check:  ## Check all links in markdown files using lychee
+	@echo "\033[0;34mChecking all links in markdown files using lychee...\033[0m"
+	@GITHUB_TOKEN="$${GITHUB_TOKEN:-$$(gh auth token 2>/dev/null)}" lychee --config lychee.toml '**/*.md'
+
+link-check-verbose:  ## Check all links in markdown files with verbose output
+	@echo "\033[0;34mChecking all links in markdown files with verbose output...\033[0m"
+	@GITHUB_TOKEN="$${GITHUB_TOKEN:-$$(gh auth token 2>/dev/null)}" lychee --config lychee.toml --verbose debug '**/*.md'
+
 .PHONY: doctor doctor-identity doctor-test smoke-doctor
 
 DOCTOR := ./hack/doctor/doctor.py
