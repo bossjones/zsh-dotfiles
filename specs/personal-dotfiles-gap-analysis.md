@@ -213,6 +213,14 @@ session (2026-08-31, `chezmoi data` pasted from `bossjones@mactop`):
    > from zero: its own backup must be created there before anything else (Task 1 pattern).
 2. **Capture `~/.ssh/config` into #137** for Q16 (scrub private IPs; machine names only —
    public repo).
+
+   > **Both done 2026-08-31 (on-machine, #137).** P0–P1 evidence, the scrubbed ssh capture and
+   > the doctor profile are in the unified spec §`minitop` survey and `profiles.yaml`. Two
+   > surprises: the `mactop` name is `scutil HostName` alone (ComputerName/LocalHostName are
+   > factory defaults), and the asdf → mise migration **already ran** there on 2026-06-01, so
+   > step 4's `version_manager` correction is not needed on the mini. `make` is broken on the
+   > mini (Xcode 26.6 loader, #138) — the F2 upgrade recipe in step 3 is unaffected, but anything
+   > that compiles is.
 3. **Upgrade chezmoi v2.31.1 → v2.72.0** using F2's verified recipe (hash the old binary
    into a backup first).
 4. Only then regenerate the config (Task 4 pattern below, with `Computer name=minitop` /

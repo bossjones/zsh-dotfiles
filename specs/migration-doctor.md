@@ -58,8 +58,8 @@ known drift still only the drift we already accepted?*
 | Name | Profile | User | Arch | Identity status |
 |---|---|---|---|---|
 | `adobetop` | work | `malcolm` | arm64 | **Confirmed** — macOS 15.7.9 (24G830) |
-| `supertop` | **personal** *(confirmed)* | `bossjones` | arm64 *(assumed)* | Apple Silicon laptop; in `~/.ssh/config`, never surveyed |
-| `minitop` | personal *(assumed)* | `bossjones` | arm64 *(assumed)* | **Hypothesis** — see below |
+| `supertop` | **personal** | `bossjones` | arm64 | **Surveyed 2026-08-31** (#136) — macOS 26.5.2, Mac16,5, chezmoi 2.72.0 |
+| `minitop` | **personal** | `bossjones` | arm64 | **Surveyed 2026-08-31** (#137) — macOS 26.6.2, Mac16,11, chezmoi 2.31.1; live names `Malcolm’s Mac mini` / `Malcolms-Mac-mini` / `HostName=mactop`. Hypothesis below resolved **no** |
 
 ### The `minitop` hypothesis
 
@@ -76,6 +76,15 @@ hypothesis:
 **Not confirmed.** Two chained assumptions, neither verified. Confirmation is P0 of
 [#137](https://github.com/bossjones/zsh-dotfiles/issues/137). Until then `hosts.minitop.identity` ships with its
 values commented `# HYPOTHESIS`.
+
+> **Resolved 2026-08-31 (#137 P0): the hypothesis was wrong on both links.** `Mac.scarlettlab.home`
+> was `supertop` before its rename, and the `mac-mini` host is a distinct machine whose only
+> set name is `scutil HostName = mactop` — `ComputerName`/`LocalHostName` are still Apple's
+> factory defaults (`Malcolm’s Mac mini` / `Malcolms-Mac-mini`), which is *not* the bare `Mac`
+> this section predicted. So this machine also breaks the "HostName is normally unset" rule
+> below: it is the one fleet host where `HostName` is set, and that setting is the sole source of
+> the `mactop` name. `hosts.minitop` now carries real identity values and 13 tracked drift
+> entries; the canonical name stays `minitop` (owner decision) and the rename is Q12's job.
 
 ### macOS has three hostnames, and one is normally unset
 

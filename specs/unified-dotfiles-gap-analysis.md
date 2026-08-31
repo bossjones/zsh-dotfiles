@@ -468,7 +468,7 @@ Deferred to #129 / #101. **Not** a blocker for the migration.
 |---|---|---|---|
 | `adobetop` | work | `malcolm` | **Confirmed** — macOS 15.7.9 (24G830), arm64 |
 | `supertop` | **personal** | `bossjones` | **Surveyed 2026-08-31** — macOS 26.5.2 (25F84), Mac16,5 / M4 Max, arm64, chezmoi 2.72.0. **Is the machine this document called "the personal machine"** — formerly named `Mac` / `Mac.scarlettlab.home`, renamed before 2026-08-31 (correction 10) |
-| `minitop` | **personal** | `bossjones` | Partially observed via owner ssh 2026-08-31: live hostname **`mactop`**, chezmoi 2.31.1, pre-rename `myAsdf*` keys, `version_manager=mise`. On-machine survey (#137) still pending. Canonical name stays `minitop`; the mini gets renamed during migration |
+| `minitop` | **personal** | `bossjones` | **Surveyed 2026-08-31** — macOS 26.6.2 (25G83), Mac16,11 / M4 Pro, arm64, chezmoi 2.31.1. `ComputerName`/`LocalHostName` are the **factory defaults** (`Malcolm’s Mac mini` / `Malcolms-Mac-mini`); only `HostName` was ever set, to `mactop`. Canonical name stays `minitop`; the mini gets renamed during migration (Q12). See §`minitop` survey below |
 
 `~/.ssh/config` on `adobetop` contains hosts `adobetop`, `supertop` and **`mac-mini`** — there is
 no host named `minitop`. A Mac mini at the factory-default `ComputerName` of `Mac` produces
@@ -479,6 +479,106 @@ surveys.
 > `Mac.scarlettlab.home` identity belonged to **`supertop` before its rename**, not to the mini;
 > the ssh host `mac-mini` is a distinct machine live-named `mactop`. Evidence chain in
 > [`personal-dotfiles-gap-analysis.md` §Machine identity resolved](./personal-dotfiles-gap-analysis.md#machine-identity-resolved--q10-answered).
+
+### `minitop` survey (2026-08-31) — returned
+
+The #137 survey, run on-machine, read-only. This is measured fact, not proposal. `hosts.minitop`
+in `hack/doctor/profiles.yaml` graduated from `hypothesis: true` to real identity values plus
+**13 tracked drift entries**.
+
+#### Identity (P0)
+
+| Source | Value |
+|---|---|
+| `scutil --get ComputerName` | `Malcolm’s Mac mini` — **factory default, never renamed** |
+| `scutil --get LocalHostName` | `Malcolms-Mac-mini` — factory default |
+| `scutil --get HostName` | **`mactop`** — explicitly set; *not* the healthy unset default |
+| `hostname` / `hostname -f` / `uname -n` / `kern.hostname` | `mactop` (all derive from `HostName`) |
+| `.chezmoi.hostname` / `fqdnHostname` | `mactop` / `mactop` |
+| Hardware | `Mac16,11`, Apple M4 Pro, arm64, user `bossjones` |
+| OS | macOS 26.6.2 (25G83) |
+| chezmoi | v2.31.1 at `~/.bin/chezmoi` (2023-03-02 build) |
+
+Three settable names, three different values — `doctor.py --identity` flags the disagreement.
+Two things this overturns:
+
+1. **The `mactop` name comes from `HostName` alone.** `ComputerName` and `LocalHostName` were
+   never touched. "The hostname prerequisite" above generalised from `adobetop` that `HostName`
+   is unset on a healthy machine; `minitop` is the fleet's counter-example, and it is the only
+   reason `.chezmoi.hostname` reads `mactop` rather than `Malcolms-Mac-mini`.
+2. **The old "bare `Mac`" hypothesis could never have matched this machine.** Apple's default on
+   this generation embeds the owner's first name. Correction 13.
+
+The doctor auto-resolves this host today via the `mactop` alias (`HostName`) — no exit-3
+ambiguity with `supertop`. `Malcolms-Mac-mini` is a second alias so resolution survives Q12
+unsetting `HostName` before the rename lands.
+
+#### chezmoi state
+
+- **The source checkout is stale and on a deleted branch.** `~/.local/share/chezmoi` is at
+  `3571b56` on `feature-asdf-to-mise` (upstream gone — it merged as PR #83), **83 commits
+  behind `origin/main`**; HEAD is an ancestor of `origin/main`, so a fast-forward loses
+  nothing. This masks two things: `chezmoi status` exits **0** here because the old template
+  still declares the old keys, and the common `no-resurrected-files` check FAILS for the wrong
+  reason — the C2 diff lists `.claude/` files that `main` has since *deleted*, not files this
+  machine resurrected. Against this branch's template, `chezmoi --source … status` fails with
+  `map has no entry for key "myRubyVersion"` — adobetop's C3 class exactly.
+- **Config:** 19 pre-rename `myAsdf*Version` keys; `fzf_tab` / `myFzfTabRev` /
+  `myPyenvPythonVersion` absent; `computer_name: "boss workstation"` and
+  `hostname: "bossworkstation"` present-but-wrong (sticky); `version_manager: "mise"` already
+  correct. All seven feature flags `false`.
+- **asdf → mise has already run here** (S6 landed 2026-06-01 via the merged `feature-asdf-to-mise`
+  branch): `~/.tool-versions.asdf.bak` exists (30 tools), `~/.tool-versions` is gone,
+  `~/.config/mise/config.toml` pins 17 tools, `mise ls` shows every one installed,
+  `ruby.compile=false`. asdf 0.11.2 (brew) and `~/.asdf` (18 plugins) remain as the rollback
+  path. Orphans relative to the C4 list: only `golang` → `go` (a rename, not a drop) and `rye`.
+- **Pending apply surface against the live (stale) checkout:** 2 ` R` scripts only — every
+  managed file is byte-identical to its rendered template.
+
+#### Dotfile spot-checks
+
+| Item | Observed 2026-08-31 | Bearing |
+|---|---|---|
+| `~/.vimrc` | chezmoi-managed regular file (`dot_vimrc`, 93 lines); `~/.vim` absent | Pre-M4 shape. Not drift — `main` still ships `dot_vimrc` |
+| `~/.tmux.conf` | unmanaged symlink → `/Users/bossjones/dev/bossjones/oh-my-tmux/.tmux.conf`; `~/.tmux.conf.local` 416 lines, unmanaged | Same shape as supertop and adobetop (#125); the username is correct, so it works today |
+| `~/.zshrc`, `~/.zprofile` | **diff clean** against the rendered templates | Zero injections in the files M3 was written for |
+| `~/.zshenv` | unmanaged, one line: `. "$HOME/.cargo/env"` (rustup) | The only injection on this machine → M3 (#123) |
+| `~/.zshrc.local` | present, 3.4K, `RBENV_VERSION=2.7.2` | S7; still chezmoi-managed here because the checkout predates the deletion |
+| `hub` / `hub.host` | `/opt/homebrew/bin/hub` installed; `hub.host = git.corp.adobe.com` | M2's breakage, live (#119) |
+| `~/.gitconfig-*` / `includeIf` | none / 0 | M1 stays work-only |
+| `core.editor` / `init.defaultBranch` | `vim` / unset | S5 already satisfied; S2 still needed |
+| `~/.gitignore_global` | lacks `**/.claude/settings.local.json` | S1 (#121) |
+| Live tools vs flags | `pyenv` 3.12.8 owns `python3`; `fnm` owns `node` 20.19.5; ruby 3.4.9 and the k8s tools via mise — **all with their flag `false`** | P2 interview input (trap 2) |
+| Shell health | `zsh -i -c exit` → 0; stderr = 4× `(eval):1: can't change option: zle`; ~0.45s startup | Baseline, identical to supertop's F16 |
+| Toolchain | `/usr/bin/make`, `/usr/bin/clang`, `xcrun` all fail to load — Xcode 26.6 loader `Symbol not found: _XPCTypeBool`; standalone CLT 26.6.0 healthy | **New finding → #138.** Every `make` target is dead on this machine |
+
+#### Doctor verdict
+
+```text
+./hack/doctor/doctor.py --state today                → 3 pass · 13 known   (exit 0)
+./hack/doctor/doctor.py --state target --phase all   → 13 pass · 20 fail  (exit 1)
+```
+
+The target-state reds are the fleet's pending shared work (S1, S2, S7, M4, `fzf_tab`, M2) plus the
+13 drift entries; none is unexplained. `hack/doctor/tests`: 50 passed, 2 skipped, and the
+smoke-doctor steps pass — both run as their underlying commands, because `make` cannot start
+(#138).
+
+#### ssh config (Q16 input)
+
+16 `Host` entries, **no `Host *`**. Fleet Macs present: `supertop` and `mac-mini` (this machine,
+self-referential); no `minitop`, `mactop` or `adobetop` entry. The setting-frequency table is in
+the #137 comment (names only — this repo is public). The candidate shared block is the same
+eight lines as adobetop's, *minus* `StrictHostKeyChecking no` / `UserKnownHostsFile /dev/null`
+per the standing warning in `migration-doctor.md`. One new finding: **9 of 16 entries name an
+`IdentityFile` under another user's home directory** — copied from adobetop's user, so they
+cannot resolve on a `bossjones` machine. A consolidation item, not a `Host *` item.
+
+#### What the survey did *not* do
+
+No `chezmoi init`, no `chezmoi apply`, no `scutil --set`, no fast-forward of the stale checkout.
+The P2 interview (every data key, human-answered) is recorded on #137 and feeds the later
+`chezmoi init` under epic #116.
 
 ### The target shape
 
@@ -527,8 +627,11 @@ return.** `adobetop` is not blocked.
 
 > **2026-08-31: the `supertop` survey has returned** (recorded in
 > [`personal-dotfiles-gap-analysis.md` §Supertop re-survey](./personal-dotfiles-gap-analysis.md#supertop-re-survey-2026-08-31),
-> folded into `hack/doctor/profiles.yaml`) — **`supertop` is unblocked**. `minitop` remains
-> blocked on #137.
+> folded into `hack/doctor/profiles.yaml`) — **`supertop` is unblocked**.
+>
+> **2026-08-31: the `minitop` survey has returned too** (§`minitop` survey above, folded into
+> `profiles.yaml` as 13 drift entries) — **`minitop` is unblocked** for Phases 1–5, subject to the
+> P2 interview answers on #137 and the toolchain repair in #138.
 
 ---
 
@@ -550,6 +653,7 @@ Recorded so the three documents can be reconciled during review.
 | 10 | **this doc**, Part 4 / Q10 | `minitop` = `mac-mini` = `Mac.scarlettlab.home` | **Resolved NO (2026-08-31).** `Mac.scarlettlab.home` was **`supertop` before its rename**; the ssh host `mac-mini` is a distinct machine live-named **`mactop`**. The "personal machine" evidence base therefore belongs to `supertop` — **now a surveyed machine**, killing Q10's worst-case branch. Evidence: this spec's backup root, worktree, upgraded chezmoi v2.72.0 and renamed `my*Version` keys are all on `supertop`, while `mactop` still runs v2.31.1 with pre-rename `myAsdf*` keys |
 | 11 | **this doc**, Part 4 | `hosts.minitop` aliases `[Mac, mac-mini, Mac.scarlettlab.home]` | `Mac`/`Mac.scarlettlab.home` were **supertop's former names** — removed from `minitop`'s aliases (now `[mactop, mac-mini]`). **Owner decision 2026-08-31: canonical fleet name stays `minitop`**; the mini's observed `mactop` name is identity drift, fixed by renaming the machine during its migration |
 | 12 | **this doc**, per-machine init commands | `supertop`'s `--promptString` values take effect | On `supertop`, `computer_name`/`hostname`/`version_manager` are **present-but-wrong** in the live config, so `hasKey` short-circuits those prompts and their `--promptString` values are **silently ignored**. The command needs `--data=false` (re-prompts everything) or a prior hand-edit of `~/.config/chezmoi/chezmoi.yaml` |
+| 13 | **this doc**, Part 4 "The hostname prerequisite"; `profiles.yaml` @ 6b01ec9 | `HostName` is unset on every healthy Mac; `minitop`'s `LocalHostName` is `mactop` | **Both wrong (2026-08-31, #137 P0).** On `minitop`, `HostName` is *explicitly set* to `mactop` and is the sole source of that name; `ComputerName`/`LocalHostName` are the factory defaults `Malcolm’s Mac mini` / `Malcolms-Mac-mini`. The `minitop-named-mactop` drift entry written from the ssh session asserted `LocalHostName=mactop` and failed on-machine — replaced by one entry per settable name |
 
 ---
 
@@ -785,8 +889,11 @@ cp "$BK"/chezmoi-*.bin ~/.bin/chezmoi
 ### Still open
 
 - **Q16 — What belongs in a shared ssh `Host *` block?** Cannot be authored from one machine.
-  Supertop's `~/.ssh/config` captured on #136 (2026-08-31); **now blocked only on the `minitop`
-  survey** (#137). See
+  Supertop's `~/.ssh/config` captured on #136 and minitop's on #137 (both 2026-08-31) — **no
+  longer blocked on a survey; authoring is pending.** All three configs share the same eight-line
+  per-host block; the shared file is that block minus `StrictHostKeyChecking no` /
+  `UserKnownHostsFile /dev/null`. minitop adds a consolidation item: 9 of its 16 entries carry an
+  `IdentityFile` under another user's home. See
   [`specs/migration-doctor.md`](./migration-doctor.md#ssh-config-consolidation).
 
 ### Resolved 2026-08-31 (second round)

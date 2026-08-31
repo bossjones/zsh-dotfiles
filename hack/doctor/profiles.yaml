@@ -461,25 +461,22 @@ hosts:
           Nothing in home/ sources it; S7 deletes the template rather than
           sourcing this file, because sourcing would ACTIVATE the stale values.
 
-  # -------------------------------------------------------------------------
-  # UNSURVEYED. minitop below is a hypothesis pending its `prompt` issue
-  # (#137). Do not trust, extend, or apply anything here until P0 confirms
-  # identity on-machine. (supertop above graduated 2026-08-31 via #136.)
-  # -------------------------------------------------------------------------
-
   minitop:
     description: >-
-      Personal Mac mini, ssh host `mac-mini`. Q10 resolved 2026-08-31: this is
-      NOT Mac.scarlettlab.home (that was supertop pre-rename). Live hostname
-      observed via owner ssh session: `mactop`, chezmoi 2.31.1, pre-rename
-      myAsdf*Version keys, version_manager=mise already set. Canonical fleet
-      name stays minitop (owner decision 2026-08-31) -- the machine gets
-      renamed during its migration, so the asserts below state the target and
-      the mactop name is tracked drift. On-machine survey (#137) still pending.
+      Personal Apple Silicon Mac mini (Mac16,11, M4 Pro), ssh host `mac-mini`.
+      Surveyed 2026-08-31 on-machine (#137): macOS 26.6.2 (25G83), arm64,
+      chezmoi 2.31.1 at ~/.bin/chezmoi. Q10 resolved: NOT Mac.scarlettlab.home
+      (that was supertop pre-rename). Live names: ComputerName and
+      LocalHostName are still the FACTORY DEFAULTS ("Malcolm's Mac mini" /
+      Malcolms-Mac-mini); only HostName was ever set, to `mactop`, which is
+      the sole source of the `mactop` name the fleet has been seeing. The
+      three settable names disagree. Canonical fleet name stays minitop
+      (owner decision 2026-08-31): the asserts state the target and all
+      three live names are tracked drift. Auto-resolution works today via the
+      `mactop` alias (HostName) -- no exit-3 ambiguity with supertop.
     identity:
       profile: personal
-      hypothesis: true
-      aliases: [mactop, mac-mini]
+      aliases: [mactop, mac-mini, Malcolms-Mac-mini]
       match:
         arch: arm64
         username: bossjones
@@ -487,19 +484,214 @@ hosts:
       assert:
         computer_name: minitop
         local_host_name: minitop
+        os_major: 26
 
     drift:
-      - id: minitop-named-mactop
-        title: live LocalHostName is mactop; the fleet name is minitop
+      # --- identity: three settable names, three different values ----------
+
+      - id: minitop-computer-name-factory-default
+        title: ComputerName is still the factory default
         type: hostname
         observed: "2026-08-31"
         expected: minitop
-        tracked: "#137"
-        traces: [Q10]
+        tracked: "#116"
+        traces: [Q6, Q10, Q12]
+        which: computer
+        want: "Malcolm’s Mac mini"
+        fix: |
+          Never renamed. Apple's default on this generation embeds the owner's
+          first name (with a U+2019 apostrophe), so the old "bare Mac"
+          hypothesis could never have matched this machine. Set by the Q12
+          hostname setter during migration (operator-reviewed, needs sudo);
+          feeds from the computer_name data key once that key is corrected.
+
+      - id: minitop-local-host-name-factory-default
+        title: LocalHostName is still the factory default
+        type: hostname
+        observed: "2026-08-31"
+        expected: minitop
+        tracked: "#116"
+        traces: [Q6, Q10, Q12]
         which: local
+        want: Malcolms-Mac-mini
+        fix: |
+          Same remedy as ComputerName. Until then the Malcolms-Mac-mini alias
+          above keeps auto-resolution unambiguous even if HostName is unset.
+
+      - id: minitop-host-name-set-mactop
+        title: HostName is explicitly set to mactop (fleet doctrine is unset)
+        type: hostname
+        observed: "2026-08-31"
+        expected: unset, or minitop if Q12 sets HostName fleet-wide
+        tracked: "#116"
+        traces: [Q10, Q12]
+        which: host
         want: mactop
         fix: |
-          Rename decided 2026-08-31: the mini becomes minitop during its
-          migration, via the Q12 hostname setter script (operator-reviewed,
-          needs sudo). Until then the aliases above let the machine resolve
-          under its live name while this entry reports the drift.
+          This is the ONLY reason `hostname`, kern.hostname and
+          .chezmoi.hostname read `mactop`: HostName overrides the derived
+          LocalHostName.local. adobetop and supertop both leave HostName
+          unset (the macOS default). Q12 decides whether the fleet sets it;
+          either way this value goes when the machine is renamed.
+
+      # --- chezmoi: binary, source checkout, config -------------------------
+
+      - id: minitop-source-checkout-stale
+        title: ~/.local/share/chezmoi sits on a merged branch, 83 behind main
+        type: command
+        observed: "2026-08-31"
+        expected: main, fast-forwarded to origin/main
+        tracked: "#116"
+        traces: [C2]
+        run: git -C ~/.local/share/chezmoi rev-parse --abbrev-ref HEAD
+        want_stdout: feature-asdf-to-mise
+        fix: |
+          Branch feature-asdf-to-mise (3571b56, 2026-06-02) merged as PR #83
+          and its remote was deleted; HEAD is an ancestor of origin/main, so
+          `git checkout main && git pull --ff-only` loses nothing.
+          Side effects while stale: (1) the common `no-resurrected-files`
+          check FAILS here -- `diff --diff-filter=A origin/main HEAD` lists
+          .claude/ files that main has since DELETED, not files this machine
+          resurrected; (2) `chezmoi-config-has-every-key` and
+          `chezmoi-templates-render` PASS only because the old template still
+          declares the old myAsdf* keys. Against main's template, `chezmoi
+          status` fails with `map has no entry for key "myRubyVersion"`.
+
+      - id: minitop-chezmoi-binary-stale
+        title: chezmoi is the 2023 v2.31.1 build in ~/.bin
+        type: binary
+        observed: "2026-08-31"
+        expected: v2.72.0 (the fleet version on adobetop and supertop)
+        tracked: "#129"
+        traces: [C3]
+        name: chezmoi
+        in_dir: ~/.bin
+        version_matching: 'v2\.31\.1'
+        fix: |
+          Same vintage supertop replaced (personal spec F2); the recipe there
+          applies verbatim. Hash the old binary into the backup first.
+
+      - id: minitop-stale-version-key-names
+        title: config carries the pre-rename myAsdf*Version keys
+        type: command
+        observed: "2026-08-31"
+        expected: the my*Version names the template now declares
+        tracked: "#129"
+        traces: [C3]
+        run: chezmoi data --format json
+        want_stdout_matching: '"myAsdfRubyVersion"'
+        fix: |
+          19 keys, adobetop's class exactly -- masked today only by the stale
+          checkout (see minitop-source-checkout-stale). Re-running
+          `chezmoi init` regenerates all of them.
+
+      - id: minitop-missing-chezmoi-keys
+        title: chezmoi config predates fzf_tab, myFzfTabRev, myPyenvPythonVersion
+        type: command
+        observed: "2026-08-31"
+        expected: all three keys present
+        tracked: "#129"
+        traces: [C3, Q17]
+        run: chezmoi data --format json
+        want_stdout_not_matching: '"myFzfTabRev"'
+        fix: |
+          ABSENT, not wrong -- hasKey is false, so a plain `chezmoi init`
+          re-run prompts for them. Never hand-edit fzf_tab to true.
+
+      - id: minitop-stale-identity-data-keys
+        title: the hostname data key still says bossworkstation
+        type: chezmoi_data
+        observed: "2026-08-31"
+        expected: minitop
+        tracked: "#116"
+        traces: [Q6, Q12]
+        key: hostname
+        want: bossworkstation
+        fix: |
+          computer_name ("boss workstation") shares the fate. Present-but-wrong
+          and therefore STICKY: hasKey short-circuits the prompt and
+          --promptString is a silent no-op. Corrective init needs --data=false
+          or a prior hand-edit. Note version_manager is already mise here, so
+          unlike supertop that key needs no correction.
+
+      # --- git / shell / dotfiles -------------------------------------------
+
+      - id: minitop-hub-host-adobe
+        title: global hub.host points at Adobe's GHE on a personal machine
+        type: git_config
+        observed: "2026-08-31"
+        expected: key absent on profile=personal
+        tracked: "#119"
+        traces: [M2]
+        key: hub.host
+        want: git.corp.adobe.com
+        fix: |
+          hub IS installed (/opt/homebrew/bin/hub) and alias.pr routes through
+          it, so `git pr` targets git.corp.adobe.com here. Fixed by the profile
+          gate (S3/M2), not by hand-editing the live file. The live ~/.gitconfig
+          is byte-identical to the rendered template (chezmoi diff is clean).
+
+      - id: minitop-zshrc-local-present
+        title: ~/.zshrc.local exists with stale values
+        type: file_exists
+        observed: "2026-08-31"
+        expected: file removed
+        tracked: "#129"
+        traces: [S7]
+        path: ~/.zshrc.local
+        fix: |
+          3.4K, RBENV_VERSION=2.7.2 and export SHELL=... -- the same content as
+          supertop's. Still chezmoi-managed on this machine because the stale
+          checkout predates S7. Nothing sources it.
+
+      - id: minitop-tmux-conf-absolute-symlink
+        title: ~/.tmux.conf is an unmanaged symlink to an absolute path
+        type: symlink
+        observed: "2026-08-31"
+        expected: a portable, chezmoi-managed link
+        tracked: "#125"
+        traces: [Q2]
+        path: ~/.tmux.conf
+        target_matching: "^/Users/bossjones/dev/bossjones/oh-my-tmux/"
+        fix: |
+          Same shape as supertop and adobetop. The username is correct here so
+          it works today; the gap is reproducibility. The target repo is the
+          .chezmoiexternal git-repo dev/bossjones/oh-my-tmux, so the link is
+          the only unmanaged piece. ~/.tmux.conf.local (416 lines) is also
+          unmanaged.
+
+      - id: minitop-zshenv-cargo-injection
+        title: ~/.zshenv is an unmanaged rustup injection
+        type: file_contains
+        observed: "2026-08-31"
+        expected: ~/.zshenv absent or chezmoi-managed
+        tracked: "#123"
+        traces: [M3]
+        path: ~/.zshenv
+        want: ".cargo/env"
+        fix: |
+          The ONLY third-party injection on this machine -- ~/.zshrc and
+          ~/.zprofile diff clean against the rendered templates. One line,
+          `. "$HOME/.cargo/env"`, written by rustup; ~/.zshenv is not in the
+          source state. Re-home under the M3 pattern alongside the personal
+          libpcap injection (#123), or drop it (brew rust is also installed).
+
+      # --- toolchain --------------------------------------------------------
+
+      - id: minitop-xcode-shims-broken
+        title: /usr/bin/make, clang and xcrun fail to load through Xcode 26.6
+        type: command
+        observed: "2026-08-31"
+        expected: /usr/bin/make --version exits 0
+        tracked: "#138"
+        traces: [C3]
+        run: /usr/bin/make --version
+        want_stderr_matching: "Failed to locate 'make'"
+        fix: |
+          xcode-select points at Xcode.app 26.6 (17F113) on macOS 26.6.2, and
+          its loader dies with `Symbol not found: _XPCTypeBool` (CoreDevice ->
+          Mercury.framework). The standalone CLT 26.6.0 is healthy. Every
+          Makefile target -- doctor-test, smoke-doctor, test -- fails before
+          running; the survey ran the underlying commands directly. Operator
+          choice: `sudo xcode-select -s /Library/Developer/CommandLineTools`,
+          or repair Xcode. Blocks anything that compiles (sheldon from source).
