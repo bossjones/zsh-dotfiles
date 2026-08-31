@@ -513,7 +513,7 @@ Two things, both specified in [`specs/migration-doctor.md`](./migration-doctor.m
 1. **`hack/doctor/doctor.py`** — a uv-scripted, YAML-driven convergence doctor. Makes this
    document's Testing Strategy executable, per-machine, and traceable back to the finding that
    motivated each assertion. `--state target` becomes the definition of done for #116.
-2. **Two survey prompts**, filed as GitHub issues labelled `prompt`, one per unsurveyed machine.
+2. **Two survey prompts**, filed as GitHub issues labelled `prompt` — [#136 (supertop)](https://github.com/bossjones/zsh-dotfiles/issues/136) and [#137 (minitop)](https://github.com/bossjones/zsh-dotfiles/issues/137).
    Each is a six-phase runnable prompt: confirm identity → observe → **interview** → classify →
    validate → stop. Read-only; no `chezmoi init`, no `chezmoi apply`.
 
@@ -621,8 +621,8 @@ chezmoi init --source=. --debug -v \
   --promptBool "opencv=false" --promptBool "fzf_tab=false"
 ```
 
-**Personal — `supertop`** (Apple Silicon laptop). ⚠️ **Provisional — do not run before the
-`supertop` survey returns.** `Computer name`/`Host name` are proposals, and the flags are the
+**Personal — `supertop`** (Apple Silicon laptop). ⚠️ **Provisional — do not run before
+[#136](https://github.com/bossjones/zsh-dotfiles/issues/136) returns.** `Computer name`/`Host name` are proposals, and the flags are the
 profile defaults rather than observed values:
 ```sh
 cd ~/.local/share/chezmoi

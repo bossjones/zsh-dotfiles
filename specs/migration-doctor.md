@@ -73,8 +73,8 @@ hypothesis:
 > **`minitop` is the informal name for the `mac-mini` host, which is the machine the unified
 > spec calls `Mac.scarlettlab.home`.**
 
-**Not confirmed.** Two chained assumptions, neither verified. Confirmation is P0 of issue
-[`prompt: survey minitop`](#the-prompt-issues). Until then `hosts.minitop.identity` ships with its
+**Not confirmed.** Two chained assumptions, neither verified. Confirmation is P0 of
+[#137](https://github.com/bossjones/zsh-dotfiles/issues/137). Until then `hosts.minitop.identity` ships with its
 values commented `# HYPOTHESIS`.
 
 ### macOS has three hostnames, and one is normally unset
@@ -960,9 +960,9 @@ it depends on.
 
 **Phase C — fleet expansion**
 - [x] `hosts.supertop` / `hosts.minitop` stubs, identity commented `# HYPOTHESIS`
-- [ ] Labels `prompt`, `machine:supertop`, `machine:minitop` (as `bossjones`)
-- [ ] Issue: *prompt: survey supertop*
-- [ ] Issue: *prompt: survey minitop*
+- [x] Labels `prompt`, `machine:supertop`, `machine:minitop` (as `bossjones`)
+- [x] Issue: [#136](https://github.com/bossjones/zsh-dotfiles/issues/136) *survey supertop*
+- [x] Issue: [#137](https://github.com/bossjones/zsh-dotfiles/issues/137) *survey minitop*
 - [ ] `specs/unified-dotfiles-gap-analysis.md` → **Part 4**; Q9 resolved, Q10–Q13 added
 
 **Phase D — after the surveys return**
@@ -994,7 +994,7 @@ it depends on.
 - [ ] `make smoke-doctor` passes on both `macos-14` and `macos-latest`
 - [ ] `profiles.yaml` contains no IP address, credential, or key path
 - [ ] `check_dev_environment.py` and every existing `Makefile` target still work unchanged
-- [ ] Both prompt issues exist, labelled `prompt`, authored by `bossjones`
+- [x] Both prompt issues exist, labelled `prompt`, authored by `bossjones` (#136, #137)
 
 ---
 
