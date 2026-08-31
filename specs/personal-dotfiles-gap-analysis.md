@@ -1,10 +1,221 @@
-# Plan: Personal Machine (`Mac.scarlettlab.home`) Dotfiles Gap Analysis
+# Plan: Personal Machine (`supertop`, formerly `Mac.scarlettlab.home`) Dotfiles Gap Analysis
 
-> **Machine:** `Mac.scarlettlab.home` (macOS 26.5.2, arm64, user `bossjones`)
-> **Analysis date:** 2026-08-15
+> **Machine:** `supertop` (macOS 26.5.2, Mac16,5 / M4 Max, arm64, user `bossjones`) —
+> named `Mac` / `Mac.scarlettlab.home` when this analysis was written; renamed between
+> 2026-08-16 and 2026-08-31. See [Machine identity resolved](#machine-identity-resolved--q10-answered).
+> **Analysis date:** 2026-08-15 · **Reconciled:** 2026-08-31 against
+> [`unified-dotfiles-gap-analysis.md`](unified-dotfiles-gap-analysis.md) (PR #130)
 > **Baseline:** `origin/main` @ `41d8a98` (merge of PR #112)
-> **Backup root:** `~/.backup/dotfiles/20260815-213326/`
+> **Backup root:** `~/.backup/dotfiles/20260815-213326/` (re-verified present 2026-08-31)
 > **Worktree:** `~/.local/share/chezmoi-gap-analysis` on `feat/personal-dotfiles-gap-analysis`
+> (re-verified 2026-08-31; stale at `2c0b1aa`, pre-rebase — see re-survey §worktrees)
+
+---
+
+## Status (2026-08-31) — reconciled against the unified spec
+
+This spec is the **evidence record** for the personal machine.
+[`unified-dotfiles-gap-analysis.md`](unified-dotfiles-gap-analysis.md) (PR #130) is the
+**decision gate** and supersedes this document wherever they disagree. Per that spec's own
+convention, nothing below is edited in silently — the original sixteen findings stand as
+written, and this table records what happened to each one.
+
+| Finding | Disposition | Superseded / mapped by |
+|---|---|---|
+| F1 — source repo clean | **Stands** | Unified C2 ("a difference in starting position, not a conflict") |
+| F2 — chezmoi 2.31.1 → 2.72.0 | **Stands, resolved** | Unified C3; the same upgrade is still pending on minitop (v2.31.1 live there) |
+| F3 — all feature flags `false` | **Corrected** | Unified C1 + correction row 1: `ruby`/`nodejs`/`k8s`/`fnm` are **inert** — no template reads them, so flipping them is cosmetic. `pyenv=true` is the one substantive flip. The all-`false` config remains valid evidence the non-TTY trap fired |
+| F4 — `~/.vimrc` gpakosz symlink | **Stands, adopted** | Unified M4; Q1 later showed adobetop has the *same* shape, retiring the side-effect risk. Symlink re-verified live on supertop 2026-08-31 |
+| F5 — 13 orphaned tools, drop all | **Superseded** | Unified C4 as **reversed 2026-08-31**: keep 10 of 12 re-pinned at latest; only `jsonnet` and `poetry` drop. `vault` re-pins to OSS **2.0.4** (Q15 — note the double breaking change: `+ent`→OSS *and* 1.11→2.0). The union question (F5's caveat) is closed |
+| F6 — gitconfig loses 2 / gains 11 | **Stands** | S2 (`init.defaultBranch`), S4 (`.tmpl` conversion), S5 (`core.editor`), M1 (identity routing, work-only), M2 (`hub.host`). M2's breakage **confirmed live on supertop 2026-08-31**: `hub` installed and global `hub.host = git.corp.adobe.com` |
+| F7 — installer injections, no sentinels | **Stands** | M3 (`libpcap/path.zsh` → #122/#123); the no-sentinel methodology point generalised at unified L205–207 |
+| F8 — statically-baked `.zshrc` | **Stands** | Fixed as a side effect of applying `main` |
+| F9 — frozen PATH in `.zprofile` | **Stands** | No remediation needed |
+| F10 — `ulimit -n` loss benign | **Stands** | No remediation proposed |
+| F11 — remote/`gh` consistent | **Stands** | Unified C5 contrast (work machine's failure does not reproduce) |
+| F12 — `fzf_tab`/`myFzfTabRev` missing | **Stands, confirmed** | Unified C3 (latent half stays Phase 6; `fzf_tab` stays `false` fleet-wide per Q17). Doctor FAIL captured live 2026-08-31 — see re-survey |
+| F13 — `profile` key needed | **Stands, decided** | S3 — shared infrastructure, both machines; still unimplemented (#118) |
+| F14 — diff line-count overstates risk | **Stands** | Carried up as a cross-cutting trap (unified L793–795) |
+| F15 — `.gitignore_global` loses a line | **Stands** | S1 (#121) — promoted to cross-machine, reproduced independently |
+| F16 — pre-existing `zle` warning | **Stands** | Tracked as drift, not `common`, in the doctor (#129) |
+
+Open questions this spec handed forward (original Notes section, unchanged below):
+
+- `~/.tmux.conf` same treatment → **answered**: unified Q2/#125 — adobetop's symlink
+  hardcodes `/Users/malcolm`, so #125 is *wider* than personal-only. Supertop's symlink
+  targets the correct user path and works today.
+- Implement `profile` → **decided**: S3, #118. Sticky; still unimplemented.
+- Union the orphan lists → **closed**: C4 reversal replaces the union question entirely.
+- `core.editor` vim vs nano → **S5 recommends `vim`**; if `nano` wins, change it once,
+  unconditionally — never gate on `profile`.
+
+## Machine identity resolved — Q10 answered
+
+The unified spec's Q10 asked whether `minitop` = `mac-mini` = `Mac.scarlettlab.home`
+(two chained, unverified assumptions), warning that if false, "this document's entire
+*personal machine* evidence base belongs to a machine not yet identified."
+
+**Q10 is resolved: NO — and the evidence base is better off for it.**
+`Mac.scarlettlab.home` was **this laptop**, since renamed `supertop`. The ssh host
+`mac-mini` is a **third, distinct machine whose live hostname is `mactop`**.
+
+Evidence chain (2026-08-31):
+
+1. **This spec's artifacts are on supertop.** The backup root
+   `~/.backup/dotfiles/20260815-213326/` (behaviour-baseline.txt, chezmoi-preupgrade.bin,
+   tarball + sha256, both diff/status captures) and the analysis worktree
+   `~/.local/share/chezmoi-gap-analysis` on this very branch both exist here.
+2. **F2's chezmoi upgrade landed here.** Supertop runs v2.72.0; its live config carries
+   the *renamed* `my*Version` keys. The machine this spec analysed is this machine.
+3. **The mac-mini is somebody else.** An owner ssh session (`ssh mac-mini`, prompt
+   `bossjones@mactop`) shows chezmoi **v2.31.1** (the 2023 build F2 replaced *here*) and
+   pre-rename `myAsdf*Version` config keys — a state this spec never described.
+4. `.chezmoi.hostname` on this machine now resolves to `supertop` (fqdn
+   `supertop.local`), not the `"Mac"` recorded in the unified spec on 2026-08-16 — the
+   rename happened between the two dates.
+
+Consequences:
+
+- The unified spec's "personal machine" evidence (inherited from this document) belongs
+  to **supertop, which is now a surveyed machine** — the Q10 doomsday branch is dead.
+- `hosts.minitop`'s aliases `[Mac, mac-mini, Mac.scarlettlab.home]` in
+  [`../hack/doctor/profiles.yaml`](../hack/doctor/profiles.yaml) mixed two machines:
+  `Mac`/`Mac.scarlettlab.home` were supertop's former names. Corrected to
+  `[mactop, mac-mini]`.
+- **Owner decision (2026-08-31): the canonical fleet name stays `minitop`.** The mini's
+  observed name `mactop` is identity drift; the machine will be renamed during its
+  migration (`scutil --set` via the Q12 setter script, operator-reviewed).
+- Issue #136 (supertop survey) is satisfied by the re-survey below; #137 (minitop) has
+  its done-criterion #1 ("answer Q10 definitively, either way") met but the on-machine
+  P0–P5 survey still pending.
+
+## Supertop re-survey (2026-08-31)
+
+The #136 survey, run on-machine, read-only. This section is measured fact, not proposal.
+
+### Identity (P0)
+
+| Source | Value |
+|---|---|
+| `scutil --get ComputerName` | `supertop` |
+| `scutil --get LocalHostName` | `supertop` |
+| `scutil --get HostName` | **not set** (the healthy macOS default — deliberately not drift, same doctrine as adobetop) |
+| `hostname` | `supertop.local` |
+| `.chezmoi.hostname` / `fqdnHostname` | `supertop` / `supertop.local` |
+| Hardware | `Mac16,5`, Apple M4 Max, arm64 |
+| OS | macOS 26.5.2 (25F84) |
+| chezmoi | v2.72.0 (2026-08-02 build) |
+
+The doctor resolves this machine **by auto, no exit-3 ambiguity** — LocalHostName is set
+correctly, so the supertop/minitop fingerprint collision
+([`migration-doctor.md`](migration-doctor.md) §resolution) never arises here.
+
+### Live chezmoi data vs the template
+
+`~/.config/chezmoi/chezmoi.yaml` against `home/.chezmoi.yaml.tmpl`'s `data:` block:
+
+- **Missing (absent → `hasKey` false → a plain `chezmoi init` re-run recovers):**
+  `fzf_tab`, `myFzfTabRev`. This is C3's missing-key class — supertop is 2 keys short
+  where adobetop was 22.
+- **Present but wrong (sticky — `hasKey` short-circuits every prompt and
+  `--promptString`; requires `chezmoi init --data=false` or a hand-edit):**
+  - `version_manager: "asdf"` — target is `mise` (S6)
+  - `computer_name: "boss workstation"`, `hostname: "bossworkstation"` — target
+    `supertop`/`supertop`. Load-bearing since Q6/Q12: these keys feed the hostname
+    setter script.
+- Everything else matches the current template (renamed `my*Version` keys present,
+  `myPyenvPythonVersion`/`myWtpVersion` present, flags all `false`, `pyenv: false`).
+
+Doctor verdict (`./hack/doctor/doctor.py --state today`):
+
+```text
+Host:    supertop    (resolved by: auto)
+Profile: personal    state=today  phase=always
+
+  ✗ FAIL   chezmoi-config-has-every-key     missing from chezmoi data: fzf_tab, myFzfTabRev
+           traces: C3, #129
+  ✓ PASS   shell-starts-clean
+  ✓ PASS   chezmoi-templates-render
+
+2 pass · 1 fail
+```
+
+### Pending apply surface
+
+`chezmoi status`: **34 entries** — 14 ` M`, 10 ` R` (scripts), 8 `MM`, 2 ` A` — plus the
+`config file template has changed` warning. The live source `~/.local/share/chezmoi` sits
+at `41d8a98`, **10 commits behind `origin/main`** (pre-#130).
+
+### Dotfile spot-checks (findings re-verified live)
+
+| Item | Observed 2026-08-31 | Bearing |
+|---|---|---|
+| `~/.vimrc` | symlink → `.vim/.vimrc` (gpakosz clone) | F4/M4 shape intact |
+| `~/.tmux.conf` | symlink → `/Users/bossjones/dev/bossjones/oh-my-tmux/.tmux.conf` | Same unmanaged-absolute shape as adobetop (#125), but the username is *correct* here — works today, reproducibility gap only |
+| `~/.zshrc.local` | present, 3.3K, `RBENV_VERSION=2.7.2` et al. | Supports S7 (delete the template; sourcing would activate stale config) |
+| `hub` / `hub.host` | `/opt/homebrew/bin/hub` installed; global `hub.host = git.corp.adobe.com` | **M2's active breakage, live on this machine** — personal `git pr` points at Adobe GHE |
+| `~/.gitconfig-*` | none (glob matches nothing) | M1 stays work-only |
+| `core.editor` | `nano` | S5 input |
+| `init.defaultBranch` | `main` (currently set live) | S2 still needed — applying `main`'s `dot_gitconfig` would lose it |
+| version managers | asdf **and** mise both installed | S6 migration is a switch, not an install |
+| Orphan sample | `jsonnet`, `poetry`, `vault` binaries absent; `opa`/`k9s`/`helm`/`helmfile`/`kubectl`/`mkcert` via asdf shims | Consistent with C4-as-reversed (the 2 drops are already gone here) |
+
+### Worktrees
+
+`git -C ~/.local/share/chezmoi worktree list` (2026-08-31):
+
+```text
+~/.local/share/chezmoi              41d8a98  [main]                                (10 behind origin/main)
+~/.local/share/chezmoi-gap-analysis 2c0b1aa  [feat/personal-dotfiles-gap-analysis] (stale: branch rebased+pushed as 6cd8873)
+~/.local/share/chezmoi-unified      fab3804  [feat/unified-dotfiles-gap-analysis]  (branch merged as PR #130)
+```
+
+Refresh commands (documented, **not executed** — same read-only discipline as the rest of
+this spec):
+
+```sh
+git -C ~/.local/share/chezmoi fetch origin
+git -C ~/.local/share/chezmoi-gap-analysis reset --hard origin/feat/personal-dotfiles-gap-analysis
+git -C ~/.local/share/chezmoi worktree remove ~/.local/share/chezmoi-unified   # merged; no longer needed
+```
+
+## Running this branch on minitop (ssh `mac-mini`, live name `mactop`)
+
+The owner plans to run this same branch on the Mac mini. Facts from the owner's ssh
+session (2026-08-31, `chezmoi data` pasted from `bossjones@mactop`):
+
+- Live hostname/fqdn: `mactop` (fleet target name: **`minitop`** — rename decided, see
+  identity section above)
+- chezmoi **v2.31.1** at `~/.bin/chezmoi` (2023-03-02 build — the same vintage F2
+  replaced on supertop)
+- Config keys are **pre-rename** `myAsdf*Version` (e.g. `myAsdfRubyVersion: 3.4.9`) —
+  the full 19-key rename gap, the same class as adobetop's 22-missing-keys (C3)
+- `version_manager: "mise"` **already present and correct** — minitop skips the sticky
+  hand-edit supertop needs for S6
+- All feature flags `false`; `fzf_tab`/`myFzfTabRev`/`myPyenvPythonVersion`/`profile`
+  absent; `computer_name`/`hostname` carry the same stale
+  `boss workstation`/`bossworkstation` values (present-but-wrong → sticky)
+- arm64, user `bossjones` — confirming the doctor's fingerprint-ambiguity premise
+
+**Prerequisites before anything runs there** (in order):
+
+1. **#137 on-machine survey (P0–P5).** Includes the artifact check this spec's header
+   documents for supertop — run interactively (BatchMode ssh fails host-key verification
+   from supertop):
+
+   ```sh
+   ssh mac-mini 'ls -ld ~/.backup/dotfiles/20260815-213326 ~/.local/share/chezmoi-gap-analysis 2>&1'
+   ```
+
+   Whether a backup/worktree exists there at all is unknown — this spec's artifacts were
+   created on supertop only.
+2. **Capture `~/.ssh/config` into #137** for Q16 (scrub private IPs; machine names only —
+   public repo).
+3. **Upgrade chezmoi v2.31.1 → v2.72.0** using F2's verified recipe (hash the old binary
+   into a backup first).
+4. Only then regenerate the config (Task 4 pattern below, with `Computer name=minitop` /
+   `Host name=minitop` and `--data=false` because the identity keys are present-but-wrong
+   there too).
 
 ---
 
@@ -663,16 +874,27 @@ Options (b) `.chezmoiignore` and (c) accept main's vimrc were considered and **r
 
 ### 4. Regenerate the chezmoi config — **in a real TTY**
 
+> **Corrected 2026-08-31.** The first draft of this command carried
+> `Computer name=boss workstation` / `Host name=bossworkstation` — the stale values from
+> the live config, contradicting this spec's own header. The targets are
+> `supertop`/`supertop` (Q6 made these keys load-bearing: they feed the hostname setter
+> script). **And `--promptString` alone cannot fix them**: both keys are *present* in the
+> live config, so `hasKey` is true and every prompt — including `--promptString` — is
+> short-circuited. The `--data=false` flag below (the template's own documented tip)
+> ignores existing data so every prompt fires fresh; the alternative is hand-editing
+> `~/.config/chezmoi/chezmoi.yaml` before a plain init. The same applies to
+> `version_manager` (present as `asdf`, target `mise`).
+
 Uses `--source=.` against the **existing working tree**, so it does not re-clone and local
 commits are preserved:
 
 ```sh
 cd ~/.local/share/chezmoi
-chezmoi init --source=. --debug -v \
+chezmoi init --source=. --data=false --debug -v \
   --promptString "Name=Malcolm Jones" \
   --promptString "Email=bossjones@theblacktonystark.com" \
-  --promptString "Computer name=boss workstation" \
-  --promptString "Host name=bossworkstation" \
+  --promptString "Computer name=supertop" \
+  --promptString "Host name=supertop" \
   --promptString "version_manager=mise" \
   --promptBool   "ruby=true" \
   --promptBool   "pyenv=true" \
