@@ -25,7 +25,6 @@ defaults:
 
 common:
   checks:
-
     # --- preconditions: must hold BEFORE migrating -------------------------
 
     - id: no-resurrected-files
@@ -94,7 +93,7 @@ common:
       type: chezmoi_data
       phase: post
       traces: [C1, Q8]
-      when: {os: darwin}
+      when: { os: darwin }
       key: cuda
       want: false
       fix: cuda is a Linux concern; revisit when boss-deeplearning enters scope.
@@ -104,7 +103,7 @@ common:
       type: chezmoi_data
       phase: post
       traces: [C1, Q8]
-      when: {os: darwin}
+      when: { os: darwin }
       key: opencv
       want: false
 
@@ -202,7 +201,6 @@ common:
 # ---------------------------------------------------------------------------
 
 profiles:
-
   work:
     checks:
       - id: work-hub-host-is-corp
@@ -288,7 +286,6 @@ profiles:
 # ---------------------------------------------------------------------------
 
 hosts:
-
   adobetop:
     description: >-
       Work machine. Surveyed 2026-08-31: macOS 15.7.9 (24G830), arm64,
