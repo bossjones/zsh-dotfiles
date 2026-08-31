@@ -150,6 +150,16 @@ config byte-identical to a machine that never opted in.
 ## 5. How it's wired (for the curious)
 
 - Flag plumbing: `home/.chezmoi.yaml.tmpl` (`fzf_tab`, pinned `myFzfTabRev`).
+
+> ⚠️ **Enabling and disabling are not symmetric.** Turning fzf-tab **off** by hand-editing
+> `data.fzf_tab: false` in `~/.config/chezmoi/chezmoi.yaml` is safe, because
+> `plugins.toml.tmpl` never evaluates the `myFzfTabRev` reference while the flag is false.
+> Turning it **on** the same way is **not** — `missingkey=error` turns the absent
+> `myFzfTabRev` into a failed `chezmoi apply`. Enable it through `chezmoi init` instead, which
+> regenerates both keys together.
+>
+> The [convergence doctor](doctor.md) catches this class with its `chezmoi_data_complete` check;
+> see [Tutorial 08](tutorials/08-investigate-an-environment.md).
 - Load order: `home/dot_sheldon/plugins.toml.tmpl` and its byte-identical twin
   `home/private_dot_config/sheldon/plugins.toml.tmpl` — when the flag is on, the lane
   `fzf-tab-settings → compinit → fzf-tab` is hoisted ahead of the widget-wrapping

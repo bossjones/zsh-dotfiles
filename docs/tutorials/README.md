@@ -18,6 +18,7 @@
 | 05 | [Run Smoke Tests Locally](05-run-smoke-tests-locally.md) | You can reproduce the CI matrix in Docker before pushing |
 | 06 | [Customize iTerm2](06-customize-iterm2.md) | Your iTerm2 profile changes are captured into the repo and re-applied on another machine |
 | 07 | [Verify CUDA Before Applying](07-verify-cuda-before-applying.md) | You can inspect your CUDA/driver state, prove the shell module resolves correctly, and rehearse a toolkit upgrade in a container before touching the host |
+| 08 | [Investigate an Environment](08-investigate-an-environment.md) | You can sit down at any macOS machine and produce a read-only diagnosis of its dotfiles state — identity, drift, and what's missing — without changing anything |
 
 If you're brand new here, start at **00** and work down — each tutorial after 01 stands alone, so feel free to skip to whichever one matches what you're trying to do today.
 
@@ -34,7 +35,13 @@ flowchart LR
     T01 --> T05["05 Run Smoke Tests Locally"]
     T01 --> T06["06 Customize iTerm2"]
     T01 --> T07["07 Verify CUDA Before Applying"]
+    T08["08 Investigate an Environment"] --> T01
+    T08 --> T04
 ```
+
+> **08 runs first, not last.** It is the only tutorial that assumes you know *nothing* about the
+> machine in front of you — it is read-only, needs no config, and tells you which of the others
+> you actually need.
 
 ---
 
@@ -46,4 +53,5 @@ flowchart LR
 - **[docs/testing-and-ci.md](../testing-and-ci.md)** — pytest, libtmux, and Docker smoke tests
 - **[docs/iterm2-and-macos.md](../iterm2-and-macos.md)** — iTerm2 import script and macOS defaults
 - **[docs/shell-loading.md](../shell-loading.md)** — the sheldon plugin load order and glob conventions
+- **[docs/doctor.md](../doctor.md)** — the convergence doctor: flags, check types, exit codes, drift register
 - **[docs/architecture.md](../architecture.md)** — the system-wide picture

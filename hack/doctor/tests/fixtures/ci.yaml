@@ -1,0 +1,50 @@
+# Smoke-test fixture. NOT a fleet definition -- `fake` is a synthetic host that
+# matches nothing, so the smoke test can assert exit codes on a CI runner that
+# is not in the fleet.
+#
+# Used by `make smoke-doctor`. See specs/migration-doctor.md.
+
+version: 1
+
+common:
+  checks:
+    - id: fixture-always-passes
+      title: a check that cannot fail
+      type: command
+      run: "true"
+      want_exit: 0
+
+    - id: fixture-always-fails
+      title: a check that cannot pass
+      type: command
+      run: "false"
+      want_exit: 0
+      fix: This is a fixture. It is supposed to fail.
+
+profiles:
+  personal:
+    checks:
+      - id: fixture-profile-scoped
+        title: a profile-scoped check
+        type: command
+        run: "true"
+        want_exit: 0
+
+hosts:
+  fake:
+    description: Synthetic host for the CI smoke test. Matches no real machine.
+    identity:
+      profile: personal
+      hypothesis: true
+      match:
+        arch: nonesuch-arch
+        username: nonesuch-user
+    drift:
+      - id: fixture-drift
+        title: drift that is present, so KNOWN today and FAIL under target
+        type: command
+        observed: "2026-08-31"
+        expected: absent
+        tracked: "#116"
+        run: "true"
+        want_exit: 0

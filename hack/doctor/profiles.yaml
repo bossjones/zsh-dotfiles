@@ -1,0 +1,412 @@
+# zsh-dotfiles convergence doctor -- fleet definition
+#
+#   common      every machine
+#   profiles    every machine of that profile   <- the TARGET state
+#   hosts       identity + tracked drift only   <- TODAY's state
+#
+# There is deliberately no hosts.<h>.checks key. A permanent per-host assertion
+# has no home here: express an inherent difference as a `when:` gate on a
+# profile-level check, and a temporary one as tracked drift.
+#
+# Design: specs/migration-doctor.md
+# Findings: specs/unified-dotfiles-gap-analysis.md
+#
+# PUBLIC REPO -- no IPs, no credentials, no key paths. Machine names only.
+
+version: 1
+
+defaults:
+  timeout: 15
+  shell: /bin/zsh
+
+# ---------------------------------------------------------------------------
+# common -- true on every machine in the fleet
+# ---------------------------------------------------------------------------
+
+common:
+  checks:
+
+    # --- preconditions: must hold BEFORE migrating -------------------------
+
+    - id: no-resurrected-files
+      title: no files resurrected relative to origin/main
+      type: command
+      phase: pre
+      traces: [C2]
+      run: git -C ~/.local/share/chezmoi diff --diff-filter=A --name-only origin/main HEAD
+      want_stdout_empty: true
+      fix: |
+        A merge resurrected files deleted on main. Review each before applying;
+        this broke Copilot CLI on the work machine once already.
+
+    - id: gh-account-can-push
+      title: the active gh account matches the origin remote protocol
+      type: command
+      phase: pre
+      traces: [C5]
+      run: gh auth status 2>&1
+      want_exit: 0
+      fix: |
+        gh auth switch --user bossjones   # for personal repos
+        Verify `git remote -v` protocol agrees with `gh auth status`.
+
+    - id: chezmoi-config-has-every-key
+      title: chezmoi config carries every key the templates declare
+      type: chezmoi_data_complete
+      phase: always
+      traces: [C3, "#129"]
+      path: ~/.local/share/chezmoi/home/.chezmoi.yaml.tmpl
+      fix: |
+        A flag was introduced after this machine's last apply. Because hasKey
+        is false for an ABSENT key, the prompt fires -- re-running init fixes it:
+          cd ~/.local/share/chezmoi && chezmoi init --source=. <all --promptString/-Bool>
+        Never hand-edit chezmoi.yaml to add fzf_tab: plugins.toml.tmpl:135
+        dereferences .myFzfTabRev, which only .chezmoi.yaml.tmpl:147 emits, and
+        missingkey=error turns the omission into a failed apply.
+
+    # --- target state: asserted AFTER migrating ----------------------------
+
+    - id: chezmoi-version-manager-mise
+      title: version_manager resolves to mise
+      type: chezmoi_data
+      phase: post
+      traces: [S6, "#126"]
+      key: version_manager
+      want: mise
+
+    - id: chezmoi-fzf-tab-present-and-false
+      title: fzf_tab is present in the config and off by default
+      type: chezmoi_data
+      phase: post
+      traces: [C1, C3, "#129"]
+      key: fzf_tab
+      want: false
+      fix: |
+        The key must be PRESENT and false -- absent is what leaves plugins.toml.tmpl
+        guarding on hasKey. Set it with `chezmoi init --promptBool fzf_tab=false`
+        in a real TTY.
+        To opt in later, use init again -- NEVER hand-edit chezmoi.yaml to set it
+        true, because plugins.toml.tmpl:135 then dereferences .myFzfTabRev, which
+        only .chezmoi.yaml.tmpl:147 emits, and missingkey=error fails the apply.
+
+    - id: chezmoi-cuda-false-on-macos
+      title: cuda is false on macOS
+      type: chezmoi_data
+      phase: post
+      traces: [C1, Q8]
+      when: {os: darwin}
+      key: cuda
+      want: false
+      fix: cuda is a Linux concern; revisit when boss-deeplearning enters scope.
+
+    - id: chezmoi-opencv-false-on-macos
+      title: opencv is false on macOS
+      type: chezmoi_data
+      phase: post
+      traces: [C1, Q8]
+      when: {os: darwin}
+      key: opencv
+      want: false
+
+    - id: gitignore-claude-settings-local
+      title: gitignore_global excludes .claude/settings.local.json
+      type: file_contains
+      phase: post
+      traces: [S1, "#121"]
+      path: ~/.gitignore_global
+      want: "**/.claude/settings.local.json"
+      fix: Append `**/.claude/settings.local.json` to home/dot_gitignore_global.
+
+    - id: git-default-branch-main
+      title: init.defaultBranch is main
+      type: git_config
+      phase: post
+      traces: [S2, "#119"]
+      key: init.defaultBranch
+      want: main
+
+    - id: git-core-editor
+      title: core.editor is vim
+      type: git_config
+      phase: post
+      traces: [S5, "#119"]
+      key: core.editor
+      want: vim
+
+    - id: zshrc-local-template-gone
+      title: the dead ~/.zshrc.local template no longer renders
+      type: file_exists
+      phase: post
+      traces: [S7, "#129"]
+      path: ~/.local/share/chezmoi/home/dot_zshrc.local.tmpl
+      want: absent
+      fix: |
+        git rm home/dot_zshrc.local.tmpl -- nothing sources it, and the rendered
+        file sets stale values (RBENV_VERSION=2.7.2, SHELL=/opt/homebrew/bin/zsh)
+        that would ACTIVATE if anything ever did.
+
+    - id: vimrc-is-upstream-symlink
+      title: ~/.vimrc is the gpakosz relative symlink
+      type: symlink
+      phase: post
+      traces: [M4, Q1, "#124"]
+      path: ~/.vimrc
+      target: .vim/.vimrc
+      fix: |
+        git rm home/dot_vimrc is mandatory -- both present yields
+        ".vimrc: inconsistent state", exit 1.
+
+    - id: mise-installed
+      title: mise is on PATH
+      type: binary
+      phase: post
+      traces: [S6, "#126"]
+      name: mise
+
+    - id: asdf-tool-versions-backed-up
+      title: the pre-migration asdf tool-versions is preserved
+      type: file_exists
+      phase: post
+      traces: [S6, C4, "#126"]
+      path: ~/.tool-versions.asdf.bak
+
+    - id: asdf-data-untouched
+      title: ~/.asdf still exists as the rollback path
+      type: file_exists
+      phase: post
+      traces: [C4, "#126"]
+      path: ~/.asdf
+
+    # --- invariants --------------------------------------------------------
+
+    - id: shell-starts-clean
+      title: an interactive zsh exits 0
+      type: command
+      traces: [S3]
+      run: zsh -i -c exit
+      want_exit: 0
+      fix: Compare stderr against the recorded baseline, not against an empty set.
+
+    - id: chezmoi-templates-render
+      title: chezmoi can render every template
+      type: command
+      traces: [C3]
+      run: chezmoi status --source=$HOME/.local/share/chezmoi
+      want_exit: 0
+      fix: |
+        A template error here usually means a missing data key --
+        see chezmoi-config-has-every-key.
+
+# ---------------------------------------------------------------------------
+# profiles -- the target shape for every machine of this kind
+# ---------------------------------------------------------------------------
+
+profiles:
+
+  work:
+    checks:
+      - id: work-hub-host-is-corp
+        title: hub.host points at the Adobe enterprise host
+        type: git_config
+        phase: post
+        traces: [M2, Q3, "#119"]
+        key: hub.host
+        want: git.corp.adobe.com
+        fix: Work only. On personal this key must be ABSENT -- it breaks `git pr`.
+
+      - id: work-identity-files-managed
+        title: three gitconfig identity files are chezmoi-managed
+        type: chezmoi_managed
+        phase: post
+        traces: [M1, Q4, "#120"]
+        pattern: "gitconfig-"
+        count: 3
+
+      - id: work-adobe-corp-identity
+        title: ~/dev/malcolm resolves to the Adobe identity
+        type: git_config
+        phase: post
+        traces: [M1, "#120"]
+        cwd: ~/dev/malcolm
+        key: user.email
+        want: malcolm@adobe.com
+        fix: includeIf is last-wins -- the routing block must stay LAST in the file.
+
+      - id: work-personal-identity-routing
+        title: ~/dev/bossjones resolves to the personal identity
+        type: git_config
+        phase: post
+        traces: [M1, "#120"]
+        cwd: ~/dev/bossjones
+        key: user.email
+        want: bossjones@theblacktonystark.com
+
+      - id: work-personal-url-rewrite
+        title: ~/dev/bossjones gets the personal URL rewrite
+        type: git_config
+        phase: post
+        traces: [M1, "#120"]
+        cwd: ~/dev/bossjones
+        key: url.git@github.com:.insteadOf
+        want: https://github.com/
+        fix: |
+          user.email alone does NOT prove the bossjones include matched --
+          both identity files set an email. Assert the rewrite too.
+
+  personal:
+    checks:
+      - id: personal-no-adobe-references
+        title: the rendered gitconfig carries no Adobe references
+        type: command
+        phase: post
+        traces: [M2, "#119"]
+        run: chezmoi cat ~/.gitconfig
+        want_stdout_not_matching: "(?i)adobe"
+        fix: |
+          hub.host must be absent under profile=personal. It does not merely leak
+          a hostname -- it points `git pr` at Adobe's GHE, where personal repos
+          do not exist.
+
+      - id: personal-no-identity-files
+        title: no gitconfig identity files are managed
+        type: chezmoi_managed
+        phase: post
+        traces: [M1, "#120"]
+        pattern: "gitconfig-"
+        count: 0
+
+      - id: personal-no-includeif
+        title: the gitconfig declares no includeIf routing
+        type: command
+        phase: post
+        traces: [M1, "#119"]
+        run: chezmoi cat ~/.gitconfig
+        want_stdout_not_matching: "includeIf"
+
+# ---------------------------------------------------------------------------
+# hosts -- identity, and tracked drift only
+# ---------------------------------------------------------------------------
+
+hosts:
+
+  adobetop:
+    description: >-
+      Work machine. Surveyed 2026-08-31: macOS 15.7.9 (24G830), arm64,
+      chezmoi 2.72.0.
+    identity:
+      profile: work
+      match:
+        arch: arm64
+        username: malcolm
+        os: darwin
+      assert:
+        computer_name: adobetop
+        local_host_name: adobetop
+        os_major: 15
+
+    drift:
+      - id: adobetop-missing-chezmoi-keys
+        title: chezmoi config predates version_manager, fzf_tab and profile
+        type: command
+        observed: "2026-08-31"
+        expected: all three keys present
+        tracked: "#129"
+        traces: [C3, Q17]
+        run: chezmoi data --format json
+        want_stdout_not_matching: '"version_manager"'
+        fix: |
+          The keys are ABSENT, not wrong -- hasKey is false, so a plain re-run of
+          `chezmoi init` with the full prompt set sets all three. Stickiness only
+          bites where a key already exists.
+
+      - id: adobetop-cuda-true-on-macos
+        title: cuda is true on a macOS host
+        type: chezmoi_data
+        observed: "2026-08-31"
+        expected: "false"
+        tracked: "#101"
+        traces: [C1, Q8]
+        key: cuda
+        want: true
+        fix: Inert today; corrected when the config is regenerated.
+
+      - id: adobetop-opencv-true-on-macos
+        title: opencv is true on a macOS host
+        type: chezmoi_data
+        observed: "2026-08-31"
+        expected: "false"
+        tracked: "#101"
+        traces: [C1, Q8]
+        key: opencv
+        want: true
+
+      # NOTE: `scutil --get HostName` is unset here, and that is deliberately
+      # NOT recorded as drift -- unset is the macOS default on a healthy
+      # machine (see specs/migration-doctor.md). ComputerName and LocalHostName
+      # are the values that matter, and both are correct. Q12 may set HostName
+      # fleet-wide later; until then there is no deviation to track.
+
+      - id: adobetop-stale-version-key-names
+        title: config carries the pre-rename myAsdf*Version keys
+        type: command
+        observed: "2026-08-31"
+        expected: the my*Version names the template now declares
+        tracked: "#129"
+        traces: [C3]
+        run: chezmoi data --format json
+        want_stdout_matching: '"myAsdfRubyVersion"'
+        fix: |
+          The template renamed myAsdf*Version -> my*Version (19 keys) and added
+          myPyenvPythonVersion, myWtpVersion, myFzfTabRev. With missingkey=error
+          this is why `chezmoi status` exits 1 on this machine -- the full
+          mechanism behind C3. Re-running `chezmoi init` regenerates all of them.
+
+      - id: adobetop-tmux-conf-absolute-symlink
+        title: ~/.tmux.conf symlinks to an absolute path containing the username
+        type: symlink
+        observed: "2026-08-31"
+        expected: a portable, chezmoi-managed link
+        tracked: "#125"
+        traces: [Q2]
+        path: ~/.tmux.conf
+        target_matching: "^/Users/malcolm/"
+        fix: |
+          The target hardcodes /Users/malcolm, so it cannot work on a bossjones
+          machine. This is within-profile divergence, not a personal-only issue.
+
+  # -------------------------------------------------------------------------
+  # UNSURVEYED. Every value below is a hypothesis pending its `prompt` issue.
+  # Do not trust, extend, or apply anything here until P0 confirms identity.
+  # -------------------------------------------------------------------------
+
+  supertop:
+    description: >-
+      Personal Apple Silicon laptop. NEVER SURVEYED -- present in ~/.ssh/config
+      as user bossjones and nothing more.
+    identity:
+      profile: personal
+      hypothesis: true
+      match:
+        arch: arm64
+        username: bossjones
+        os: darwin
+      assert:
+        computer_name: supertop
+        local_host_name: supertop
+
+  minitop:
+    description: >-
+      Personal machine. NEVER SURVEYED. Hypothesised to be the ssh host
+      `mac-mini`, which is hypothesised to be the machine the unified spec calls
+      Mac.scarlettlab.home. Two chained assumptions -- see Q10.
+    identity:
+      profile: personal
+      hypothesis: true
+      aliases: [Mac, mac-mini, Mac.scarlettlab.home]
+      match:
+        arch: arm64
+        username: bossjones
+        os: darwin
+      assert:
+        computer_name: minitop
+        local_host_name: minitop

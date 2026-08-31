@@ -4,7 +4,12 @@
 
 **Nothing on this page is changed by the documentation effort that created it.** These are observations recorded against the source as of this writing, offered as candidates for future cleanup. Each entry cites the file so you can verify it yourself.
 
-**See also:** [Shell Loading](shell-loading.md) · [Provisioning Scripts](provisioning-scripts.md) · [Testing &amp; CI](testing-and-ci.md)
+**See also:** [Shell Loading](shell-loading.md) · [Provisioning Scripts](provisioning-scripts.md) · [Testing &amp; CI](testing-and-ci.md) · [Convergence Doctor](doctor.md)
+
+> **Several of these warts now have executable assertions.** The [convergence doctor](doctor.md)
+> encodes many of the findings below as checks that fail loudly rather than lurking — run
+> `make doctor` to see which apply to your machine, or
+> [Tutorial 08](tutorials/08-investigate-an-environment.md) to learn the workflow.
 
 ---
 
