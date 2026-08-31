@@ -6,6 +6,11 @@ Deep-dive reference for the asdf and mise integration, including how the choice 
 - [Quick Summary](#quick-summary)
 - [End-to-End Threading](#end-to-end-threading)
 - [Pinned Tool Versions](#pinned-tool-versions)
+
+> **Before and after migrating,** the [convergence doctor](doctor.md) gates the switch:
+> `doctor.py --phase pre` checks the machine is safe to migrate, `--phase post` asserts the
+> migration landed (`version_manager: mise`, `mise` on `PATH`, `~/.tool-versions.asdf.bak`
+> present, `~/.asdf` intact as the rollback path).
 - [Architecture Diagram](#architecture-diagram)
 - [Practical: How to Switch](#practical-how-to-switch)
 - [Module Gating Logic](#module-gating-logic)

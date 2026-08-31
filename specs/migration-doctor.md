@@ -1,6 +1,8 @@
 # Spec: `hack/doctor` — a YAML-driven convergence doctor
 
-> **Status:** design agreed 2026-08-31, not yet implemented
+> **Status:** design agreed 2026-08-31; Phases A–B implemented
+> **User documentation:** [`docs/doctor.md`](../docs/doctor.md) (reference) ·
+> [Tutorial 08](../docs/tutorials/08-investigate-an-environment.md) (hands-on)
 > **Companion to:** [`specs/unified-dotfiles-gap-analysis.md`](./unified-dotfiles-gap-analysis.md)
 > **Tracking:** epic #116
 > **Baseline:** `origin/main` @ `41d8a98`, branch `feat/unified-dotfiles-gap-analysis`
@@ -77,8 +79,8 @@ values commented `# HYPOTHESIS`.
 
 ### macOS has three hostnames, and one is normally unset
 
-Every source enumerated on `adobetop`, 2026-08-31. This is the canonical surface — `doctor.py
---identity` probes all of it:
+Every source enumerated on `adobetop`, 2026-08-31. `doctor.py --identity` probes the **nine**
+that are real sources; the last four rows are recorded so nobody re-investigates them:
 
 | Command | `adobetop` | Kind |
 |---|---|---|
@@ -101,9 +103,8 @@ never `scutil HostName`. It came from DNS.
 The failure mode worth detecting is not any single value but **disagreement between the three
 settable ones**, which is what `--identity` reports.
 
-`HostName` is unset on a machine that works correctly. Nothing sets it unless
-`sudo scutil --set HostName` is run explicitly. It follows that `Mac.scarlettlab.home` on the mini
-was never `scutil HostName` either — it is DHCP/DNS-derived.
+Nothing sets `HostName` unless `sudo scutil --set HostName` is run explicitly, so an unset value
+is a healthy machine, not a broken one. Severity is calibrated accordingly:
 
 | Name | Severity | Rationale |
 |---|---|---|
@@ -934,30 +935,31 @@ it depends on.
 ## Ordered task list
 
 **Phase A — schema and engine (TDD)**
-- [ ] `hack/schemas/doctor-profiles.schema.json` (three layers; **no** `hosts.<h>.checks`)
-- [ ] Test layer 3 (schema) — written first, red
-- [ ] `doctor.py` skeleton: `Ctx`, `Check`, `Result`, registry, `load`/`validate`, `--validate`
-- [ ] Test layer 2 (resolution) — red, including the ambiguity case
-- [ ] `resolve_profile()` — green
-- [ ] Test layer 4 (state semantics) — red
-- [ ] Drift evaluation + `--state` — green
-- [ ] Test layer 1 (handlers) — red, one type at a time
-- [ ] Handlers — green, one type at a time (incl. `chezmoi_data_complete`)
-- [ ] `--identity` probe: all 11 hostname sources, disagreement detection
+- [x] `hack/schemas/doctor-profiles.schema.json` (three layers; **no** `hosts.<h>.checks`)
+- [x] Test layer 3 (schema) — written first, red
+- [x] `doctor.py` skeleton: `Ctx`, `Check`, `Result`, registry, `load`/`validate`, `--validate`
+- [x] Test layer 2 (resolution) — red, including the ambiguity case
+- [x] `resolve_profile()` — green
+- [x] Test layer 4 (state semantics) — red
+- [x] Drift evaluation + `--state` — green
+- [x] Test layer 1 (handlers) — red, one type at a time
+- [x] Handlers — green, one type at a time (incl. `chezmoi_data_complete`)
+- [x] `--identity` probe: the 9 real hostname sources (the other 4 in the table above are not
+      sources on modern macOS), plus disagreement detection
 - [ ] Issue-state lookup for `tracked:` — batched, cached, offline ⇒ `WARN`
-- [ ] `render()` text + json; exit codes
+- [x] `render()` text + json; exit codes
 
 **Phase B — the `adobetop` profile**
-- [ ] `profiles.yaml`: `version`, `defaults`, `common.checks`
-- [ ] `profiles.work` / `profiles.personal` from the unified spec's findings
-- [ ] `hosts.adobetop` from **observed** state, with any drift tracked
-- [ ] Test layer 5 (traceability) — green
-- [ ] Test layer 6 (live) — green, or every failure documented
-- [ ] `make doctor-test` + `make doctor` + `make smoke-doctor`
+- [x] `profiles.yaml`: `version`, `defaults`, `common.checks`
+- [x] `profiles.work` / `profiles.personal` from the unified spec's findings
+- [x] `hosts.adobetop` from **observed** state, with any drift tracked
+- [x] Test layer 5 (traceability) — green
+- [x] Test layer 6 (live) — green, or every failure documented
+- [x] `make doctor-test` + `make doctor` + `make smoke-doctor`
 - [ ] Wire `smoke-doctor` + layers 1–5 into CI on **both** macOS runners (Q13)
 
 **Phase C — fleet expansion**
-- [ ] `hosts.supertop` / `hosts.minitop` stubs, identity commented `# HYPOTHESIS`
+- [x] `hosts.supertop` / `hosts.minitop` stubs, identity commented `# HYPOTHESIS`
 - [ ] Labels `prompt`, `machine:supertop`, `machine:minitop` (as `bossjones`)
 - [ ] Issue: *prompt: survey supertop*
 - [ ] Issue: *prompt: survey minitop*

@@ -6,6 +6,11 @@ Comprehensive reference for the testing framework, GitHub workflows, Docker smok
 - [Quick Start](#quick-start)
 - [Pytest + libtmux Integration Model](#pytest--libtmux-integration-model)
 - [Makefile Targets](#makefile-targets)
+
+> **Also see [Convergence Doctor](doctor.md).** `make doctor-test` (unit layers 1–5) and
+> `make smoke-doctor` (the exit-code contract, proven from scratch) are the doctor's lanes.
+> No CI runner belongs to the machine fleet, so `smoke-doctor` — not a fleet assertion — is
+> the meaningful CI gate for it.
 - [GitHub Workflows](#github-workflows)
 - [GitHub Actions Job Pipeline](#github-actions-job-pipeline)
 - [Pre-Commit Hooks](#pre-commit-hooks)

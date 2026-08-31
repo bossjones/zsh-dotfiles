@@ -8,12 +8,14 @@ Everything about this ZSH dotfiles system, organized so you can either read top-
 flowchart TD
     A{"Who are you today?"} -->|"New to this repo"| B["1. Installation<br/>2. Tutorial 00–01<br/>3. Architecture"]
     A -->|"Extending it"| C["1. Shell Loading<br/>2. Feature Flags<br/>3. Tutorial 02–04"]
-    A -->|"Debugging / auditing"| D["1. Provisioning Scripts<br/>2. Testing &amp; CI<br/>3. Gotchas"]
+    A -->|"Debugging / auditing"| D["1. Convergence Doctor<br/>2. Provisioning Scripts<br/>3. Testing &amp; CI<br/>4. Gotchas"]
+    A -->|"New machine, unknown state"| E["1. Tutorial 08<br/>2. Convergence Doctor"]
 ```
 
 - **New here?** [Installation](installation.md) → [Tutorial 00: First-time setup](tutorials/00-first-time-setup.md) → [Tutorial 01: Daily workflow](tutorials/01-daily-workflow.md) → [Architecture](architecture.md).
 - **Extending it?** [Shell Loading](shell-loading.md) and [Feature Flags](feature-flags.md), then the hands-on [tutorials](tutorials/README.md).
 - **Auditing it?** [Provisioning Scripts](provisioning-scripts.md), [Testing &amp; CI](testing-and-ci.md), and the candid [Gotchas](gotchas.md).
+- **Sat down at a machine you don't know?** [Tutorial 08: Investigate an environment](tutorials/08-investigate-an-environment.md) → [Convergence Doctor](doctor.md). Read-only; nothing is changed.
 
 ## Reference &amp; explanation
 
@@ -29,6 +31,7 @@ flowchart TD
 | [Provisioning Scripts](provisioning-scripts.md) | The chezmoi `run_` lifecycle and every provisioning script by phase |
 | [iTerm2 &amp; macOS](iterm2-and-macos.md) | The self-verifying iTerm2 importer, Nerd Fonts, and `~/.osx` |
 | [Testing &amp; CI](testing-and-ci.md) | pytest + libtmux, Docker smoke lanes, the 5 GitHub workflows and 8-cell matrix |
+| [Convergence Doctor](doctor.md) | `hack/doctor/doctor.py` — read-only, YAML-driven per-machine state verification, drift tracking, `--identity` |
 | [Gotchas](gotchas.md) | Known warts and cleanup candidates — dead code, inert flags, mis-named scripts |
 
 ## Tutorials (hands-on)
@@ -45,6 +48,7 @@ The [tutorial track](tutorials/README.md) is a numbered, goal-oriented path — 
 | 05 | [Run smoke tests locally](tutorials/05-run-smoke-tests-locally.md) | CI parity on your laptop |
 | 06 | [Customize iTerm2](tutorials/06-customize-iterm2.md) | Version-controlled terminal settings |
 | 07 | [Verify CUDA before applying](tutorials/07-verify-cuda-before-applying.md) | Confidence in your CUDA/driver state before changing it |
+| 08 | [Investigate an environment](tutorials/08-investigate-an-environment.md) | A read-only diagnosis of any machine's dotfiles state |
 
 ## Conventions
 

@@ -6,6 +6,12 @@ Complete reference for all configuration flags, environment variables, and featu
 - [Chezmoi Feature Booleans](#chezmoi-feature-booleans)
 - [Version Manager Selection](#version-manager-selection)
 - [Identity Configuration](#identity-configuration)
+
+> **Verifying these on a real machine:** the [convergence doctor](doctor.md) asserts flag
+> values with the `chezmoi_data` check type, and its `chezmoi_data_complete` check catches the
+> case where *a flag was added to the template after your last apply* — the keys are absent
+> rather than wrong, which `chezmoi status` reports only as an opaque failure. See
+> [Tutorial 08](tutorials/08-investigate-an-environment.md).
 - [Installation-Time Environment Variables](#installation-time-environment-variables)
 - [Runtime Shell Variables](#runtime-shell-variables)
 - [External CI Variables](#external-ci-variables)

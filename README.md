@@ -69,6 +69,7 @@ Read the deep dive in **[docs/architecture.md](docs/architecture.md)** and the e
 | 📦 [Provisioning Scripts](docs/provisioning-scripts.md) | The chezmoi `run_` lifecycle and every provisioning script by phase |
 | 🖥️ [iTerm2 &amp; macOS](docs/iterm2-and-macos.md) | The self-verifying iTerm2 settings importer, Nerd Fonts, and `~/.osx` |
 | 🧪 [Testing &amp; CI](docs/testing-and-ci.md) | pytest + libtmux, Docker smoke lanes, the 5 GitHub workflows and 8-cell matrix |
+| 🩺 [Convergence Doctor](docs/doctor.md) | `make doctor` — read-only, YAML-driven verification of a machine's state, drift tracking, and `--identity` hostname probing |
 | ⚠️ [Gotchas](docs/gotchas.md) | Candid known warts and cleanup candidates — dead code, inert flags, mis-named scripts |
 | 🎓 [Tutorials](docs/tutorials/README.md) | Hands-on, numbered walkthroughs (00 → 07), newcomer-first with verification steps |
 | 🤝 [Contributing](CONTRIBUTING.md) | Dev setup, pre-commit hooks, editing templates, adding a tool module |
