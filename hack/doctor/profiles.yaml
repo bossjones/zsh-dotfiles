@@ -281,6 +281,30 @@ profiles:
         run: chezmoi cat ~/.gitconfig
         want_stdout_not_matching: "includeIf"
 
+      - id: personal-pyenv-true
+        title: pyenv is true (the one live boolean on macOS)
+        type: chezmoi_data
+        phase: post
+        traces: [C1, "#116"]
+        key: pyenv
+        want: true
+        fix: |
+          Owner decision on #137 (2026-08-31): pyenv owns python3 on both
+          personal machines, so the flag is true for the profile. Present-but-
+          wrong today on both (sticky) -- corrected at the --data=false init.
+
+      - id: personal-inert-flags-honest
+        title: ruby, nodejs, k8s and fnm are true (installed on every personal host)
+        type: command
+        phase: post
+        traces: [C1, "#116"]
+        run: chezmoi data --format json
+        want_stdout_not_matching: '"(ruby|nodejs|k8s|fnm)": false'
+        fix: |
+          Inert -- no template reads them -- recorded for honesty only. Owner
+          answered true for all four on #137; supertop's spec validation block
+          says the same. Set at the corrective init, never by hand.
+
 # ---------------------------------------------------------------------------
 # hosts -- identity, and tracked drift only
 # ---------------------------------------------------------------------------
@@ -613,6 +637,23 @@ hosts:
           --promptString is a silent no-op. Corrective init needs --data=false
           or a prior hand-edit. Note version_manager is already mise here, so
           unlike supertop that key needs no correction.
+
+      - id: minitop-feature-flags-false
+        title: every feature flag is false while the tools are live
+        type: chezmoi_data
+        observed: "2026-08-31"
+        expected: pyenv, fnm, ruby, nodejs, k8s all true (owner, #137 P2)
+        tracked: "#116"
+        traces: [C1]
+        key: pyenv
+        want: false
+        fix: |
+          pyenv 3.12.8 owns python3, fnm owns node 20.19.5, ruby 3.4.9 and the
+          k8s toolset are installed via mise -- all five flags say false. The
+          non-TTY all-false trap, or a first init before the tools existed.
+          Present-but-wrong => sticky => the same --data=false init that fixes
+          computer_name/hostname. cuda/opencv stay false (Q8); fzf_tab is
+          ABSENT and becomes present-and-false at that init.
 
       # --- git / shell / dotfiles -------------------------------------------
 

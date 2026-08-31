@@ -484,7 +484,7 @@ surveys.
 
 The #137 survey, run on-machine, read-only. This is measured fact, not proposal. `hosts.minitop`
 in `hack/doctor/profiles.yaml` graduated from `hypothesis: true` to real identity values plus
-**13 tracked drift entries**.
+**14 tracked drift entries**.
 
 #### Identity (P0)
 
@@ -555,12 +555,12 @@ unsetting `HostName` before the rename lands.
 #### Doctor verdict
 
 ```text
-./hack/doctor/doctor.py --state today                → 3 pass · 13 known   (exit 0)
-./hack/doctor/doctor.py --state target --phase all   → 13 pass · 20 fail  (exit 1)
+./hack/doctor/doctor.py --state today                → 3 pass · 14 known   (exit 0)
+./hack/doctor/doctor.py --state target --phase all   → 13 pass · 23 fail  (exit 1)
 ```
 
 The target-state reds are the fleet's pending shared work (S1, S2, S7, M4, `fzf_tab`, M2) plus the
-13 drift entries; none is unexplained. `hack/doctor/tests`: 50 passed, 2 skipped, and the
+14 drift entries and the two new `personal` flag checks; none is unexplained. `hack/doctor/tests`: 50 passed, 2 skipped, and the
 smoke-doctor steps pass — both run as their underlying commands, because `make` cannot start
 (#138).
 
@@ -574,11 +574,37 @@ per the standing warning in `migration-doctor.md`. One new finding: **9 of 16 en
 `IdentityFile` under another user's home directory** — copied from adobetop's user, so they
 cannot resolve on a `bossjones` machine. A consolidation item, not a `Host *` item.
 
+#### P2 interview — every data key, owner-answered (2026-08-31)
+
+Asked one key at a time in the *"this machine has X / the profile has Y / the spec recommends Z
+because W"* form, after P1 had established X. Recorded verbatim on #137.
+
+| Key | Live on minitop | supertop | Answer | Sticky? |
+|---|---|---|---|---|
+| `computer_name` | `boss workstation` | `boss workstation` | **`minitop`** | yes — present-but-wrong |
+| `hostname` | `bossworkstation` | `bossworkstation` | **`minitop`** | yes |
+| `name` / `email` | Malcolm Jones / bossjones@… | same | **keep** | — |
+| `profile` | absent (no template key yet, #118) | absent | **`personal`** | no |
+| `pyenv` | `false` (pyenv owns `python3`) | `false` | **`true`** | yes |
+| `fnm` | `false` (fnm owns `node`) | `false` | **`true`** | yes |
+| `ruby` | `false` (3.4.9 via mise) | `false` | **`true`** | yes |
+| `nodejs` | `false` (20.19.5 via fnm) | `false` | **`true`** | yes |
+| `k8s` | `false` (toolset via mise) | `false` | **`true`** | yes |
+| `cuda` / `opencv` | `false` / `false` | same | **both `false`** (Q8) | — |
+| `fzf_tab` | absent | absent | **`false`, present** (Q17) | no — absent ⇒ prompt fires |
+| `version_manager` | `mise` (migration already ran) | `asdf` | **`mise`** | — already right |
+
+Consequences folded into `profiles.yaml`: the five booleans are now `profiles.personal` checks
+(`personal-pyenv-true`, `personal-inert-flags-honest`), so supertop's target state carries the
+same answer; minitop's present-but-wrong values are drift `minitop-feature-flags-false`. Because
+`computer_name`, `hostname` and the five flags are all present-but-wrong, minitop's corrective
+init needs **`--data=false`** exactly like supertop's (correction 12) — `version_manager` is the
+one key it does *not* need to fix.
+
 #### What the survey did *not* do
 
-No `chezmoi init`, no `chezmoi apply`, no `scutil --set`, no fast-forward of the stale checkout.
-The P2 interview (every data key, human-answered) is recorded on #137 and feeds the later
-`chezmoi init` under epic #116.
+No `chezmoi init`, no `chezmoi apply`, no `scutil --set`, no fast-forward of the stale checkout,
+no `xcode-select`. Applying is a separate, reviewed step under epic #116.
 
 ### The target shape
 
@@ -752,6 +778,28 @@ chezmoi init --source=. --data=false --debug -v \
   --promptString "Email=bossjones@theblacktonystark.com" \
   --promptString "Computer name=supertop" \
   --promptString "Host name=supertop" \
+  --promptString "version_manager=mise" \
+  --promptString "profile=personal" \
+  --promptBool "ruby=true"   --promptBool "pyenv=true" --promptBool "nodejs=true" \
+  --promptBool "k8s=true"    --promptBool "cuda=false" --promptBool "fnm=true" \
+  --promptBool "opencv=false" --promptBool "fzf_tab=false"
+```
+
+**Personal — `minitop`** (Mac mini). **Survey returned 2026-08-31** (#137); every value below
+is an owner answer from the P2 interview, not a default. Same `--data=false` reason as supertop:
+`computer_name`/`hostname` and all five booleans are present-but-wrong in the live config, so
+without it the prompts are silently skipped. `version_manager` is already `mise` here.
+**Prerequisites**, in order: fast-forward the stale source checkout (`git checkout main && git
+pull --ff-only` — it is on the merged `feature-asdf-to-mise` branch, 83 behind), upgrade chezmoi
+v2.31.1 → v2.72.0 (personal spec F2 recipe), and repair the toolchain (#138) if anything will
+compile.
+```sh
+cd ~/.local/share/chezmoi
+chezmoi init --source=. --data=false --debug -v \
+  --promptString "Name=Malcolm Jones" \
+  --promptString "Email=bossjones@theblacktonystark.com" \
+  --promptString "Computer name=minitop" \
+  --promptString "Host name=minitop" \
   --promptString "version_manager=mise" \
   --promptString "profile=personal" \
   --promptBool "ruby=true"   --promptBool "pyenv=true" --promptBool "nodejs=true" \
