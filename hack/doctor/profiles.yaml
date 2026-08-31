@@ -371,18 +371,15 @@ hosts:
           The target hardcodes /Users/malcolm, so it cannot work on a bossjones
           machine. This is within-profile divergence, not a personal-only issue.
 
-  # -------------------------------------------------------------------------
-  # UNSURVEYED. Every value below is a hypothesis pending its `prompt` issue.
-  # Do not trust, extend, or apply anything here until P0 confirms identity.
-  # -------------------------------------------------------------------------
-
   supertop:
     description: >-
-      Personal Apple Silicon laptop. NEVER SURVEYED -- present in ~/.ssh/config
-      as user bossjones and nothing more.
+      Personal Apple Silicon laptop (Mac16,5, M4 Max). Surveyed 2026-08-31
+      on-machine (#136): macOS 26.5.2 (25F84), arm64, chezmoi 2.72.0.
+      Formerly named "Mac" / Mac.scarlettlab.home -- this is the machine the
+      input specs called "the personal machine" (Q10 resolved; see
+      specs/personal-dotfiles-gap-analysis.md).
     identity:
       profile: personal
-      hypothesis: true
       match:
         arch: arm64
         username: bossjones
@@ -390,16 +387,99 @@ hosts:
       assert:
         computer_name: supertop
         local_host_name: supertop
+        os_major: 26
+
+    drift:
+      - id: supertop-missing-chezmoi-keys
+        title: chezmoi config predates fzf_tab and myFzfTabRev
+        type: command
+        observed: "2026-08-31"
+        expected: both keys present
+        tracked: "#129"
+        traces: [C3]
+        run: chezmoi data --format json
+        want_stdout_not_matching: '"myFzfTabRev"'
+        fix: |
+          The keys are ABSENT, not wrong -- hasKey is false, so a plain re-run
+          of `chezmoi init` sets both. Only 2 keys short here, against
+          adobetop's 22: this config was regenerated after the my*Version
+          rename but before fzf_tab was introduced.
+
+      - id: supertop-version-manager-asdf
+        title: version_manager is asdf; the fleet target is mise
+        type: chezmoi_data
+        observed: "2026-08-31"
+        expected: mise
+        tracked: "#126"
+        traces: [S6]
+        key: version_manager
+        want: asdf
+        fix: |
+          Present-but-wrong, so hasKey short-circuits every prompt including
+          --promptString. Corrective init needs --data=false, or a prior
+          hand-edit of ~/.config/chezmoi/chezmoi.yaml.
+
+      - id: supertop-stale-identity-data-keys
+        title: the hostname data key still says bossworkstation
+        type: chezmoi_data
+        observed: "2026-08-31"
+        expected: supertop
+        tracked: "#116"
+        traces: [Q6, Q12]
+        key: hostname
+        want: bossworkstation
+        fix: |
+          computer_name ("boss workstation") shares the fate. Both are
+          present-but-wrong (sticky) and, since Q6/Q12, load-bearing -- they
+          feed the hostname setter script. Same --data=false / hand-edit
+          remedy as version_manager.
+
+      - id: supertop-hub-host-adobe
+        title: global hub.host points at Adobe's GHE on a personal machine
+        type: git_config
+        observed: "2026-08-31"
+        expected: key absent on profile=personal
+        tracked: "#119"
+        traces: [M2]
+        key: hub.host
+        want: git.corp.adobe.com
+        fix: |
+          hub IS installed here and dot_gitconfig wires `git pr` through it,
+          so this actively points `git pr` at git.corp.adobe.com. Resolved by
+          the profile gate (S3/M2), not by hand-editing the live file.
+
+      - id: supertop-zshrc-local-present
+        title: ~/.zshrc.local exists with stale values
+        type: file_exists
+        observed: "2026-08-31"
+        expected: file removed
+        tracked: "#129"
+        traces: [S7]
+        path: ~/.zshrc.local
+        fix: |
+          3.3K of live-but-stale config (RBENV_VERSION=2.7.2, export SHELL=...).
+          Nothing in home/ sources it; S7 deletes the template rather than
+          sourcing this file, because sourcing would ACTIVATE the stale values.
+
+  # -------------------------------------------------------------------------
+  # UNSURVEYED. minitop below is a hypothesis pending its `prompt` issue
+  # (#137). Do not trust, extend, or apply anything here until P0 confirms
+  # identity on-machine. (supertop above graduated 2026-08-31 via #136.)
+  # -------------------------------------------------------------------------
 
   minitop:
     description: >-
-      Personal machine. NEVER SURVEYED. Hypothesised to be the ssh host
-      `mac-mini`, which is hypothesised to be the machine the unified spec calls
-      Mac.scarlettlab.home. Two chained assumptions -- see Q10.
+      Personal Mac mini, ssh host `mac-mini`. Q10 resolved 2026-08-31: this is
+      NOT Mac.scarlettlab.home (that was supertop pre-rename). Live hostname
+      observed via owner ssh session: `mactop`, chezmoi 2.31.1, pre-rename
+      myAsdf*Version keys, version_manager=mise already set. Canonical fleet
+      name stays minitop (owner decision 2026-08-31) -- the machine gets
+      renamed during its migration, so the asserts below state the target and
+      the mactop name is tracked drift. On-machine survey (#137) still pending.
     identity:
       profile: personal
       hypothesis: true
-      aliases: [Mac, mac-mini, Mac.scarlettlab.home]
+      aliases: [mactop, mac-mini]
       match:
         arch: arm64
         username: bossjones
@@ -407,3 +487,19 @@ hosts:
       assert:
         computer_name: minitop
         local_host_name: minitop
+
+    drift:
+      - id: minitop-named-mactop
+        title: live LocalHostName is mactop; the fleet name is minitop
+        type: hostname
+        observed: "2026-08-31"
+        expected: minitop
+        tracked: "#137"
+        traces: [Q10]
+        which: local
+        want: mactop
+        fix: |
+          Rename decided 2026-08-31: the mini becomes minitop during its
+          migration, via the Q12 hostname setter script (operator-reviewed,
+          needs sudo). Until then the aliases above let the machine resolve
+          under its live name while this entry reports the drift.
