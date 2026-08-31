@@ -207,8 +207,10 @@ session (2026-08-31, `chezmoi data` pasted from `bossjones@mactop`):
    ssh mac-mini 'ls -ld ~/.backup/dotfiles/20260815-213326 ~/.local/share/chezmoi-gap-analysis 2>&1'
    ```
 
-   Whether a backup/worktree exists there at all is unknown — this spec's artifacts were
-   created on supertop only.
+   > **Checked 2026-08-31 (owner-run):** neither path exists on the mini — `No such file
+   > or directory` for both. This spec's artifacts were created on supertop only, closing
+   > the last loose end in the Q10 evidence chain. The minitop migration therefore starts
+   > from zero: its own backup must be created there before anything else (Task 1 pattern).
 2. **Capture `~/.ssh/config` into #137** for Q16 (scrub private IPs; machine names only —
    public repo).
 3. **Upgrade chezmoi v2.31.1 → v2.72.0** using F2's verified recipe (hash the old binary
