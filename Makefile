@@ -217,3 +217,30 @@ macos-init-fzf-tab-oneliner:  ## Install chezmoi via chezmoi.io/get, then init -
 macos-init-fzf-tab-dry-run:  ## Preview good defaults + fzf-tab init from --source=. without changing anything
 	@echo "\033[0;34mDry-running chezmoi init with fzf-tab from --source=. (host: $(CHEZMOI_HOSTNAME))...\033[0m"
 	chezmoi init -R --debug -v --dry-run $(CHEZMOI_GOOD_DEFAULTS) $(CHEZMOI_FZF_TAB_DEFAULTS) --source=.
+
+.PHONY: doctor doctor-identity doctor-test smoke-doctor
+
+DOCTOR := ./hack/doctor/doctor.py
+DOCTOR_FIXTURE := hack/doctor/tests/fixtures/ci.yaml
+
+doctor:  ## Run the convergence doctor against this machine
+	@$(DOCTOR)
+
+doctor-identity:  ## Probe every macOS hostname source (works with no profile)
+	@$(DOCTOR) --identity
+
+doctor-test:  ## Unit-test the doctor (layers 1-5; no real system access)
+	@uv run --quiet --with pytest --with pyyaml --with jsonschema \
+		pytest hack/doctor/tests -q
+
+smoke-doctor:  ## Prove doctor.py runs from scratch and honours its exit codes
+	@echo "\033[0;34mSmoke-testing hack/doctor/doctor.py...\033[0m"
+	@$(DOCTOR) --validate
+	@$(DOCTOR) --validate --format json >/dev/null
+	@rc=0; $(DOCTOR) --config $(DOCTOR_FIXTURE) --profile fake --state target \
+		>/dev/null 2>&1 || rc=$$?; \
+		[ $$rc -eq 1 ] || { echo "expected exit 1 from the failing fixture, got $$rc"; exit 1; }
+	@rc=0; $(DOCTOR) --profile nonesuch >/dev/null 2>&1 || rc=$$?; \
+		[ $$rc -eq 3 ] || { echo "expected exit 3 for an unknown profile, got $$rc"; exit 1; }
+	@$(DOCTOR) --identity --format json | python3 -m json.tool >/dev/null
+	@echo "\033[0;32m✓ smoke-doctor passed\033[0m"
