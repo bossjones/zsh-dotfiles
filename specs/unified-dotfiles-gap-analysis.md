@@ -467,13 +467,18 @@ Deferred to #129 / #101. **Not** a blocker for the migration.
 | Name | Profile | User | Identity status |
 |---|---|---|---|
 | `adobetop` | work | `malcolm` | **Confirmed** — macOS 15.7.9 (24G830), arm64 |
-| `supertop` | **personal** | `bossjones` | Apple Silicon laptop. In `~/.ssh/config`; **never surveyed** |
-| `minitop` | **personal** | `bossjones` | Hypothesised = `mac-mini` = `Mac.scarlettlab.home`. **Never surveyed** |
+| `supertop` | **personal** | `bossjones` | **Surveyed 2026-08-31** — macOS 26.5.2 (25F84), Mac16,5 / M4 Max, arm64, chezmoi 2.72.0. **Is the machine this document called "the personal machine"** — formerly named `Mac` / `Mac.scarlettlab.home`, renamed before 2026-08-31 (correction 10) |
+| `minitop` | **personal** | `bossjones` | Partially observed via owner ssh 2026-08-31: live hostname **`mactop`**, chezmoi 2.31.1, pre-rename `myAsdf*` keys, `version_manager=mise`. On-machine survey (#137) still pending. Canonical name stays `minitop`; the mini gets renamed during migration |
 
 `~/.ssh/config` on `adobetop` contains hosts `adobetop`, `supertop` and **`mac-mini`** — there is
 no host named `minitop`. A Mac mini at the factory-default `ComputerName` of `Mac` produces
 exactly the `.chezmoi.hostname` → `"Mac"` this document already recorded. Hence Q10; hence the
 surveys.
+
+> **Q10 resolved 2026-08-31 — the hypothesis above was wrong** (correction 10). The `"Mac"` /
+> `Mac.scarlettlab.home` identity belonged to **`supertop` before its rename**, not to the mini;
+> the ssh host `mac-mini` is a distinct machine live-named `mactop`. Evidence chain in
+> [`personal-dotfiles-gap-analysis.md` §Machine identity resolved](./personal-dotfiles-gap-analysis.md#machine-identity-resolved--q10-answered).
 
 ### The target shape
 
@@ -520,6 +525,11 @@ Two things, both specified in [`specs/migration-doctor.md`](./migration-doctor.m
 **Nothing in Phases 1–5 below should execute on `supertop` or `minitop` until their surveys
 return.** `adobetop` is not blocked.
 
+> **2026-08-31: the `supertop` survey has returned** (recorded in
+> [`personal-dotfiles-gap-analysis.md` §Supertop re-survey](./personal-dotfiles-gap-analysis.md#supertop-re-survey-2026-08-31),
+> folded into `hack/doctor/profiles.yaml`) — **`supertop` is unblocked**. `minitop` remains
+> blocked on #137.
+
 ---
 
 ## Corrections to the input specs
@@ -537,6 +547,9 @@ Recorded so the three documents can be reconciled during review.
 | 7 | **this doc**, C4 | Accept the orphan drops | **Reversed 2026-08-31** — keep 10 of 12 at latest versions; only `jsonnet`/`poetry` drop |
 | 8 | **this doc**, header | A two-machine fleet | It is **three**; `supertop` and `minitop` are unsurveyed (Part 4) |
 | 9 | **this doc**, C1 | `cuda`/`opencv` values are "cosmetic honesty" | They are **Linux-only concerns**; `false` on macOS is correct on the merits (Q8) |
+| 10 | **this doc**, Part 4 / Q10 | `minitop` = `mac-mini` = `Mac.scarlettlab.home` | **Resolved NO (2026-08-31).** `Mac.scarlettlab.home` was **`supertop` before its rename**; the ssh host `mac-mini` is a distinct machine live-named **`mactop`**. The "personal machine" evidence base therefore belongs to `supertop` — **now a surveyed machine**, killing Q10's worst-case branch. Evidence: this spec's backup root, worktree, upgraded chezmoi v2.72.0 and renamed `my*Version` keys are all on `supertop`, while `mactop` still runs v2.31.1 with pre-rename `myAsdf*` keys |
+| 11 | **this doc**, Part 4 | `hosts.minitop` aliases `[Mac, mac-mini, Mac.scarlettlab.home]` | `Mac`/`Mac.scarlettlab.home` were **supertop's former names** — removed from `minitop`'s aliases (now `[mactop, mac-mini]`). **Owner decision 2026-08-31: canonical fleet name stays `minitop`**; the mini's observed `mactop` name is identity drift, fixed by renaming the machine during its migration |
+| 12 | **this doc**, per-machine init commands | `supertop`'s `--promptString` values take effect | On `supertop`, `computer_name`/`hostname`/`version_manager` are **present-but-wrong** in the live config, so `hasKey` short-circuits those prompts and their `--promptString` values are **silently ignored**. The command needs `--data=false` (re-prompts everything) or a prior hand-edit of `~/.config/chezmoi/chezmoi.yaml` |
 
 ---
 
@@ -621,12 +634,16 @@ chezmoi init --source=. --debug -v \
   --promptBool "opencv=false" --promptBool "fzf_tab=false"
 ```
 
-**Personal — `supertop`** (Apple Silicon laptop). ⚠️ **Provisional — do not run before
-[#136](https://github.com/bossjones/zsh-dotfiles/issues/136) returns.** `Computer name`/`Host name` are proposals, and the flags are the
-profile defaults rather than observed values:
+**Personal — `supertop`** (Apple Silicon laptop). ~~Provisional — do not run before
+[#136](https://github.com/bossjones/zsh-dotfiles/issues/136) returns.~~ **Survey returned 2026-08-31**: `Computer name`/`Host name` = `supertop` are
+confirmed correct (they match live scutil values). ⚠️ But the survey also found
+`computer_name`/`hostname`/`version_manager` **present-but-wrong** in the live config
+(`boss workstation`/`bossworkstation`/`asdf`), so `hasKey` short-circuits those prompts and the
+`--promptString` values below would be **silently ignored** (correction 12). `--data=false` added
+so every prompt fires fresh:
 ```sh
 cd ~/.local/share/chezmoi
-chezmoi init --source=. --debug -v \
+chezmoi init --source=. --data=false --debug -v \
   --promptString "Name=Malcolm Jones" \
   --promptString "Email=bossjones@theblacktonystark.com" \
   --promptString "Computer name=supertop" \
@@ -768,7 +785,8 @@ cp "$BK"/chezmoi-*.bin ~/.bin/chezmoi
 ### Still open
 
 - **Q16 — What belongs in a shared ssh `Host *` block?** Cannot be authored from one machine.
-  Blocked on both surveys capturing `~/.ssh/config`. See
+  Supertop's `~/.ssh/config` captured on #136 (2026-08-31); **now blocked only on the `minitop`
+  survey** (#137). See
   [`specs/migration-doctor.md`](./migration-doctor.md#ssh-config-consolidation).
 
 ### Resolved 2026-08-31 (second round)
@@ -777,9 +795,7 @@ cp "$BK"/chezmoi-*.bin ~/.bin/chezmoi
 |---|---|---|
 | **Q15** | Is `vault 1.11.3+ent` deliberate? | **No — re-pin to the latest OSS build, `2.0.4`.** Two changes in one: `+ent` → OSS (loses Enterprise-only namespaces, replication, HSM seals) and a **major** 1.11 → 2.0 bump. Verified against the release history: Vault 2.0.0 shipped 2026-04-14; the 1.x line ended at 1.21.4 on 2026-03-05. |
 | **Q17** | Does `fzf_tab: true` hold up? | **Moot — the default reverts to `false`.** Nothing exercises `myFzfTabRev`, so C3's tripwire stays latent and stays in Phase 6. |
-- **Q10 — Is `minitop` = `mac-mini` = `Mac.scarlettlab.home`?** Two chained, unverified
-  assumptions. If false, this document's entire "personal machine" evidence base belongs to a
-  machine not yet identified. See Part 4.
+| **Q10** | Is `minitop` = `mac-mini` = `Mac.scarlettlab.home`? | **No** (correction 10). `Mac.scarlettlab.home` was `supertop` pre-rename; `mac-mini` is a distinct machine live-named `mactop`. The "personal machine" evidence base belongs to **`supertop` — now surveyed**. Canonical name for the mini stays `minitop` (correction 11). See [`personal-dotfiles-gap-analysis.md` §Machine identity resolved](./personal-dotfiles-gap-analysis.md#machine-identity-resolved--q10-answered). |
 
 ---
 
