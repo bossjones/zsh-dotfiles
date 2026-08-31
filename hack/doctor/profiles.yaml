@@ -25,7 +25,6 @@ defaults:
 
 common:
   checks:
-
     # --- preconditions: must hold BEFORE migrating -------------------------
 
     - id: no-resurrected-files
@@ -94,7 +93,7 @@ common:
       type: chezmoi_data
       phase: post
       traces: [C1, Q8]
-      when: {os: darwin}
+      when: { os: darwin }
       key: cuda
       want: false
       fix: cuda is a Linux concern; revisit when boss-deeplearning enters scope.
@@ -104,7 +103,7 @@ common:
       type: chezmoi_data
       phase: post
       traces: [C1, Q8]
-      when: {os: darwin}
+      when: { os: darwin }
       key: opencv
       want: false
 
@@ -197,12 +196,65 @@ common:
         A template error here usually means a missing data key --
         see chezmoi-config-has-every-key.
 
+    - id: xcode-toolchain-shims-usable
+      title: the /usr/bin toolchain shims execute through the active developer dir
+      type: command
+      when: { os: darwin }
+      traces: ["#138"]
+      run: |
+        /usr/bin/make --version >/dev/null 2>&1 \
+          && /usr/bin/clang --version >/dev/null 2>&1 \
+          && echo ok
+      want_stdout: ok
+      fix: |
+        The shims resolve, but nothing they hand off to loads. Read the real error
+        first -- `/usr/bin/clang --version` prints it, `make` only prints the
+        xcode-select fallback:
+          dlopen(@rpath/libxcodebuildLoader.dylib): Symbol not found: _XPCTypeBool
+            Referenced from: /Library/Developer/PrivateFrameworks/CoreDevice.framework
+            Expected in:     /Library/Apple/System/.../Mercury.framework
+        That signature is a STALE CoreDevice, not a broken Xcode -- see
+        xcode-system-resources-match-xcode for the cause and the repair.
+        Nothing that compiles works until this is green: every Makefile target
+        here, sheldon-from-source on arm64, any brew build, any mise fallback.
+
+    - id: xcode-system-resources-match-xcode
+      title: the XcodeSystemResources receipt matches the Xcode.app on disk
+      type: command
+      when: { os: darwin, file_present: /Applications/Xcode.app }
+      traces: ["#138"]
+      run: |
+        pkg=$(pkgutil --pkg-info com.apple.pkg.XcodeSystemResources 2>/dev/null \
+                | awk -F': ' '/^version:/ {print $2}' | cut -d. -f1)
+        app=$(defaults read /Applications/Xcode.app/Contents/Info \
+                CFBundleShortVersionString 2>/dev/null | cut -d. -f1)
+        if [ -n "$pkg" ] && [ "$pkg" = "$app" ]; then
+          echo match
+        else
+          echo "mismatch receipt=${pkg:-none} xcode=${app:-none}"
+        fi
+      want_stdout: match
+      fix: |
+        Xcode.app was upgraded in place but its system-components step never ran,
+        so /Library/Developer/PrivateFrameworks still holds the OLD Xcode's
+        CoreDevice.framework. It links symbols the current OS no longer exports,
+        which is what breaks every /usr/bin toolchain shim.
+        Read the receipt version, not the app version -- `xcodebuild -version`
+        keeps printing the new number while the frameworks stay old.
+        Repair by installing the pkg the app already ships (needs sudo):
+          sudo installer -pkg \
+            /Applications/Xcode.app/Contents/Resources/Packages/XcodeSystemResources.pkg \
+            -target /
+        `sudo xcodebuild -runFirstLaunch` does the same and more.
+        The escape hatch, if Xcode itself is not wanted, is to point the shims at
+        the standalone Command Line Tools instead:
+          sudo xcode-select -s /Library/Developer/CommandLineTools
+
 # ---------------------------------------------------------------------------
 # profiles -- the target shape for every machine of this kind
 # ---------------------------------------------------------------------------
 
 profiles:
-
   work:
     checks:
       - id: work-hub-host-is-corp
@@ -288,7 +340,6 @@ profiles:
 # ---------------------------------------------------------------------------
 
 hosts:
-
   adobetop:
     description: >-
       Work machine. Surveyed 2026-08-31: macOS 15.7.9 (24G830), arm64,

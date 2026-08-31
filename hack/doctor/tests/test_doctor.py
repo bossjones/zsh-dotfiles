@@ -10,7 +10,9 @@ Six layers, per specs/migration-doctor.md#testing-strategy:
   6. live               - real adobetop run, DOCTOR_LIVE=1 only
 
 Handlers are pure with respect to Ctx, so nothing here touches the real system
-except layer 6.
+except layer 6 -- and TestXcodeToolchainProbes, which spawns a shell to exercise
+the committed `run:` strings themselves. That one is still hermetic: it fakes
+every binary it calls onto PATH, so its result does not depend on the host.
 """
 
 from __future__ import annotations
@@ -416,6 +418,99 @@ class TestWhenGate:
             check(type="file_exists", path="~/x", when={"os": "darwin"}),
             make_ctx(tmp_path))
         assert r.status == doctor.PASS
+
+
+class TestXcodeToolchainProbes:
+    """The committed shell probes behind the two #138 checks.
+
+    These run the real `run:` strings out of profiles.yaml through the real
+    subprocess runner, against fake `pkgutil`/`defaults` on PATH. That is the
+    only layer that can catch a probe which parses the wrong field or compares
+    the wrong pair -- a FakeRunner would just echo whatever it was handed.
+    """
+
+    @staticmethod
+    def _committed(check_id):
+        cfg = doctor.load_config(PROFILES_PATH)
+        for c in doctor.all_checks(cfg):
+            if c.id == check_id:
+                return c
+        raise AssertionError(f"{check_id} is not in the committed profiles.yaml")
+
+    @staticmethod
+    def _shim(tmp_path, name, body):
+        d = tmp_path / "shims"
+        d.mkdir(exist_ok=True)
+        f = d / name
+        f.write_text("#!/bin/sh\n" + body + "\n")
+        f.chmod(0o755)
+        return d
+
+    def _run_receipt_probe(self, tmp_path, monkeypatch, *, receipt, xcode):
+        """receipt/xcode are the version strings the fakes report; None = absent."""
+        d = self._shim(
+            tmp_path, "pkgutil",
+            f'echo "version: {receipt}"' if receipt else "exit 1")
+        self._shim(tmp_path, "defaults",
+                   f'echo "{xcode}"' if xcode else "exit 1")
+        monkeypatch.setenv("PATH", f"{d}:{os.environ['PATH']}")
+        c = self._committed("xcode-system-resources-match-xcode")
+        # Drop when.file_present: the gate is asserted on its own below, and
+        # Xcode.app need not be installed to test the version compare.
+        c = doctor.Check.from_dict({**c.spec, "when": {}})
+        return doctor.run_check(c, make_ctx(tmp_path, runner=doctor._sh))
+
+    def test_matching_major_versions_pass(self, tmp_path, monkeypatch):
+        r = self._run_receipt_probe(tmp_path, monkeypatch,
+                                    receipt="26.6.0.0.1781586605", xcode="26.6")
+        assert r.status == doctor.PASS
+
+    def test_the_138_state_is_caught(self, tmp_path, monkeypatch):
+        """Xcode.app upgraded to 26.x, XcodeSystemResources receipt still 16.2 --
+        exactly what left a 2024 CoreDevice linking _XPCTypeBool on minitop."""
+        r = self._run_receipt_probe(tmp_path, monkeypatch,
+                                    receipt="16.2.0.0.1.1733547573", xcode="26.6")
+        assert r.status == doctor.FAIL
+        assert "receipt=16" in r.message and "xcode=26" in r.message
+
+    def test_absent_receipt_is_not_silently_a_match(self, tmp_path, monkeypatch):
+        """Two empty strings compare equal in sh -- the probe must reject that."""
+        r = self._run_receipt_probe(tmp_path, monkeypatch,
+                                    receipt=None, xcode=None)
+        assert r.status == doctor.FAIL
+        assert "receipt=none" in r.message
+
+    def test_minor_version_bumps_are_not_a_mismatch(self, tmp_path, monkeypatch):
+        """The pkg trails the app within a major; only the major must agree."""
+        r = self._run_receipt_probe(tmp_path, monkeypatch,
+                                    receipt="26.2.0.0.1770000000", xcode="26.6")
+        assert r.status == doctor.PASS
+
+    def test_shim_probe_wants_ok_on_stdout(self, tmp_path):
+        """The symptom check cannot be shimmed -- /usr/bin/make is absolute by
+        design -- so assert its contract: silence or noise both fail."""
+        c = self._committed("xcode-toolchain-shims-usable")
+        assert c.when == {"os": "darwin"}
+        assert "/usr/bin/make" in c.get("run") and "/usr/bin/clang" in c.get("run")
+        cases = [
+            ("ok\n", doctor.PASS),
+            ("", doctor.FAIL),                       # shim produced nothing
+            ("xcode-select: Failed to locate 'make'\n", doctor.FAIL),
+        ]
+        for out, want in cases:
+            r = doctor.run_check(
+                c, make_ctx(tmp_path, runner=FakeRunner(default=(0, out, ""))))
+            assert r.status == want, f"{out!r} should be {want}"
+
+    def test_receipt_check_is_gated_on_xcode_being_installed(self):
+        c = self._committed("xcode-system-resources-match-xcode")
+        assert c.when == {"os": "darwin",
+                          "file_present": "/Applications/Xcode.app"}
+
+    def test_both_checks_trace_the_issue(self):
+        for cid in ("xcode-toolchain-shims-usable",
+                    "xcode-system-resources-match-xcode"):
+            assert "#138" in self._committed(cid).traces
 
 
 # --------------------------------------------------------------------------
