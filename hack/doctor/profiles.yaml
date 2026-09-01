@@ -561,18 +561,26 @@ hosts:
       # --- chezmoi: binary, source checkout, config -------------------------
 
       - id: minitop-source-checkout-stale
-        title: ~/.local/share/chezmoi sits on a merged branch, 83 behind main
+        title: ~/.local/share/chezmoi is not main fast-forwarded to origin/main
         type: command
         observed: "2026-08-31"
         expected: main, fast-forwarded to origin/main
         tracked: "#116"
         traces: [C2]
-        run: git -C ~/.local/share/chezmoi rev-parse --abbrev-ref HEAD
-        want_stdout: feature-asdf-to-mise
+        run: |
+          C=~/.local/share/chezmoi
+          [ "$(git -C $C rev-parse --abbrev-ref HEAD)" = main ] \
+            && [ "$(git -C $C rev-parse HEAD)" = "$(git -C $C rev-parse origin/main)" ] \
+            || echo stale
+        want_stdout: stale
         fix: |
-          Branch feature-asdf-to-mise (3571b56, 2026-06-02) merged as PR #83
-          and its remote was deleted; HEAD is an ancestor of origin/main, so
-          `git checkout main && git pull --ff-only` loses nothing.
+          The live source is a second checkout that has never tracked main.
+          Surveyed on feature-asdf-to-mise (3571b56, merged as PR #83, remote
+          deleted, 83 behind); it has since moved to fix/138-xcode-toolchain-
+          shims, so this probe asserts the CONDITION -- not main, or main not
+          at origin/main -- rather than a branch name that keeps changing.
+          `git checkout main && git pull --ff-only` loses nothing once the
+          working branch is merged.
           Side effects while stale: (1) the common `no-resurrected-files`
           check FAILS here -- `diff --diff-filter=A origin/main HEAD` lists
           .claude/ files that main has since DELETED, not files this machine
@@ -716,23 +724,3 @@ hosts:
           `. "$HOME/.cargo/env"`, written by rustup; ~/.zshenv is not in the
           source state. Re-home under the M3 pattern alongside the personal
           libpcap injection (#123), or drop it (brew rust is also installed).
-
-      # --- toolchain --------------------------------------------------------
-
-      - id: minitop-xcode-shims-broken
-        title: /usr/bin/make, clang and xcrun fail to load through Xcode 26.6
-        type: command
-        observed: "2026-08-31"
-        expected: /usr/bin/make --version exits 0
-        tracked: "#138"
-        traces: [C3]
-        run: /usr/bin/make --version
-        want_stderr_matching: "Failed to locate 'make'"
-        fix: |
-          xcode-select points at Xcode.app 26.6 (17F113) on macOS 26.6.2, and
-          its loader dies with `Symbol not found: _XPCTypeBool` (CoreDevice ->
-          Mercury.framework). The standalone CLT 26.6.0 is healthy. Every
-          Makefile target -- doctor-test, smoke-doctor, test -- fails before
-          running; the survey ran the underlying commands directly. Operator
-          choice: `sudo xcode-select -s /Library/Developer/CommandLineTools`,
-          or repair Xcode. Blocks anything that compiles (sheldon from source).

@@ -218,9 +218,10 @@ session (2026-08-31, `chezmoi data` pasted from `bossjones@mactop`):
    > the doctor profile are in the unified spec §`minitop` survey and `profiles.yaml`. Two
    > surprises: the `mactop` name is `scutil HostName` alone (ComputerName/LocalHostName are
    > factory defaults), and the asdf → mise migration **already ran** there on 2026-06-01, so
-   > step 4's `version_manager` correction is not needed on the mini. `make` is broken on the
-   > mini (Xcode 26.6 loader, #138) — the F2 upgrade recipe in step 3 is unaffected, but anything
-   > that compiles is.
+   > step 4's `version_manager` correction is not needed on the mini. `make` was broken on the
+   > mini at survey time (Xcode 26.6 loader, #138) — since **diagnosed and repaired** the same day
+   > (stale `XcodeSystemResources` receipt from the in-place 16.2 → 26.6 upgrade; PR #139), so
+   > nothing here is blocked.
 3. **Upgrade chezmoi v2.31.1 → v2.72.0** using F2's verified recipe (hash the old binary
    into a backup first).
 4. Only then regenerate the config (Task 4 pattern below, with `Computer name=minitop` /

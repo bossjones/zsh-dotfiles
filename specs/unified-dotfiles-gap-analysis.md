@@ -550,7 +550,7 @@ unsetting `HostName` before the rename lands.
 | `~/.gitignore_global` | lacks `**/.claude/settings.local.json` | S1 (#121) |
 | Live tools vs flags | `pyenv` 3.12.8 owns `python3`; `fnm` owns `node` 20.19.5; ruby 3.4.9 and the k8s tools via mise — **all with their flag `false`** | P2 interview input (trap 2) |
 | Shell health | `zsh -i -c exit` → 0; stderr = 4× `(eval):1: can't change option: zle`; ~0.45s startup | Baseline, identical to supertop's F16 |
-| Toolchain | `/usr/bin/make`, `/usr/bin/clang`, `xcrun` all fail to load — Xcode 26.6 loader `Symbol not found: _XPCTypeBool`; standalone CLT 26.6.0 healthy | **New finding → #138.** Every `make` target is dead on this machine |
+| Toolchain | `/usr/bin/make`, `/usr/bin/clang`, `xcrun` all fail to load — Xcode 26.6 loader `Symbol not found: _XPCTypeBool`; standalone CLT 26.6.0 healthy | **New finding → #138, since diagnosed and repaired** (see the note below the doctor verdict). Every `make` target was dead on this machine |
 
 #### Doctor verdict
 
@@ -561,8 +561,26 @@ unsetting `HostName` before the rename lands.
 
 The target-state reds are the fleet's pending shared work (S1, S2, S7, M4, `fzf_tab`, M2) plus the
 14 drift entries and the two new `personal` flag checks; none is unexplained. `hack/doctor/tests`: 50 passed, 2 skipped, and the
-smoke-doctor steps pass — both run as their underlying commands, because `make` cannot start
-(#138).
+smoke-doctor steps pass — both run as their underlying commands, because `make` could not start
+at survey time (#138).
+
+> **Toolchain: diagnosed and repaired, later on 2026-08-31 (#138 → PR #139).** Not a broken
+> Xcode. `Xcode.app` had been upgraded 16.2 → 26.6 **in place**, but the system-components step
+> that installs its private frameworks never ran, so an Xcode-16.2 `CoreDevice` was still
+> resolving against the `Mercury` shipped with macOS 26.6.2 — hence `Symbol not found:
+> _XPCTypeBool`. The tell is the **receipt, not the app**: `xcodebuild -version` said `Xcode 26.6`
+> throughout while `pkgutil --pkg-info com.apple.pkg.XcodeSystemResources` said
+> `16.2.0.0.1733547573`, which is what made it hard to see. Repaired with the pkg Xcode already
+> ships, which keeps Xcode selected rather than falling back to the CLT:
+> `sudo installer -pkg /Applications/Xcode.app/Contents/Resources/Packages/XcodeSystemResources.pkg -target /`.
+> The receipt now reads `26.6.0.0.1781586605`, and `/usr/bin/make`, `/usr/bin/clang` and
+> `xcrun --find cc` all work — Makefile targets are usable on the mini again.
+>
+> PR #139 adds two **common** checks so the fleet catches this next time:
+> `xcode-toolchain-shims-usable` (the symptom) and `xcode-system-resources-match-xcode` (the
+> cause — it compares receipt major to app major, so it fires while the toolchain still works).
+> No drift entry survives: the machine is repaired, and a drift that no longer holds is a FAIL by
+> design, so `minitop-xcode-shims-broken` was deleted from `profiles.yaml`.
 
 #### ssh config (Q16 input)
 
@@ -657,7 +675,8 @@ return.** `adobetop` is not blocked.
 >
 > **2026-08-31: the `minitop` survey has returned too** (§`minitop` survey above, folded into
 > `profiles.yaml` as 13 drift entries) — **`minitop` is unblocked** for Phases 1–5, subject to the
-> P2 interview answers on #137 and the toolchain repair in #138.
+> P2 interview answers on #137. The #138 toolchain repair is **done** (PR #139), so it is no
+> longer a prerequisite.
 
 ---
 
@@ -791,8 +810,8 @@ is an owner answer from the P2 interview, not a default. Same `--data=false` rea
 without it the prompts are silently skipped. `version_manager` is already `mise` here.
 **Prerequisites**, in order: fast-forward the stale source checkout (`git checkout main && git
 pull --ff-only` — it is on the merged `feature-asdf-to-mise` branch, 83 behind), upgrade chezmoi
-v2.31.1 → v2.72.0 (personal spec F2 recipe), and repair the toolchain (#138) if anything will
-compile.
+v2.31.1 → v2.72.0 (personal spec F2 recipe). The toolchain repair once listed here (#138) is
+**already done** — `XcodeSystemResources.pkg` was reinstalled on 2026-08-31, so compiling works.
 ```sh
 cd ~/.local/share/chezmoi
 chezmoi init --source=. --data=false --debug -v \
