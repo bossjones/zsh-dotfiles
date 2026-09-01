@@ -167,6 +167,89 @@ and `/etc/hosts` (loopback entries only). See
 
 ---
 
+## Xcode toolchain shims
+
+Two checks guard the `/usr/bin` build toolchain on macOS, because when it breaks **every
+`make` target in this repo fails before running anything** — and so does sheldon-from-source
+on arm64, any brew build from source, and any mise tool that falls back to compiling.
+
+| Check | Catches |
+|---|---|
+| `xcode-toolchain-shims-usable` | the **symptom** — `/usr/bin/make` and `/usr/bin/clang` no longer execute |
+| `xcode-system-resources-match-xcode` | the **cause**, before it becomes a symptom |
+
+### The failure
+
+`/usr/bin/make`, `/usr/bin/clang`, `/usr/bin/cc` and `xcrun` are not compilers. They are shims
+that ask `xcode-select`'s active developer directory to locate the real tool. When the handoff
+breaks, `make` only shows you the fallback, which misdiagnoses it as a missing install:
+
+```
+$ /usr/bin/make --version
+xcode-select: Failed to locate 'make', requesting installation of command line developer tools.
+```
+
+**Run `/usr/bin/clang --version` instead** — it prints the actual error:
+
+```
+dlopen(@rpath/libxcodebuildLoader.dylib): Symbol not found: _XPCTypeBool
+  Referenced from: /Library/Developer/PrivateFrameworks/CoreDevice.framework/…/CoreDevice
+  Expected in:     /Library/Apple/System/Library/PrivateFrameworks/Mercury.framework/…/Mercury
+```
+
+That is a **version skew between two private frameworks**, not a missing or corrupt Xcode.
+`CoreDevice` belongs to Xcode; `Mercury` belongs to macOS. An old `CoreDevice` asks for a
+symbol the current OS stopped exporting, and the loader gives up.
+
+### Why `xcodebuild -version` lies
+
+Upgrading Xcode.app replaces the *app*. The system components it installs outside the bundle —
+into `/Library/Developer/PrivateFrameworks` — are installed separately, on first launch. If
+that step never runs, you get a new app sitting on old frameworks, and the obvious diagnostic
+reports everything is fine:
+
+```sh
+xcodebuild -version                                    # Xcode 26.6   <- the APP
+pkgutil --pkg-info com.apple.pkg.XcodeSystemResources  # version: 16.2.0.0…  <- the FRAMEWORKS
+```
+
+**The receipt is the number that matters.** `xcode-system-resources-match-xcode` compares its
+major version against `Xcode.app`'s and fails on disagreement, which is why it fires while the
+toolchain still works — the skew is detectable before the next macOS update makes it fatal.
+
+### Repair
+
+Install the package the app already ships. This is the root-cause fix and keeps Xcode selected,
+so iOS SDKs and simulators stay available:
+
+```sh
+sudo installer -pkg \
+  /Applications/Xcode.app/Contents/Resources/Packages/XcodeSystemResources.pkg -target /
+```
+
+`sudo xcodebuild -runFirstLaunch` does the same thing plus the rest of first-launch setup.
+
+If you do not need Xcode at all, point the shims at the standalone Command Line Tools, which
+carry their own self-contained toolchain and never load `CoreDevice`:
+
+```sh
+sudo xcode-select -s /Library/Developer/CommandLineTools
+```
+
+This sidesteps the problem rather than fixing it — the stale framework stays on disk, and
+anything wanting an Xcode-only SDK stops working. Verify either route with:
+
+```sh
+xcode-select -p && /usr/bin/make --version && /usr/bin/clang --version
+```
+
+> Seen on `minitop` (macOS 26.6.2, Xcode 26.6 on an Xcode-16.2 receipt) — [#138](https://github.com/bossjones/zsh-dotfiles/issues/138).
+> Note that `make doctor` cannot help you here: `make` is one of the casualties. Run
+> `./hack/doctor/doctor.py` directly, or use the CLT's
+> `/Library/Developer/CommandLineTools/usr/bin/make`.
+
+---
+
 ## Configuration
 
 One file: [`hack/doctor/profiles.yaml`](../hack/doctor/profiles.yaml), validated against
