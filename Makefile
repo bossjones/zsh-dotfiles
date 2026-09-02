@@ -1,20 +1,29 @@
-sync:
+.PHONY: help
+help:  ## Show this help (every documented target)
+	@awk 'BEGIN {FS = ":.*?## "} \
+		/^[a-zA-Z0-9_.-]+:.*?## / {printf "  \033[36m%-28s\033[0m %s\n", $$1, $$2}' \
+		$(MAKEFILE_LIST)
+
+# `make` with no target keeps its historical meaning: `sync`.
+.DEFAULT_GOAL := sync
+
+sync:  ## uv sync --all-extras and install the pre-commit hooks
 	@uv sync --all-extras
 	uv run pre-commit install
 
-pre-commit:
+pre-commit:  ## Run every pre-commit hook against all files
 	uv run pre-commit run -a
 
-test:
+test:  ## Run the tmux-based integration suite (py.test, 6 reruns)
 	py.test --tb=short --no-header --showlocals --reruns 6 test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py test_ccstatusline_settings.py
 
-test-pdb:
+test-pdb:  ## Run the integration suite under the bpdb debugger
 	py.test --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py test_ccstatusline_settings.py
 
-uv-test:
+uv-test:  ## Run the integration suite through `uv run pytest` (verbose, timed)
 	uv run pytest -vvvv --tb=short --no-header --showlocals --reruns 6 --durations-min=0.05 --durations=10 test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py test_ccstatusline_settings.py
 
-uv-test-pdb:
+uv-test-pdb:  ## Run the integration suite through uv under the bpdb debugger
 	uv run pytest --pdb --pdbcls bpdb:BPdb --tb=short --no-header --showlocals test_dotfiles.py test_fzf_tab.py test_scripts_backup_dotfiles.py test_scripts_check_jsonc.py test_ccstatusline_settings.py
 
 .PHONY: update-cursor-rules
@@ -27,7 +36,7 @@ update-cursor-rules:  ## Update cursor rules from prompts/drafts/cursor_rules
 	find hack/drafts/cursor_rules -type f -name "*.md" ! -name "README.md" -exec sh -c 'for file; do target=$${file%.md}; cp -a "$$file" ".cursor/rules/$$(basename "$$target")"; done' sh {} +
 
 .PHONY: install-hooks
-install-hooks:
+install-hooks:  ## Create the 3.12 uv venv and install the pre-commit hooks
 	uv venv --python 3.12
 	uv run pre-commit install
 
