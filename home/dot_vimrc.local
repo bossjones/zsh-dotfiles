@@ -1,0 +1,56 @@
+" ~/.vimrc.local — personal overrides layered on top of gpakosz/.vim
+"
+" This file is sourced by ~/.vim/.vimrc at the very end (see its
+" `if filereadable(expand("~/.vimrc.local"))` guard), so everything here
+" wins over the upstream defaults.
+"
+" Contents are the deltas from the retired chezmoi-managed `home/dot_vimrc`,
+" which used to overwrite ~/.vimrc wholesale and orphan the ~/.vim clone.
+" Upstream's `set nomodeline` security default is deliberately NOT overridden.
+
+" ============================================================
+" Encoding
+" ============================================================
+set fileencoding=utf-8          " Encoding written to file on save
+set fileformat=unix             " Default line ending format for new files (LF)
+set fileformats=unix,dos,mac    " Line ending formats recognised when reading files
+set ambiwidth=double            " Treat ambiguous-width chars (e.g. CJK) as double-width
+
+" ============================================================
+" File safety — upstream enables all three; we want none of them
+" ============================================================
+set nobackup                    " Don't create a backup file before overwriting
+set noswapfile                  " Don't create a .swp swap file for crash recovery
+set noundofile                  " Don't write an undo history file (no .un~ files)
+set viminfo+=!                  " Include global variables (! marks) in viminfo state
+
+" ============================================================
+" Display & UI
+" ============================================================
+set wrap                        " Visually wrap long lines (upstream sets nowrap)
+set list                        " Show invisible characters (upstream sets nolist)
+set listchars=tab:>-            " Render tab characters as '>-' (ASCII, not Unicode)
+set background=dark             " Terminal background is dark (affects colorscheme)
+set ruler                       " Show cursor position in the status bar
+set nopaste                     " Start with paste mode off (preserves auto-indent)
+
+if exists("+colorcolumn")
+  set colorcolumn=81            " Display a marker after column 80
+endif
+
+" Popup menu (autocomplete) colors
+highlight Pmenu ctermbg=lightcyan ctermfg=black    " Autocomplete popup background/foreground
+highlight PmenuSel ctermbg=blue ctermfg=black      " Currently selected popup item
+highlight PmenuSbar ctermbg=darkgray               " Popup menu scroll bar
+highlight PmenuThumb ctermbg=lightgray             " Scroll bar thumb (drag handle)
+
+" ============================================================
+" Status line — replaces upstream's multi-segment highlighted statusline
+" ============================================================
+" Format: truncated filepath | modified/readonly flags | encoding | fileformat | filetype | line,col | scroll%
+set statusline=%<%f\ %m%r%h%w%{'['.(&fenc!=''?&fenc:&enc).']['.&ff.']'}%y%=%l,%c%V%8P
+
+" ============================================================
+" ChangeLog plugin
+" ============================================================
+let g:changelog_username="Malcolm Jones <bossjones@theblacktonystark.com>"

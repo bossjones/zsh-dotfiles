@@ -13,6 +13,13 @@
 #   stripComponents: 1
 #   refreshPeriod: 168h
 
+# gpakosz/.vim, via the bossjones fork so upstream churn can't break an apply.
+# ~/.vimrc is a chezmoi-managed symlink into this clone (home/symlink_dot_vimrc),
+# and personal overrides live in ~/.vimrc.local (home/dot_vimrc.local).
+.vim:
+  type: git-repo
+  url: https://github.com/bossjones/.vim.git
+
 dev/bossjones/oh-my-tmux:
   type: git-repo
   url: https://github.com/bossjones/.tmux.git
