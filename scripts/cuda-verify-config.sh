@@ -166,7 +166,7 @@ Package: nvidia-driver-* nvidia-dkms-* nvidia-kernel-common-* nvidia-kernel-sour
 Pin: release o=NVIDIA
 Pin-Priority: -1
 
-Package: libnvidia-cfg1-* libnvidia-common-* libnvidia-compute-* libnvidia-decode-* libnvidia-encode-* libnvidia-extra-* libnvidia-fbc1-* libnvidia-gl-* libxnvctrl*
+Package: libnvidia-cfg1-* libnvidia-common-* libnvidia-compute-* libnvidia-decode-* libnvidia-encode-* libnvidia-extra-* libnvidia-fbc1-* libnvidia-gl-* libnvidia-egl-wayland* libxnvctrl*
 Pin: release o=NVIDIA
 Pin-Priority: -1
 PIN
@@ -197,6 +197,18 @@ PIN
         log_fail "toolkit must pull no driver packages" "see: apt-get install -s cuda-toolkit-${CUDA_SERIES}"
     else
         log_pass "cuda-toolkit-${CUDA_SERIES} pulls zero driver packages"
+    fi
+
+    # The invariant that actually matters, and the one that caught two pin gaps
+    # (libxnvctrl0, libnvidia-egl-wayland1) that the pattern list had missed.
+    # See specs/cuda-toolkit-cleanup.md section 3.
+    leak=$(apt-get -s upgrade 2>/dev/null |
+        grep -cE '^Inst (nvidia-|libnvidia-|xserver-xorg-video-nvidia|libxnvctrl)')
+    if [ "$leak" -eq 0 ]; then
+        log_pass "no driver-stack package leaks through the pin on upgrade"
+    else
+        log_fail "pin leaks: ${leak} driver-stack package(s) would change" \
+            "$(apt-get -s upgrade 2>/dev/null | grep -E '^Inst (nvidia-|libnvidia-|xserver|libxnvctrl)' | head -3)"
     fi
 else
     log_note "no NVIDIA apt repo in this image - skipping pin checks"

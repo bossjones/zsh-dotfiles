@@ -506,6 +506,11 @@ docker compose run --rm smoke-shell /bin/zsh
 
 Two separate ad-hoc rigs, because they answer different questions. Neither runs in CI.
 
+> **Read [`specs/cuda-toolkit-cleanup.md`](../specs/cuda-toolkit-cleanup.md) before touching NVIDIA
+> packages.** It records the traps found by actually doing this — including an `apt-mark auto` on an
+> obsolete-looking driver metapackage that nearly removed the working driver, and two vacuous gate
+> scripts that reported success while checking nothing.
+
 ### Why separate from the standard smoke image
 
 [`Dockerfile`](../Dockerfile) is `ubuntu:24.04`; these are `ubuntu:22.04`, because NVIDIA's apt

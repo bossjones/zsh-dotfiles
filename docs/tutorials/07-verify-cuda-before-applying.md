@@ -428,7 +428,20 @@ On the measured machine, every one of these checks passed, including PTX JIT —
 
 ## Step 7: Sanity-check apt package selection before you touch anything
 
-These are all traps that were hit for real while building the automated rigs — check for them before running an install or removal, not after.
+These are all traps that were hit for real while building the automated rigs — check for them before running an install or removal, not after. [`specs/cuda-toolkit-cleanup.md`](../../specs/cuda-toolkit-cleanup.md) has the full list, including one that nearly deleted a working driver.
+
+**Find the manual root before marking anything `auto`.** An obsolete-looking `nvidia-driver-<old>`
+metapackage often has `Depends: nvidia-driver-<new>`, making it the only manually-marked root holding
+the current driver in place. Marking it `auto` hands the whole stack to `autoremove`:
+
+```sh
+apt-mark showmanual | grep -E 'nvidia|cuda'
+apt-cache depends nvidia-driver-550          # -> Depends: nvidia-driver-580
+sudo apt-get -s autoremove | grep -cE '^(Remv|Purg) '
+```
+
+Note the `(Remv|Purg)` alternation: **apt prints `Purg`, not `Remv`, for `--purge` operations**, so a
+gate that greps only `^Remv` silently matches nothing and passes vacuously.
 
 **`apt install cuda` pulls a driver, and can replace your working one.** The `cuda` metapackage depends on `cuda-drivers`. If you only want a toolkit:
 
