@@ -59,3 +59,4 @@ hack/doctor/bin/chezmoi
 # lychee link-checker output and cache
 .lychee-report.md
 .lycheecache
+.boss-skills/

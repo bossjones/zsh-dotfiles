@@ -15,25 +15,30 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "timeout": {"type": "integer", "minimum": 1, "maximum": 300, "default": 10},
-        "shell": {"type": "string", "default": "/bin/zsh"}
+        "timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300,
+          "default": 10
+        },
+        "shell": { "type": "string", "default": "/bin/zsh" }
       }
     },
-    "common": {"$ref": "#/$defs/checkContainer"},
+    "common": { "$ref": "#/$defs/checkContainer" },
     "profiles": {
       "type": "object",
       "additionalProperties": false,
-      "propertyNames": {"enum": ["work", "personal"]},
+      "propertyNames": { "enum": ["work", "personal"] },
       "properties": {
-        "work": {"$ref": "#/$defs/checkContainer"},
-        "personal": {"$ref": "#/$defs/checkContainer"}
+        "work": { "$ref": "#/$defs/checkContainer" },
+        "personal": { "$ref": "#/$defs/checkContainer" }
       }
     },
     "hosts": {
       "type": "object",
       "minProperties": 1,
-      "propertyNames": {"pattern": "^[a-z0-9][a-z0-9-]*$"},
-      "additionalProperties": {"$ref": "#/$defs/host"}
+      "propertyNames": { "pattern": "^[a-z0-9][a-z0-9-]*$" },
+      "additionalProperties": { "$ref": "#/$defs/host" }
     }
   },
 
@@ -42,7 +47,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "checks": {"type": "array", "items": {"$ref": "#/$defs/check"}}
+        "checks": { "type": "array", "items": { "$ref": "#/$defs/check" } }
       }
     },
 
@@ -52,9 +57,9 @@
       "additionalProperties": false,
       "description": "A host may declare ONLY what is inherent (identity) and what is temporary (drift). There is deliberately no `checks` key -- a permanent per-host assertion has no home. Express inherent differences as a `when:` gate on a profile-level check.",
       "properties": {
-        "description": {"type": "string"},
-        "identity": {"$ref": "#/$defs/identity"},
-        "drift": {"type": "array", "items": {"$ref": "#/$defs/drift"}}
+        "description": { "type": "string" },
+        "identity": { "$ref": "#/$defs/identity" },
+        "drift": { "type": "array", "items": { "$ref": "#/$defs/drift" } }
       }
     },
 
@@ -63,7 +68,7 @@
       "required": ["profile"],
       "additionalProperties": false,
       "properties": {
-        "profile": {"enum": ["work", "personal"]},
+        "profile": { "enum": ["work", "personal"] },
         "hypothesis": {
           "type": "boolean",
           "default": false,
@@ -71,7 +76,7 @@
         },
         "aliases": {
           "type": "array",
-          "items": {"type": "string"},
+          "items": { "type": "string" },
           "description": "Extra names hostname-matching (rule 4) will accept, so a mis-named machine still resolves while its drift is reported."
         },
         "match": {
@@ -79,9 +84,9 @@
           "additionalProperties": false,
           "description": "Fingerprint for resolution rule 5. ALL keys must match. Ambiguity across hosts is a hard error, never a guess.",
           "properties": {
-            "arch": {"type": "string"},
-            "username": {"type": "string"},
-            "os": {"type": "string"}
+            "arch": { "type": "string" },
+            "username": { "type": "string" },
+            "os": { "type": "string" }
           }
         },
         "assert": {
@@ -89,11 +94,11 @@
           "additionalProperties": false,
           "description": "Verified and reported; never used to resolve.",
           "properties": {
-            "computer_name": {"type": "string"},
-            "local_host_name": {"type": "string"},
-            "host_name": {"type": "string"},
-            "os_major": {"type": "integer"},
-            "hw_model": {"type": "string"}
+            "computer_name": { "type": "string" },
+            "local_host_name": { "type": "string" },
+            "host_name": { "type": "string" },
+            "os_major": { "type": "integer" },
+            "hw_model": { "type": "string" }
           }
         }
       }
@@ -104,161 +109,217 @@
       "required": ["id", "title", "type"],
       "additionalProperties": false,
       "properties": {
-        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
-        "title": {"type": "string", "minLength": 1},
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "title": { "type": "string", "minLength": 1 },
         "type": {
           "enum": [
-            "command", "file_exists", "file_contains", "symlink", "binary",
-            "path_entry", "git_config", "chezmoi_data", "chezmoi_managed",
-            "chezmoi_data_complete", "hostname", "brew"
+            "command",
+            "file_exists",
+            "file_contains",
+            "symlink",
+            "binary",
+            "path_entry",
+            "git_config",
+            "chezmoi_data",
+            "chezmoi_managed",
+            "chezmoi_data_complete",
+            "hostname",
+            "brew"
           ]
         },
-        "phase": {"enum": ["pre", "post", "always"], "default": "always"},
-        "severity": {"enum": ["error", "warn"], "default": "error"},
-        "traces": {"type": "array", "items": {"type": "string"}},
-        "fix": {"type": "string"},
+        "phase": { "enum": ["pre", "post", "always"], "default": "always" },
+        "severity": { "enum": ["error", "warn"], "default": "error" },
+        "traces": { "type": "array", "items": { "type": "string" } },
+        "fix": { "type": "string" },
         "when": {
           "type": "object",
           "additionalProperties": false,
           "description": "Gate. The check is SKIPped unless every key matches. `profile` is deliberately absent -- a profile-specific check belongs in that profile's block.",
           "properties": {
-            "os": {"type": "string"},
-            "arch": {"type": "string"},
-            "username": {"type": "string"},
-            "hw_model": {"type": "string"},
-            "binary_present": {"type": "string"},
-            "file_present": {"type": "string"}
+            "os": { "type": "string" },
+            "arch": { "type": "string" },
+            "username": { "type": "string" },
+            "hw_model": { "type": "string" },
+            "binary_present": { "type": "string" },
+            "file_present": { "type": "string" }
           }
         },
 
-        "observed": {"type": "string", "format": "date"},
-        "expected": {"type": "string"},
-        "tracked": {"type": "string", "pattern": "^#[0-9]+$"},
+        "observed": { "type": "string", "format": "date" },
+        "expected": { "type": "string" },
+        "tracked": { "type": "string", "pattern": "^#[0-9]+$" },
 
-        "run": {"type": "string"},
-        "cwd": {"type": "string"},
-        "want_exit": {"type": "integer"},
-        "want_stdout": {"type": "string"},
-        "want_stdout_matching": {"type": "string"},
-        "want_stdout_not_matching": {"type": "string"},
-        "want_stdout_empty": {"type": "boolean"},
-        "want_stderr_matching": {"type": "string"},
-        "want_stderr_not_matching": {"type": "string"},
+        "run": { "type": "string" },
+        "cwd": { "type": "string" },
+        "want_exit": { "type": "integer" },
+        "want_stdout": { "type": "string" },
+        "want_stdout_matching": { "type": "string" },
+        "want_stdout_not_matching": { "type": "string" },
+        "want_stdout_empty": { "type": "boolean" },
+        "want_stderr_matching": { "type": "string" },
+        "want_stderr_not_matching": { "type": "string" },
 
-        "path": {"type": "string"},
-        "want": {"type": ["string", "boolean", "integer"]},
-        "want_matching": {"type": "string"},
-        "absent": {"type": "boolean"},
+        "path": { "type": "string" },
+        "want": { "type": ["string", "boolean", "integer"] },
+        "want_matching": { "type": "string" },
+        "absent": { "type": "boolean" },
 
-        "target": {"type": "string"},
-        "target_matching": {"type": "string"},
+        "target": { "type": "string" },
+        "target_matching": { "type": "string" },
 
-        "name": {"type": "string"},
-        "in_dir": {"type": "string"},
-        "version_matching": {"type": "string"},
-        "version_arg": {"type": "string"},
+        "name": { "type": "string" },
+        "in_dir": { "type": "string" },
+        "version_matching": { "type": "string" },
+        "version_arg": { "type": "string" },
 
-        "dir": {"type": "string"},
+        "dir": { "type": "string" },
 
-        "key": {"type": "string"},
+        "key": { "type": "string" },
 
-        "pattern": {"type": "string"},
-        "count": {"type": "integer", "minimum": 0},
-        "min": {"type": "integer", "minimum": 0},
-        "max": {"type": "integer", "minimum": 0},
+        "pattern": { "type": "string" },
+        "count": { "type": "integer", "minimum": 0 },
+        "min": { "type": "integer", "minimum": 0 },
+        "max": { "type": "integer", "minimum": 0 },
 
-        "which": {"enum": ["computer", "local", "host"]},
-        "want_any_of": {"type": "array", "items": {"type": "string"}},
-        "allow_unset": {"type": "boolean"},
+        "which": { "enum": ["computer", "local", "host"] },
+        "want_any_of": { "type": "array", "items": { "type": "string" } },
+        "allow_unset": { "type": "boolean" },
 
-        "formula": {"type": "string"},
-        "cask": {"type": "string"}
+        "formula": { "type": "string" },
+        "cask": { "type": "string" }
       },
 
       "allOf": [
         {
-          "if": {"properties": {"type": {"const": "command"}}, "required": ["type"]},
+          "if": {
+            "properties": { "type": { "const": "command" } },
+            "required": ["type"]
+          },
           "then": {
             "required": ["run"],
             "anyOf": [
-              {"required": ["want_exit"]},
-              {"required": ["want_stdout"]},
-              {"required": ["want_stdout_matching"]},
-              {"required": ["want_stdout_not_matching"]},
-              {"required": ["want_stdout_empty"]},
-              {"required": ["want_stderr_matching"]},
-              {"required": ["want_stderr_not_matching"]}
+              { "required": ["want_exit"] },
+              { "required": ["want_stdout"] },
+              { "required": ["want_stdout_matching"] },
+              { "required": ["want_stdout_not_matching"] },
+              { "required": ["want_stdout_empty"] },
+              { "required": ["want_stderr_matching"] },
+              { "required": ["want_stderr_not_matching"] }
             ]
           }
         },
         {
-          "if": {"properties": {"type": {"const": "file_exists"}}, "required": ["type"]},
-          "then": {"required": ["path"]}
+          "if": {
+            "properties": { "type": { "const": "file_exists" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["path"] }
         },
         {
-          "if": {"properties": {"type": {"const": "file_contains"}}, "required": ["type"]},
+          "if": {
+            "properties": { "type": { "const": "file_contains" } },
+            "required": ["type"]
+          },
           "then": {
             "required": ["path"],
-            "oneOf": [{"required": ["want"]}, {"required": ["want_matching"]}]
+            "oneOf": [
+              { "required": ["want"] },
+              { "required": ["want_matching"] }
+            ]
           }
         },
         {
-          "if": {"properties": {"type": {"const": "symlink"}}, "required": ["type"]},
-          "then": {"required": ["path"]}
+          "if": {
+            "properties": { "type": { "const": "symlink" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["path"] }
         },
         {
-          "if": {"properties": {"type": {"const": "binary"}}, "required": ["type"]},
-          "then": {"required": ["name"]}
+          "if": {
+            "properties": { "type": { "const": "binary" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["name"] }
         },
         {
-          "if": {"properties": {"type": {"const": "path_entry"}}, "required": ["type"]},
-          "then": {"required": ["dir"]}
+          "if": {
+            "properties": { "type": { "const": "path_entry" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["dir"] }
         },
         {
-          "if": {"properties": {"type": {"const": "git_config"}}, "required": ["type"]},
-          "then": {"required": ["key"]}
+          "if": {
+            "properties": { "type": { "const": "git_config" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["key"] }
         },
         {
-          "if": {"properties": {"type": {"const": "chezmoi_data"}}, "required": ["type"]},
+          "if": {
+            "properties": { "type": { "const": "chezmoi_data" } },
+            "required": ["type"]
+          },
           "then": {
             "required": ["key"],
-            "oneOf": [{"required": ["want"]}, {"required": ["want_matching"]}]
+            "oneOf": [
+              { "required": ["want"] },
+              { "required": ["want_matching"] }
+            ]
           }
         },
         {
-          "if": {"properties": {"type": {"const": "chezmoi_managed"}}, "required": ["type"]},
+          "if": {
+            "properties": { "type": { "const": "chezmoi_managed" } },
+            "required": ["type"]
+          },
           "then": {
             "required": ["pattern"],
-            "anyOf": [{"required": ["count"]}, {"required": ["min"]}, {"required": ["max"]}]
+            "anyOf": [
+              { "required": ["count"] },
+              { "required": ["min"] },
+              { "required": ["max"] }
+            ]
           }
         },
         {
-          "if": {"properties": {"type": {"const": "hostname"}}, "required": ["type"]},
+          "if": {
+            "properties": { "type": { "const": "hostname" } },
+            "required": ["type"]
+          },
           "then": {
             "required": ["which"],
             "anyOf": [
-              {"required": ["want"]},
-              {"required": ["want_any_of"]},
-              {"required": ["allow_unset"]}
+              { "required": ["want"] },
+              { "required": ["want_any_of"] },
+              { "required": ["allow_unset"] }
             ]
           }
         },
         {
-          "if": {"properties": {"type": {"const": "brew"}}, "required": ["type"]},
-          "then": {"oneOf": [{"required": ["formula"]}, {"required": ["cask"]}]}
+          "if": {
+            "properties": { "type": { "const": "brew" } },
+            "required": ["type"]
+          },
+          "then": {
+            "oneOf": [{ "required": ["formula"] }, { "required": ["cask"] }]
+          }
         }
       ]
     },
 
     "check": {
       "allOf": [
-        {"$ref": "#/$defs/checkBase"},
+        { "$ref": "#/$defs/checkBase" },
         {
-          "not": {"anyOf": [
-            {"required": ["observed"]},
-            {"required": ["expected"]},
-            {"required": ["tracked"]}
-          ]},
+          "not": {
+            "anyOf": [
+              { "required": ["observed"] },
+              { "required": ["expected"] },
+              { "required": ["tracked"] }
+            ]
+          },
           "$comment": "observed/expected/tracked belong to drift entries only."
         }
       ]
@@ -266,7 +327,7 @@
 
     "drift": {
       "allOf": [
-        {"$ref": "#/$defs/checkBase"},
+        { "$ref": "#/$defs/checkBase" },
         {
           "required": ["observed", "expected", "tracked"],
           "$comment": "No untracked drift. An entry without a tracking issue has no convergence plan and is therefore an unmanaged difference, not an accepted deviation."
