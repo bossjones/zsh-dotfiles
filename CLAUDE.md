@@ -110,7 +110,7 @@ chezmoi doctor                            # Verify template syntax
 ## CI/CD Pipeline
 
 ### GitHub Actions Workflow
-- **Platforms**: Tests run on `macos-14` and `macos-latest`
+- **Platforms**: Tests run on `macos-15` (`macos-26` runs nightly in `tests-future-macos.yml`)
 - **Python**: Uses Python 3.12 with pip caching
 - **Go**: Uses Go 1.20.5 for chezmoi operations
 - **Prerequisites**: Uses external `zsh-dotfiles-prep` installer for system setup

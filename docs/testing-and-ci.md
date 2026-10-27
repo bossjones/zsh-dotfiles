@@ -178,7 +178,7 @@ Defined in the [`Makefile`](../Makefile). Note that only some targets are declar
 | `smoke-cuda-clean` | None (cleanup) | No | `make smoke-cuda-clean` |
 
 **These are the only real coverage for `home/shell/cuda/`.** CI runs on macOS only
-([`tests.yml`](../.github/workflows/tests.yml) matrix is `macos-14`/`macos-15`) and the `cuda`
+([`tests.yml`](../.github/workflows/tests.yml) matrix is `macos-15`) and the `cuda`
 sheldon plugin is gated on `.chezmoi.os == "linux"`, so no CI job ever sources those modules. The
 pytest suite does not cover them either.
 
@@ -246,7 +246,7 @@ Five workflows run on push, PR, and schedule.
 
 | Workflow | File | Trigger | Platform | Purpose | Status |
 |----------|------|---------|----------|---------|--------|
-| **GitHub Actions CI** | `tests.yml` | Push (main), PR, manual dispatch | macOS 14, 15 × Python 3.12 × asdf/mise (8 jobs) | Primary test suite; matrix covers OS × version manager | Active (fail-fast: false) |
+| **GitHub Actions CI** | `tests.yml` | Push (main), PR, daily schedule, manual dispatch | macOS 15 × Python 3.12 × asdf/mise (2 jobs) | Primary test suite; matrix covers OS × version manager | Active (fail-fast: false) |
 | **Future macOS** | `tests-future-macos.yml` | Daily cron (07:00 UTC) | macOS 26 (beta), latest × Python 3.12 × asdf/mise | Canary for future macOS; early warning system | Active (continue-on-error: true) |
 | **Actionlint** | `actionlint.yml` | Push, PR, merge_group | ubuntu-latest | Lint GitHub Actions workflow syntax; upload SARIF security report | Active |
 | **Tmate** | `tmate.yml` | Manual dispatch (workflow_dispatch) | ubuntu-latest | Manual debugging via SSH session | On-demand |
@@ -292,13 +292,14 @@ flowchart TD
 strategy:
   fail-fast: false  # Run all jobs even if one fails; useful for version manager testing
   matrix:
-    os: ["macos-14", "macos-15"]
+    os: ["macos-15"]
     python-version: ["3.12"]
     version_manager: ["asdf", "mise"]
 ```
 
-Results in **8 jobs total**:
-- 2 macOS versions × 1 Python version × 2 version managers = 8 parallel jobs
+Results in **2 jobs total**:
+- 1 macOS version × 1 Python version × 2 version managers = 2 parallel jobs
+- `macos-26` runs separately in the nightly `tests-future-macos.yml` until it is promoted here
 - `fail-fast: false` ensures both asdf and mise test lanes complete even if one fails
 
 ### Environment Variables
@@ -320,10 +321,21 @@ Set in `tests.yml` (lines 33-45):
 
 The workflow uses 4 caching strategies to speed up subsequent runs:
 
-1. **Homebrew downloads** (lines 67-75): Cache compiled brew packages
-2. **Cargo binaries** (lines 77-86): Cache Rust toolchain from prereq installer
-3. **Version manager tools** (lines 88-100): Cache asdf plugins/installs **and** mise installs (keyed by manager)
-4. **LunarVim** (lines 102-112): Cache LunarVim install (only re-install on branch change)
+1. **Homebrew downloads**: Cache downloaded bottles and the formula API (bottles are still poured every run)
+2. **Cargo binaries**: Cache Rust toolchain from prereq installer
+3. **Version manager tools**: Cache asdf plugins/installs **and** mise installs (keyed by manager)
+4. **LunarVim**: Cache LunarVim install (only re-install on branch change)
+
+**Caches are saved from `main` only.** Every job restores with `actions/cache/restore`, but the
+matching `actions/cache/save` steps at the end of the job run only on `refs/heads/main`. PRs can
+restore caches from their own ref or from `main`, so per-PR saves bought nothing on a PR's first
+run. They also wrote a ~1.5 GB Homebrew cache per PR, which pushed the repo past GitHub's 10 GB
+cache limit and evicted the `main` entries every PR falls back on. The daily `schedule` trigger
+keeps the `main` caches inside GitHub's 7-day unused-cache eviction window.
+
+**Homebrew settings:** `HOMEBREW_NO_AUTO_UPDATE`, `HOMEBREW_NO_INSTALL_CLEANUP` and
+`HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK` are set because the prereq installer runs `brew update`
+itself, and the dozens of separate `brew install` calls would otherwise each repeat that work.
 
 **Cache key strategy:**
 ```yaml
