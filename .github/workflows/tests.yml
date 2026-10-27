@@ -10,6 +10,10 @@ on:
       - synchronize
       - reopened
       - ready_for_review
+  schedule:
+    # 06:00 UTC daily. Keeps main's caches warm: GitHub evicts caches unused for
+    # 7 days, and PRs can only restore caches saved from their own ref or main.
+    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       debug_enabled:
@@ -26,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["macos-14", "macos-15"]
+        os: ["macos-15"]
         python-version: ["3.12"]
         version_manager: ["asdf", "mise"]
 
@@ -43,6 +47,13 @@ jobs:
       # CI. This env var (read by both the parent shell and Homebrew's sandboxed
       # child) lifts the untrusted-tap refusal so the prereq installer can proceed.
       HOMEBREW_NO_REQUIRE_TAP_TRUST: "1"
+      # The prereq installer runs `brew update` itself; skip the per-command
+      # auto-update, post-install cleanup and dependents check that every one of
+      # the dozens of separate `brew install` calls would otherwise repeat.
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: "1"
+      HOMEBREW_NO_ENV_HINTS: "1"
 
     steps:
       - name: Checkout repository [${{ matrix.os }}, py${{ matrix.python-version }}]
@@ -65,7 +76,8 @@ jobs:
         run: go version
 
       - name: Cache Homebrew downloads [${{ matrix.os }}]
-        uses: actions/cache@v6
+        id: brew-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/Library/Caches/Homebrew/downloads
@@ -75,7 +87,8 @@ jobs:
             brew-${{ matrix.os }}-
 
       - name: Cache cargo binaries from prereq installer [${{ matrix.os }}]
-        uses: actions/cache@v6
+        id: cargo-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.cargo/bin
@@ -87,7 +100,7 @@ jobs:
 
       - name: Cache version-manager tool installs [${{ matrix.os }}, ${{ matrix.version_manager }}]
         id: vm-tools-cache
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.asdf/installs
@@ -101,7 +114,7 @@ jobs:
 
       - name: Cache LunarVim install [${{ matrix.os }}]
         id: lvim-cache
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.local/share/lunarvim
@@ -198,3 +211,47 @@ jobs:
 
           make test
           '
+
+      # PR runs only restore caches. Saving from PRs let each PR write its own
+      # ~1.5 GB Homebrew cache, which pushed the repo past its 10 GB cache limit
+      # and evicted the main-branch entries every PR falls back on.
+      - name: Save cache Homebrew downloads [${{ matrix.os }}]
+        if: success() && github.ref == 'refs/heads/main' && steps.brew-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/Library/Caches/Homebrew/downloads
+            ~/Library/Caches/Homebrew/api
+          key: ${{ steps.brew-cache.outputs.cache-primary-key }}
+
+      - name: Save cache cargo binaries from prereq installer [${{ matrix.os }}]
+        if: success() && github.ref == 'refs/heads/main' && steps.cargo-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ steps.cargo-cache.outputs.cache-primary-key }}
+
+      - name: Save cache version-manager tool installs [${{ matrix.os }}, ${{ matrix.version_manager }}]
+        if: success() && github.ref == 'refs/heads/main' && steps.vm-tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/.asdf/installs
+            ~/.asdf/plugins
+            ~/.asdf/shims
+            ~/.local/share/mise/installs
+            ~/.local/share/mise/plugins
+          key: ${{ steps.vm-tools-cache.outputs.cache-primary-key }}
+
+      - name: Save cache LunarVim install [${{ matrix.os }}]
+        if: success() && github.ref == 'refs/heads/main' && steps.lvim-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/.local/share/lunarvim
+            ~/.config/lvim
+            ~/.cache/nvim
+          key: ${{ steps.lvim-cache.outputs.cache-primary-key }}
